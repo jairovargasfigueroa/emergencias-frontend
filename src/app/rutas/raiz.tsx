@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { XStack, YStack } from 'tamagui'
 import { MarcaSga } from '../../shared/ui/MarcaSga'
+import { Navegacion } from '../Navegacion'
 
 export type ContextoRouter = {
   queryClient: QueryClient
@@ -26,6 +27,7 @@ function LayoutPanel() {
         borderColor="$borde"
       >
         <MarcaSga />
+        <Navegacion />
       </YStack>
       <YStack render="main" flex={1} minW={0} px={40} py={32} gap={24}>
         <Outlet />

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { getRouteApi, Link, Navigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { Button, Spinner, Text, ToggleGroup, XStack, YStack } from 'tamagui'
 import type { Pagina } from '../../shared/api/cliente'
@@ -9,9 +9,12 @@ import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/iconos'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { estaAbierto, type FiltroEstadoIncidente, type IncidenteResumen } from './api'
+import { esFiltro, FILTROS } from './busqueda'
 import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidentesQuery } from './queries'
 import { TEXTO_FILTRO } from './textos'
+
+const rutaApi = getRouteApi('/incidentes')
 
 const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Estado', ancho: 200 },
@@ -22,8 +25,6 @@ const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Unidades' },
 ]
 
-const FILTROS: FiltroEstadoIncidente[] = ['ABIERTOS', 'CERRADOS', 'TODOS']
-
 const SIN_INCIDENTES: Record<FiltroEstadoIncidente, string> = {
   ABIERTOS: 'No hay incidentes abiertos.',
   CERRADOS: 'No hay incidentes cerrados.',
@@ -33,17 +34,15 @@ const SIN_INCIDENTES: Record<FiltroEstadoIncidente, string> = {
 /** Cada cuánto se recalcula el tiempo transcurrido de los incidentes abiertos. */
 const INTERVALO_RELOJ_MS = 30_000
 
-function esFiltro(valor: string): valor is FiltroEstadoIncidente {
-  return (FILTROS as string[]).includes(valor)
-}
-
 /**
  * Consulta de incidentes, solo lectura: los incidentes los crea el sistema a partir de las alertas y cambian solo por
- * la máquina de estados. El filtro y la página viven en el estado de la pantalla.
+ * la máquina de estados. El filtro y la página van en la URL, donde la página se cuenta desde 1.
  */
 export function IncidentesPage() {
-  const [filtro, setFiltro] = useState<FiltroEstadoIncidente>('ABIERTOS')
-  const [pagina, setPagina] = useState(0)
+  const busqueda = rutaApi.useSearch()
+  const navigate = rutaApi.useNavigate()
+  const filtro = busqueda.estado ?? 'ABIERTOS'
+  const pagina = (busqueda.pagina ?? 1) - 1
   const [ahora, setAhora] = useState(() => Date.now())
   const incidentes = useQuery(incidentesQuery(filtro, pagina))
 
@@ -54,19 +53,30 @@ export function IncidentesPage() {
 
   // Si la lista se achicó (por ejemplo, porque se cerraron incidentes) y la página ya no existe, se pasa a la última.
   const datos = incidentes.data
-  if (datos && !incidentes.isPlaceholderData && pagina > 0 && pagina >= datos.totalPaginas) {
-    setPagina(Math.max(datos.totalPaginas - 1, 0))
-  }
+  const ultimaPagina =
+    datos && !incidentes.isPlaceholderData && pagina > 0 && pagina >= datos.totalPaginas ? datos.totalPaginas : null
 
   function cambiarFiltro(valor: string) {
     if (esFiltro(valor) && valor !== filtro) {
-      setFiltro(valor)
-      setPagina(0)
+      // Cambiar el filtro vuelve a la primera página.
+      navigate({ search: { estado: valor } })
     }
+  }
+
+  function irAPagina(indice: number) {
+    navigate({ search: { estado: busqueda.estado, pagina: indice > 0 ? indice + 1 : undefined } })
   }
 
   return (
     <>
+      {ultimaPagina !== null ? (
+        <Navigate
+          to="/incidentes"
+          search={{ estado: busqueda.estado, pagina: ultimaPagina > 1 ? ultimaPagina : undefined }}
+          replace
+        />
+      ) : null}
+
       <EncabezadoPagina
         titulo="Incidentes"
         descripcion="Incidentes generados a partir de las alertas, del más reciente al más antiguo."
@@ -146,7 +156,7 @@ export function IncidentesPage() {
               )}
             </Tabla>
             {incidentes.data.totalElementos > 0 ? (
-              <Paginacion datos={incidentes.data} bloqueada={incidentes.isPlaceholderData} onIrA={setPagina} />
+              <Paginacion datos={incidentes.data} bloqueada={incidentes.isPlaceholderData} onIrA={irAPagina} />
             ) : null}
           </YStack>
         )}

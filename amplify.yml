@@ -1,0 +1,23 @@
+# Build del panel en AWS Amplify. La URL de la API se configura en la consola de Amplify como VITE_API_URL.
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # Vite 8 necesita Node 20.19 o superior.
+        - nvm install 22
+        - nvm use 22
+        # Misma versión mayor de pnpm con la que se generó pnpm-lock.yaml (la que entiende allowBuilds).
+        - npm install -g pnpm@12
+        - pnpm config set store-dir .pnpm-store
+        - pnpm install --frozen-lockfile
+    build:
+      commands:
+        - pnpm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - .pnpm-store/**/*

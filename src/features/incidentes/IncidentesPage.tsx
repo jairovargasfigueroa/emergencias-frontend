@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { Button, Spinner, Text, ToggleGroup, XStack, YStack } from 'tamagui'
 import type { Pagina } from '../../shared/api/cliente'
@@ -154,48 +155,51 @@ export function IncidentesPage() {
   )
 }
 
+/** Toda la fila es un enlace al detalle del incidente. */
 function FilaIncidente({ incidente, ahora }: { incidente: IncidenteResumen; ahora: number }) {
   const abierto = estaAbierto(incidente.estado)
   return (
-    <FilaTabla columnas={COLUMNAS} alto={64}>
-      <InsigniaEstadoIncidente estado={incidente.estado} />
-      <Text fontSize={14} color="$texto">
-        {fechaHoraCorta(incidente.fechaHoraCreacion)}
-      </Text>
-      <YStack>
+    <Link to="/incidentes/$incidenteId" params={{ incidenteId: incidente.id }} style={{ textDecoration: 'none' }}>
+      <FilaTabla columnas={COLUMNAS} alto={64} interactiva>
+        <InsigniaEstadoIncidente estado={incidente.estado} />
         <Text fontSize={14} color="$texto">
-          {abierto
-            ? tiempoTranscurrido(incidente.fechaHoraCreacion, ahora)
-            : incidente.fechaHoraCierre
-              ? fechaHoraCorta(incidente.fechaHoraCierre)
-              : '—'}
+          {fechaHoraCorta(incidente.fechaHoraCreacion)}
         </Text>
-        <Text fontSize={12} lineHeight={16} color="$textoSecundario">
-          {abierto ? 'abierto' : 'cerrado'}
-        </Text>
-      </YStack>
-      {incidente.cantidadAfectados === null ? (
-        <Text fontSize={14} color="$textoTenue">
-          Sin reportar
-        </Text>
-      ) : (
+        <YStack>
+          <Text fontSize={14} color="$texto">
+            {abierto
+              ? tiempoTranscurrido(incidente.fechaHoraCreacion, ahora)
+              : incidente.fechaHoraCierre
+                ? fechaHoraCorta(incidente.fechaHoraCierre)
+                : '—'}
+          </Text>
+          <Text fontSize={12} lineHeight={16} color="$textoSecundario">
+            {abierto ? 'abierto' : 'cerrado'}
+          </Text>
+        </YStack>
+        {incidente.cantidadAfectados === null ? (
+          <Text fontSize={14} color="$textoTenue">
+            Sin reportar
+          </Text>
+        ) : (
+          <Text fontSize={14} color="$texto">
+            {incidente.cantidadAfectados}
+          </Text>
+        )}
         <Text fontSize={14} color="$texto">
-          {incidente.cantidadAfectados}
+          {incidente.cantidadAlertas}
         </Text>
-      )}
-      <Text fontSize={14} color="$texto">
-        {incidente.cantidadAlertas}
-      </Text>
-      {incidente.unidades.length === 0 ? (
-        <Text fontSize={14} color="$textoTenue">
-          Ninguna
-        </Text>
-      ) : (
-        <Text fontFamily="$mono" fontSize={13} fontWeight="500" color="$texto" numberOfLines={1}>
-          {incidente.unidades.join(', ')}
-        </Text>
-      )}
-    </FilaTabla>
+        {incidente.unidades.length === 0 ? (
+          <Text fontSize={14} color="$textoTenue">
+            Ninguna
+          </Text>
+        ) : (
+          <Text fontFamily="$mono" fontSize={13} fontWeight="500" color="$texto" numberOfLines={1}>
+            {incidente.unidades.join(', ')}
+          </Text>
+        )}
+      </FilaTabla>
+    </Link>
   )
 }
 

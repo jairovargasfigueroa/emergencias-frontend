@@ -44,11 +44,13 @@ type PropsFila = {
   /** Fila de un registro dado de baja: se muestra con menos contraste. */
   atenuada?: boolean
   alto?: number
+  /** Fila que abre algo al tocarla, por ejemplo envuelta en un `Link`: se resalta al pasar el puntero. */
+  interactiva?: boolean
   children: ReactNode
 }
 
 /** Cada hijo es una celda, en el mismo orden que las columnas. */
-export function FilaTabla({ columnas, atenuada = false, alto = 60, children }: PropsFila) {
+export function FilaTabla({ columnas, atenuada = false, alto = 60, interactiva = false, children }: PropsFila) {
   const celdas = Children.toArray(children)
   return (
     <XStack
@@ -60,6 +62,8 @@ export function FilaTabla({ columnas, atenuada = false, alto = 60, children }: P
       borderTopWidth={1}
       borderColor="$borde"
       bg={atenuada ? '$fondo' : '$superficie'}
+      cursor={interactiva ? 'pointer' : undefined}
+      hoverStyle={interactiva ? { bg: '$fondo' } : undefined}
     >
       {columnas.map((columna, indice) => (
         <XStack

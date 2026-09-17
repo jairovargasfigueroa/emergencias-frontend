@@ -48,6 +48,16 @@ export function IconoPersonas(props: PropsIcono) {
   )
 }
 
+export function IconoIncidentes(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M7 17v-5a5 5 0 0 1 10 0v5" />
+      <path d="M5 17h14v3.5H5z" />
+      <path d="M12 2.5v2M3.5 6l1.5 1.5M20.5 6L19 7.5" />
+    </Icono>
+  )
+}
+
 export function IconoMas(props: PropsIcono) {
   return (
     <Icono {...props}>
@@ -133,6 +143,31 @@ export function IconoCheck(props: PropsIcono) {
   return (
     <Icono {...props}>
       <path d="M6 12.5l4 4L18 8.5" />
+    </Icono>
+  )
+}
+
+export function IconoActualizar(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M21.35 5.2v5.1h-5.1M2.65 18.8v-5.1h5.1" />
+      <path d="M4.8 9.45a7.65 7.65 0 0 1 12.6-2.85l3.95 3.7M2.65 13.7l3.95 3.7a7.65 7.65 0 0 0 12.6-2.85" />
+    </Icono>
+  )
+}
+
+export function IconoAnterior(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M15 6l-6 6 6 6" />
+    </Icono>
+  )
+}
+
+export function IconoSiguiente(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M9 6l6 6-6 6" />
     </Icono>
   )
 }

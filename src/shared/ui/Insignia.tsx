@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react'
 import { Text, XStack } from 'tamagui'
 
-export type TonoInsignia = 'verde' | 'ambar' | 'gris' | 'contorno'
+export type TonoInsignia = 'rojo' | 'verde' | 'ambar' | 'gris' | 'contorno'
 
 const TONOS = {
+  rojo: { fondo: '$primarioTinte', texto: '$primarioPresionado', punto: '$primario' },
   verde: { fondo: '$disponibleTinte', texto: '$disponibleTexto', punto: '$disponible' },
   ambar: { fondo: '$enAtencionTinte', texto: '$enAtencionTexto', punto: '$enAtencion' },
   gris: { fondo: '$fueraServicioTinte', texto: '$fueraServicioTexto', punto: '$fueraServicio' },

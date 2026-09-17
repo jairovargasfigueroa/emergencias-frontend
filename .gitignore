@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Configuración empaquetada por el compilador de Tamagui
+.tamagui
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -13,6 +13,15 @@ export type CuerpoError = {
   [propiedad: string]: unknown
 }
 
+/** `PaginaResponse` del backend: una página de resultados. `pagina` empieza en 0. */
+export type Pagina<T> = {
+  contenido: T[]
+  pagina: number
+  tamano: number
+  totalElementos: number
+  totalPaginas: number
+}
+
 export class ErrorApi extends Error {
   readonly status: number
   readonly codigo: string | undefined

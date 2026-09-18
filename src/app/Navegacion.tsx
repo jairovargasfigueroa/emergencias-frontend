@@ -1,10 +1,10 @@
 import { Link } from '@tanstack/react-router'
 import type { ComponentType } from 'react'
 import { Text, XStack, YStack } from 'tamagui'
-import { IconoAmbulancia, IconoPersonas, type PropsIcono } from '../shared/ui/iconos'
+import { IconoAmbulancia, IconoIncidentes, IconoPersonas, type PropsIcono } from '../shared/ui/iconos'
 
 type Seccion = {
-  to: '/flota' | '/personal'
+  to: '/flota' | '/personal' | '/incidentes'
   etiqueta: string
   Icono: ComponentType<PropsIcono>
 }
@@ -13,6 +13,7 @@ type Seccion = {
 const SECCIONES: Seccion[] = [
   { to: '/flota', etiqueta: 'Flota', Icono: IconoAmbulancia },
   { to: '/personal', etiqueta: 'Personal', Icono: IconoPersonas },
+  { to: '/incidentes', etiqueta: 'Incidentes', Icono: IconoIncidentes },
 ]
 
 export function Navegacion() {

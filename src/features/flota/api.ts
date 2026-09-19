@@ -1,6 +1,6 @@
 import { api } from '../../shared/api/cliente'
 
-export type EstadoAmbulancia = 'DISPONIBLE' | 'EN_ATENCION' | 'FUERA_DE_SERVICIO'
+export type EstadoAmbulancia = 'SIN_TURNO' | 'DISPONIBLE' | 'EN_ATENCION' | 'FUERA_DE_SERVICIO'
 
 /** `AmbulanciaResponse` del backend. */
 export type Ambulancia = {

@@ -27,7 +27,8 @@ import {
   TEXTO_ORIGEN_UBICACION,
 } from './textos'
 
-const rutaApi = getRouteApi('/incidentes/$incidenteId')
+// El id lleva el prefijo de la ruta protegida, que es de la que cuelgan todas las pantallas del panel.
+const rutaApi = getRouteApi('/protegida/incidentes/$incidenteId')
 
 /** Cada cuánto se recalcula el tiempo que lleva abierto el incidente. */
 const INTERVALO_RELOJ_MS = 30_000

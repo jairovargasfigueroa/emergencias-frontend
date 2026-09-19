@@ -1,3 +1,5 @@
+import { tokenActual } from '../sesion/almacen'
+
 /** Error de validación de un campo, tal como lo envía el backend. */
 export type ErrorDeCampo = {
   campo: string
@@ -44,18 +46,27 @@ type Metodo = 'GET' | 'POST'
 type OpcionesPedido = {
   metodo?: Metodo
   cuerpo?: unknown
+  /** Solo para `/auth/admin`: es la única ruta que se llama sin sesión abierta. */
+  sinToken?: boolean
   signal?: AbortSignal
 }
 
-async function pedir<T>(ruta: string, { metodo = 'GET', cuerpo, signal }: OpcionesPedido = {}): Promise<T> {
+async function pedir<T>(ruta: string, { metodo = 'GET', cuerpo, sinToken, signal }: OpcionesPedido = {}): Promise<T> {
+  const cabeceras: Record<string, string> = { Accept: 'application/json' }
+  if (cuerpo !== undefined) {
+    cabeceras['Content-Type'] = 'application/json'
+  }
+  // La identidad sale del token firmado por el servidor: el panel no la escribe.
+  const token = sinToken ? null : tokenActual()
+  if (token) {
+    cabeceras.Authorization = `Bearer ${token}`
+  }
+
   let respuesta: Response
   try {
     respuesta = await fetch(`${URL_BASE}${ruta}`, {
       method: metodo,
-      headers:
-        cuerpo === undefined
-          ? { Accept: 'application/json' }
-          : { Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: cabeceras,
       body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
       signal,
     })
@@ -86,7 +97,8 @@ async function leerCuerpoError(respuesta: Response): Promise<CuerpoError> {
 
 export const api = {
   get: <T>(ruta: string, signal?: AbortSignal) => pedir<T>(ruta, { signal }),
-  post: <T>(ruta: string, cuerpo?: unknown) => pedir<T>(ruta, { metodo: 'POST', cuerpo }),
+  post: <T>(ruta: string, cuerpo?: unknown, opciones?: Omit<OpcionesPedido, 'metodo' | 'cuerpo'>) =>
+    pedir<T>(ruta, { ...opciones, metodo: 'POST', cuerpo }),
 }
 
 /** Devuelve el código del error de la API, si lo tiene. */

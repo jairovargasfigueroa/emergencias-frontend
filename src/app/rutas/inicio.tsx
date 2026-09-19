@@ -1,9 +1,9 @@
 import { Navigate, createRoute } from '@tanstack/react-router'
-import { rutaRaiz } from './raiz'
+import { rutaProtegida } from './protegida'
 
 /** El panel abre en la flota. */
 export const rutaInicio = createRoute({
-  getParentRoute: () => rutaRaiz,
+  getParentRoute: () => rutaProtegida,
   path: '/',
   component: IrAFlota,
 })

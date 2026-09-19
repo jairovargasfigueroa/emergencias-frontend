@@ -1,9 +1,9 @@
 import { createRoute } from '@tanstack/react-router'
 import { DetalleIncidentePage } from '../../features/incidentes/DetalleIncidentePage'
-import { rutaRaiz } from './raiz'
+import { rutaProtegida } from './protegida'
 
 export const rutaIncidente = createRoute({
-  getParentRoute: () => rutaRaiz,
+  getParentRoute: () => rutaProtegida,
   path: '/incidentes/$incidenteId',
   // En la URL el id es texto; la página lo recibe como número (NaN si no lo es) y avisa que no existe.
   params: {

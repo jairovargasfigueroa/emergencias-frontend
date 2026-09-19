@@ -7,23 +7,22 @@ import { fechaHora, fechaHoraCorta, tiempoTranscurrido } from '../../shared/form
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
-import { Insignia, type TonoInsignia } from '../../shared/ui/Insignia'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import {
+  atencionResuelta,
   estaAbierto,
   type AlertaDeIncidente,
   type AtencionDeIncidente,
-  type EstadoAtencion,
   type IncidenteDetalle,
   type Ubicacion,
 } from './api'
-import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
+import { InsigniaEstadoAtencion, InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidenteQuery } from './queries'
 import {
   TEXTO_ESTADO_ALERTA,
-  TEXTO_ESTADO_ATENCION,
   TEXTO_MOTIVO_CANCELACION_ATENCION,
   TEXTO_MOTIVO_CIERRE,
+  TEXTO_MOTIVO_SIN_TRASLADO,
   TEXTO_ORIGEN_UBICACION,
 } from './textos'
 
@@ -41,14 +40,6 @@ const COLUMNAS_ALERTAS: ColumnaTabla[] = [
   { titulo: 'Ubicación', ancho: 180 },
   { titulo: 'Estado', ancho: 110 },
 ]
-
-const TONO_ATENCION: Record<EstadoAtencion, TonoInsignia> = {
-  EN_CAMINO: 'ambar',
-  EN_EL_LUGAR: 'ambar',
-  PACIENTE_RECOGIDO: 'ambar',
-  PACIENTE_ENTREGADO: 'verde',
-  CANCELADA: 'gris',
-}
 
 /**
  * Detalle de un incidente, solo lectura: cómo está, las alertas que lo formaron y lo que hizo cada unidad, con la hora
@@ -227,17 +218,29 @@ type Hito = {
   hora: string | null
   ubicacion?: Ubicacion | null
   nota?: string
+  /** Qué decir mientras el hito no ocurrió, cuando "Pendiente" se queda corto. */
+  pendiente?: string
 }
 
 function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
   const cancelada = atencion.estado === 'CANCELADA'
+  const sinTraslado = atencion.estado === 'SIN_TRASLADO'
   const hitos: Hito[] = [
     { nombre: 'Llegó al lugar', hora: atencion.horaLlegada, ubicacion: atencion.ubicacionLlegada },
     { nombre: 'Paciente a bordo', hora: atencion.horaRecogida, ubicacion: atencion.ubicacionRecogida },
+    { nombre: 'Llegó al hospital', hora: atencion.horaLlegadaHospital, ubicacion: atencion.ubicacionLlegadaHospital },
     { nombre: 'Entregó al paciente', hora: atencion.horaEntrega, ubicacion: atencion.ubicacionEntrega },
   ]
-  // Una atención cancelada ya no tiene hitos pendientes: quedan los que ocurrieron y la cancelación.
-  const visibles = cancelada ? hitos.filter((hito) => hito.hora !== null) : hitos
+  // Una salida que se cortó ya no tiene hitos pendientes: quedan los que ocurrieron y cómo terminó.
+  const visibles = cancelada || sinTraslado ? hitos.filter((hito) => hito.hora !== null) : hitos
+  if (sinTraslado) {
+    visibles.push({
+      nombre: 'Terminó sin traslado',
+      hora: atencion.horaSinTraslado,
+      ubicacion: atencion.ubicacionSinTraslado,
+      nota: atencion.motivoSinTraslado ? TEXTO_MOTIVO_SIN_TRASLADO[atencion.motivoSinTraslado] : undefined,
+    })
+  }
   if (cancelada) {
     visibles.push({
       nombre: 'Cancelada',
@@ -245,7 +248,10 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
       nota: atencion.motivoCancelacion ? TEXTO_MOTIVO_CANCELACION_ATENCION[atencion.motivoCancelacion] : undefined,
     })
   }
-  const activa = !cancelada && atencion.estado !== 'PACIENTE_ENTREGADO'
+  // Terminar la salida no desocupa la ambulancia: hasta que se libera no puede recibir otra emergencia.
+  if (atencionResuelta(atencion.estado)) {
+    visibles.push({ nombre: 'Unidad liberada', hora: atencion.horaLiberacion, pendiente: 'La unidad sigue ocupada' })
+  }
   const paciente = [atencion.nombrePaciente, atencion.documentoPaciente].filter(Boolean).join(' · ')
   const destino = [atencion.centroSalud?.nombre, atencion.destinoDescripcion].filter(Boolean).join(' · ')
 
@@ -256,9 +262,7 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
           <Text fontFamily="$mono" fontSize={15} fontWeight="600" color="$texto">
             {atencion.placa}
           </Text>
-          <Insignia tono={TONO_ATENCION[atencion.estado]} conPunto={activa}>
-            {TEXTO_ESTADO_ATENCION[atencion.estado]}
-          </Insignia>
+          <InsigniaEstadoAtencion atencion={atencion} />
         </XStack>
 
         <XStack flexWrap="wrap" rowGap={16} columnGap={48}>
@@ -273,7 +277,7 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
                   <Nota>{tiempoTranscurrido(atencion.horaToma, new Date(hito.hora).getTime())} después de tomarlo</Nota>
                 </>
               ) : (
-                <Valor tenue>Pendiente</Valor>
+                <Valor tenue>{hito.pendiente ?? 'Pendiente'}</Valor>
               )}
               {hito.nota ? <Nota>{hito.nota}</Nota> : null}
               {hito.ubicacion ? <EnlaceMapa ubicacion={hito.ubicacion} /> : null}
@@ -284,7 +288,11 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
         <XStack flexWrap="wrap" rowGap={16} columnGap={48} pt={16} borderTopWidth={1} borderColor="$borde">
           <Dato etiqueta="Paciente">{paciente ? <Valor>{paciente}</Valor> : <Valor tenue>Sin datos</Valor>}</Dato>
           <Dato etiqueta="Destino">
-            {destino ? <Valor>{destino}</Valor> : <Valor tenue>{atencion.horaEntrega ? 'Sin datos' : 'Todavía no se entrega'}</Valor>}
+            {destino ? (
+              <Valor>{destino}</Valor>
+            ) : (
+              <Valor tenue>{sinTraslado ? 'No hubo traslado' : atencion.horaEntrega ? 'Sin datos' : 'Todavía no se entrega'}</Valor>
+            )}
           </Dato>
         </XStack>
       </YStack>

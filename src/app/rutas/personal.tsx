@@ -1,9 +1,9 @@
 import { createRoute } from '@tanstack/react-router'
 import { PersonalPage } from '../../features/personal/PersonalPage'
-import { rutaRaiz } from './raiz'
+import { rutaProtegida } from './protegida'
 
 export const rutaPersonal = createRoute({
-  getParentRoute: () => rutaRaiz,
+  getParentRoute: () => rutaProtegida,
   path: '/personal',
   component: PersonalPage,
 })

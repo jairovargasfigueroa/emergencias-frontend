@@ -14,7 +14,8 @@ import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidentesQuery } from './queries'
 import { TEXTO_FILTRO } from './textos'
 
-const rutaApi = getRouteApi('/incidentes')
+// El id lleva el prefijo de la ruta protegida, que es de la que cuelgan todas las pantallas del panel.
+const rutaApi = getRouteApi('/protegida/incidentes')
 
 const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Estado', ancho: 200 },

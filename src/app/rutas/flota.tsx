@@ -1,9 +1,9 @@
 import { createRoute } from '@tanstack/react-router'
 import { FlotaPage } from '../../features/flota/FlotaPage'
-import { rutaRaiz } from './raiz'
+import { rutaProtegida } from './protegida'
 
 export const rutaFlota = createRoute({
-  getParentRoute: () => rutaRaiz,
+  getParentRoute: () => rutaProtegida,
   path: '/flota',
   component: FlotaPage,
 })

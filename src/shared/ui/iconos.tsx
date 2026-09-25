@@ -58,6 +58,17 @@ export function IconoIncidentes(props: PropsIcono) {
   )
 }
 
+/** Un punto de origen, un recorrido y un destino: el traslado de un lado al otro. */
+export function IconoTraslados(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="5.5" r="2.5" />
+      <path d="M8 18.5h5a3.5 3.5 0 0 0 0-7h-2a3.5 3.5 0 0 1 0-7h5" />
+    </Icono>
+  )
+}
+
 export function IconoMas(props: PropsIcono) {
   return (
     <Icono {...props}>

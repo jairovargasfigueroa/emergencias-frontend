@@ -19,6 +19,17 @@ export function fechaHoraCorta(iso: string): string {
   return `${fecha.getDate()} ${MESES[fecha.getMonth()]}, ${dosDigitos(fecha.getHours())}:${dosDigitos(fecha.getMinutes())}`
 }
 
+/** Solo la hora, "09:20". Para tablas donde la fecha ya está en el encabezado. */
+export function hora(iso: string): string {
+  const fecha = new Date(iso)
+  return `${dosDigitos(fecha.getHours())}:${dosDigitos(fecha.getMinutes())}`
+}
+
+/** "2026-09-29" en la hora local: es como el backend espera el día de la tabla. */
+export function comoDia(fecha: Date): string {
+  return `${fecha.getFullYear()}-${dosDigitos(fecha.getMonth() + 1)}-${dosDigitos(fecha.getDate())}`
+}
+
 /** Tiempo desde `iso` hasta `ahora` (en milisegundos): "menos de 1 min", "25 min", "3 h 10 min" o "2 d 5 h". */
 export function tiempoTranscurrido(iso: string, ahora: number): string {
   const minutos = Math.max(0, Math.floor((ahora - new Date(iso).getTime()) / 60_000))

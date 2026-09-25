@@ -10,7 +10,7 @@ import { IconoApagar, IconoHistorial, IconoLlave, IconoMas, IconoReactivar } fro
 import { Insignia } from '../../shared/ui/Insignia'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { HistorialAsignacionesDialog, type SujetoHistorial } from '../asignaciones/HistorialAsignacionesDialog'
-import type { Ambulancia } from './api'
+import { TIPO_UNIDAD_CORTO, type Ambulancia } from './api'
 import { EstadoAmbulancia } from './EstadoAmbulancia'
 import {
   ambulanciasQuery,
@@ -99,7 +99,7 @@ export function FlotaPage() {
                     {ambulancia.placa}
                   </Text>
                   <Paragraph fontSize={14} color={ambulancia.activa ? '$texto' : '$textoTenue'} numberOfLines={1}>
-                    {ambulancia.tipoUnidad}
+                    {TIPO_UNIDAD_CORTO[ambulancia.tipoUnidad]}
                   </Paragraph>
                   <XStack opacity={ambulancia.activa ? 1 : 0.55}>
                     <EstadoAmbulancia estado={ambulancia.estado} />

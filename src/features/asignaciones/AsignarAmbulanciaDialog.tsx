@@ -9,6 +9,7 @@ import { IconoAviso } from '../../shared/ui/iconos'
 import { Insignia } from '../../shared/ui/Insignia'
 import { ambulanciasQuery } from '../flota/queries'
 import type { Paramedico } from '../personal/api'
+import { TIPO_UNIDAD_CORTO } from '../flota/api'
 import type { ContextoReasignacion } from './api'
 import { asignarParamedicoMutation } from './queries'
 
@@ -159,7 +160,7 @@ export function AsignarAmbulanciaDialog({ paramedico, onCerrar }: Props) {
                               {ambulancia.placa}
                             </Text>
                             <Text fontSize={14} color="$textoSecundario" flex={1} numberOfLines={1}>
-                              {ambulancia.tipoUnidad}
+                              {TIPO_UNIDAD_CORTO[ambulancia.tipoUnidad]}
                             </Text>
                             {actual ? <Insignia tono="contorno">Actual</Insignia> : null}
                           </XStack>

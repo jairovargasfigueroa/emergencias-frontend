@@ -8,12 +8,22 @@ import { rutaLogin } from './rutas/login'
 import { rutaPersonal } from './rutas/personal'
 import { rutaProtegida } from './rutas/protegida'
 import { rutaRaiz } from './rutas/raiz'
+import { rutaTraslado } from './rutas/traslado'
+import { rutaTraslados } from './rutas/traslados'
 
 // Rutas por código: no dependen de un archivo generado al levantar el proyecto. Todo cuelga de la ruta protegida
 // menos el login, que es lo único que se puede ver sin sesión.
 const arbolDeRutas = rutaRaiz.addChildren([
   rutaLogin,
-  rutaProtegida.addChildren([rutaInicio, rutaFlota, rutaPersonal, rutaIncidentes, rutaIncidente]),
+  rutaProtegida.addChildren([
+    rutaInicio,
+    rutaFlota,
+    rutaPersonal,
+    rutaIncidentes,
+    rutaIncidente,
+    rutaTraslados,
+    rutaTraslado,
+  ]),
 ])
 
 export const router = createRouter({

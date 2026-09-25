@@ -1,16 +1,17 @@
 import { useForm } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Button, Dialog, Form, Input, Label, Spinner, XStack, YStack, useToastController } from 'tamagui'
+import { Button, Dialog, Form, Input, Label, Spinner, Text, XStack, YStack, useToastController } from 'tamagui'
 import { z } from 'zod'
 import { codigoDeError, mensajeDeError } from '../../shared/api/cliente'
 import { BotonPrimario } from '../../shared/ui/botones'
 import { MensajeDeCampo, textoDeErrores } from '../../shared/ui/EstadosDeCarga'
+import { DETALLE_TIPO_UNIDAD, TEXTO_TIPO_UNIDAD, TIPOS_UNIDAD, type TipoUnidad } from './api'
 import { registrarAmbulanciaMutation } from './queries'
 
 const esquema = z.object({
   placa: z.string().trim().min(1, 'La placa es obligatoria.'),
-  tipoUnidad: z.string().trim().min(1, 'El tipo de unidad es obligatorio.'),
+  tipoUnidad: z.enum(TIPOS_UNIDAD, { message: 'Elegí el tipo de unidad.' }),
 })
 
 type Props = {
@@ -26,7 +27,7 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
   const [errorPlaca, setErrorPlaca] = useState<string | null>(null)
 
   const form = useForm({
-    defaultValues: { placa: '', tipoUnidad: '' },
+    defaultValues: { placa: '', tipoUnidad: '' as TipoUnidad },
     validators: { onSubmit: esquema },
     onSubmit: async ({ value, formApi }) => {
       try {
@@ -110,18 +111,42 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
               <form.Field name="tipoUnidad">
                 {(field) => (
                   <YStack gap={6}>
-                    <Label htmlFor="tipoUnidad" color="$texto" fontSize={13} fontWeight="500">
+                    <Label color="$texto" fontSize={13} fontWeight="500">
                       Tipo de unidad
                     </Label>
-                    <Input
-                      id="tipoUnidad"
-                      size="$4"
-                      placeholder="Ej.: Soporte vital básico"
-                      value={field.state.value}
-                      onChange={(evento) => field.handleChange(evento.currentTarget.value)}
-                      onBlur={field.handleBlur}
-                      borderColor={field.state.meta.isValid ? '$bordeFuerte' : '$primario'}
-                    />
+                    <YStack gap={6}>
+                      {TIPOS_UNIDAD.map((tipo) => {
+                        const elegido = field.state.value === tipo
+                        return (
+                          <XStack
+                            key={tipo}
+                            role="radio"
+                            aria-checked={elegido}
+                            tabIndex={0}
+                            items="flex-start"
+                            gap={10}
+                            px={12}
+                            py={10}
+                            rounded={10}
+                            cursor="pointer"
+                            borderWidth={1}
+                            borderColor={elegido ? '$primario' : '$borde'}
+                            bg={elegido ? '$primarioTinte' : 'transparent'}
+                            hoverStyle={{ borderColor: '$bordeFuerte' }}
+                            onPress={() => field.handleChange(tipo)}
+                          >
+                            <YStack gap={2} flex={1} minW={0}>
+                              <Text fontSize={13} fontWeight="600" color="$texto">
+                                {TEXTO_TIPO_UNIDAD[tipo]}
+                              </Text>
+                              <Text fontSize={12} color="$textoSecundario">
+                                {DETALLE_TIPO_UNIDAD[tipo]}
+                              </Text>
+                            </YStack>
+                          </XStack>
+                        )
+                      })}
+                    </YStack>
                     <MensajeDeCampo texto={textoDeErrores(field.state.meta.errors)} />
                   </YStack>
                 )}

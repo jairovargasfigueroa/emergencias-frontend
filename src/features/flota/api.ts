@@ -2,11 +2,51 @@ import { api } from '../../shared/api/cliente'
 
 export type EstadoAmbulancia = 'SIN_TURNO' | 'DISPONIBLE' | 'EN_ATENCION' | 'FUERA_DE_SERVICIO'
 
+/**
+ * Clasificación de la Norma Nacional de Ambulancias Terrestres (N° 430). En este orden se eligen, que es el de
+ * menor a mayor capacidad.
+ */
+export const TIPOS_UNIDAD = ['IA', 'IB', 'II', 'III'] as const
+
+export type TipoUnidad = (typeof TIPOS_UNIDAD)[number]
+
+export const TEXTO_TIPO_UNIDAD: Record<TipoUnidad, string> = {
+  IA: 'Tipo IA · Transporte simple',
+  IB: 'Tipo IB · Rescate',
+  II: 'Tipo II · Soporte vital básico',
+  III: 'Tipo III · Soporte vital avanzado',
+}
+
+/** Para tablas y listas, donde no entra el nombre completo. */
+export const TIPO_UNIDAD_CORTO: Record<TipoUnidad, string> = {
+  IA: 'Tipo IA',
+  IB: 'Tipo IB',
+  II: 'Tipo II',
+  III: 'Tipo III',
+}
+
+export const DETALLE_TIPO_UNIDAD: Record<TipoUnidad, string> = {
+  IA: 'Paciente estable que camina o va en silla de ruedas, sin atención durante el viaje.',
+  IB: 'Rescate y salvataje. No entra en el reparto de traslados.',
+  II: 'Camilla, oxígeno y dos paramédicos.',
+  III: 'Monitor, medicación y vía, para pacientes inestables.',
+}
+
+/** Los tipos que hacen traslados, de menor a mayor capacidad. La IB queda fuera: rescata, no traslada. */
+const ESCALERA: TipoUnidad[] = ['IA', 'II', 'III']
+
+/** Si una unidad de este tipo alcanza para un traslado que pide otro. Una mejor sirve; una menor no. */
+export function cubreA(unidad: TipoUnidad, pedido: TipoUnidad) {
+  const propio = ESCALERA.indexOf(unidad)
+  const requerido = ESCALERA.indexOf(pedido)
+  return propio >= 0 && requerido >= 0 && propio >= requerido
+}
+
 /** `AmbulanciaResponse` del backend. */
 export type Ambulancia = {
   id: number
   placa: string
-  tipoUnidad: string
+  tipoUnidad: TipoUnidad
   estado: EstadoAmbulancia
   activa: boolean
 }
@@ -14,7 +54,7 @@ export type Ambulancia = {
 /** `RegistrarAmbulanciaRequest` del backend. */
 export type RegistrarAmbulancia = {
   placa: string
-  tipoUnidad: string
+  tipoUnidad: TipoUnidad
 }
 
 export const ambulanciasApi = {

@@ -1,2 +1,7 @@
 allowBuilds:
+  # Su postinstall solo sirve para hornear la configuración de Firebase App Hosting desde una variable de entorno.
+  # Acá la configuración entra por las VITE_*, así que no hace falta.
+  '@firebase/util': false
   esbuild: true
+  # Llega arrastrado por Firestore, que el panel no importa: el bundle ni lo incluye.
+  protobufjs: false

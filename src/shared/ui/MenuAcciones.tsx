@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Menu, XStack, YStack } from 'tamagui'
 import { IconoAcciones } from './iconos'
 
@@ -30,24 +30,12 @@ type Props = {
  * Menú "⋯" con las acciones de una fila. Quien lo usa arma la lista según la fila: lo que no aplica a esa fila no
  * se pasa, y lo que no se puede hacer todavía se pasa con `motivo` para que se vea apagado y explicado.
  *
- * `modal={false}` a propósito: el menú es un accesorio de la tabla, no una capa que tape la página. Así no se
- * bloquea el scroll ni se pelea el foco con los diálogos que abren estas mismas acciones.
+ * Va sin `modal={false}`, aunque tape la página mientras está abierto: con esa opción el panel del menú queda
+ * en `pointer-events: none` y los clics lo atraviesan, así que se ve pero ninguna acción se entera.
  */
 export function MenuAcciones({ etiqueta, acciones }: Props) {
-  // El menú se controla desde acá porque el cierre lo hacemos nosotros: la acción se dispara con un clic del
-  // DOM y no con el `onSelect` de la librería, que depende de su sistema de pulsación y no llegaba a correr.
-  const [abierto, setAbierto] = useState(false)
-
-  function elegir(accion: AccionDeMenu) {
-    if (accion.motivo !== undefined) {
-      return
-    }
-    setAbierto(false)
-    accion.onElegir()
-  }
-
   return (
-    <Menu open={abierto} onOpenChange={setAbierto} placement="bottom-end" offset={6}>
+    <Menu placement="bottom-end" offset={6}>
       <Menu.Trigger
         width={32}
         height={32}
@@ -93,7 +81,7 @@ export function MenuAcciones({ etiqueta, acciones }: Props) {
                 key={accion.etiqueta}
                 textValue={accion.etiqueta}
                 disabled={apagada}
-                onClick={() => elegir(accion)}
+                onSelect={() => accion.onElegir()}
                 minH={36}
                 py={apagada ? 8 : 0}
                 px={10}

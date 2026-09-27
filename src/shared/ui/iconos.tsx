@@ -145,6 +145,37 @@ export function IconoAsignar(props: PropsIcono) {
   )
 }
 
+/** Los tres puntos que abren el menú de acciones de una fila. */
+export function IconoAcciones(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    </Icono>
+  )
+}
+
+export function IconoEditar(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M4 20h4L18.5 9.5a2.83 2.83 0 0 0-4-4L4 16z" />
+      <path d="M13.5 6.5l4 4" />
+    </Icono>
+  )
+}
+
+/** El contrario de IconoAsignar: la misma persona, pero restándole la unidad. */
+export function IconoQuitar(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="9" cy="8" r="3.25" />
+      <path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5" />
+      <path d="M15.5 11h6" />
+    </Icono>
+  )
+}
+
 export function IconoCerrar(props: PropsIcono) {
   return (
     <Icono {...props}>

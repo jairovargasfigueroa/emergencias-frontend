@@ -27,9 +27,23 @@ export const historialDeParamedicoQuery = (paramedicoId: number) =>
 export const asignarParamedicoMutation = (queryClient: QueryClient) =>
   mutationOptions({
     mutationFn: (datos: AsignarParamedico) => asignacionesApi.asignar(datos),
-    onSuccess: () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: personalKeys.todos }),
-        queryClient.invalidateQueries({ queryKey: asignacionesKeys.todas }),
-      ]),
+    onSuccess: () => refrescarAsignaciones(queryClient),
   })
+
+/**
+ * Deja al paramédico sin ambulancia. Puede fallar con 409 `PARAMEDICO_EN_TURNO`: a quien está trabajando no se
+ * le cambia la unidad debajo de los pies.
+ */
+export const quitarDeLaUnidadMutation = (queryClient: QueryClient) =>
+  mutationOptions({
+    mutationFn: (paramedicoId: number) => asignacionesApi.quitarDeLaUnidad(paramedicoId),
+    onSuccess: () => refrescarAsignaciones(queryClient),
+  })
+
+/** Cambia a la vez la ambulancia que se ve en la lista de personal y el historial de asignaciones. */
+function refrescarAsignaciones(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: personalKeys.todos }),
+    queryClient.invalidateQueries({ queryKey: asignacionesKeys.todas }),
+  ])
+}

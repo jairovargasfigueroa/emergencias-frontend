@@ -1,5 +1,6 @@
 import { mutationOptions, queryOptions, type QueryClient } from '@tanstack/react-query'
 import { flotaKeys } from '../flota/queries'
+import { operacionKeys } from '../monitoreo/queries'
 import { trasladosApi, type TrasladoDelPanel } from './api'
 
 export const trasladosKeys = {
@@ -32,7 +33,10 @@ export const trasladoQuery = (id: number) =>
     queryFn: ({ signal }) => trasladosApi.detalle(id, signal),
   })
 
-/** Asignar a mano cambia la unidad y el estado: se recarga todo lo de traslados y también la flota. */
+/**
+ * Asignar a mano cambia la unidad y el estado: se recarga todo lo de traslados y también la flota. Y el centro
+ * de control, que se asigna desde su franja de problemas y esperaría al refresco para sacarlo de la lista.
+ */
 export const asignarTrasladoMutation = (queryClient: QueryClient) =>
   mutationOptions({
     mutationFn: ({ id, ambulanciaId }: { id: number; ambulanciaId: number }) =>
@@ -41,5 +45,6 @@ export const asignarTrasladoMutation = (queryClient: QueryClient) =>
       queryClient.setQueryData(trasladosKeys.detalle(fila.traslado.id), fila)
       void queryClient.invalidateQueries({ queryKey: trasladosKeys.todos })
       void queryClient.invalidateQueries({ queryKey: flotaKeys.todas })
+      void queryClient.invalidateQueries({ queryKey: operacionKeys.todo })
     },
   })

@@ -1,19 +1,25 @@
 import { queryOptions } from '@tanstack/react-query'
-import { ambulanciasQuery } from '../flota/queries'
+import { operacionApi } from './api'
 
 /**
- * Cada cuánto se vuelve a pedir la flota. Por Firebase solo viaja la posición: el estado de cada unidad
- * (disponible, en atención, sin turno) llega únicamente por REST, así que hay que ir a buscarlo.
+ * Cada cuánto se vuelve a pedir la operación. Por Firebase solo viajan la posición y los incidentes abiertos: el
+ * estado de cada unidad, su tripulación y la bitácora llegan únicamente por REST, así que hay que ir a buscarlos.
  */
 const REFRESCO_MS = 20_000
 
 /**
- * La flota tal como la mira el Centro de control. Comparte clave con la pantalla de flota a propósito: es el
- * mismo dato, y así un cambio hecho allá se ve acá sin pedirlo de nuevo. Lo único propio es el refresco, que
- * en TanStack Query es por observador y no le afecta a la otra pantalla.
+ * Clave propia. Antes esta pantalla reusaba la de la flota porque miraba `/ambulancias`; ahora mira `/operacion`,
+ * que es otro endpoint y trae otra cosa: escribir en la clave de la flota dejaría a la pantalla de Flota leyendo
+ * unidades que no tienen la forma que espera.
  */
-export const flotaEnVivoQuery = () =>
+export const operacionKeys = {
+  todo: ['operacion'] as const,
+  estadoActual: () => [...operacionKeys.todo, 'estado-actual'] as const,
+}
+
+export const operacionQuery = () =>
   queryOptions({
-    ...ambulanciasQuery(),
+    queryKey: operacionKeys.estadoActual(),
+    queryFn: ({ signal }) => operacionApi.estadoActual(signal),
     refetchInterval: REFRESCO_MS,
   })

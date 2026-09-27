@@ -42,13 +42,15 @@ type Props = {
   seleccionada: number | null
   onSeleccionar: (ambulanciaId: number | null) => void
   ahora: number
+  /** Alto del panel. Las filas scrollean adentro para que la página no crezca. */
+  alto: number
 }
 
 /**
  * Toda la flota en servicio, esté o no en el mapa. Las que no circulan también aparecen: que una unidad no se vea
  * en el mapa tiene que tener una explicación a la vista, y no parecer que se perdió.
  */
-export function TablaDeUnidades({ unidades, filtro, seleccionada, onSeleccionar, ahora }: Props) {
+export function TablaDeUnidades({ unidades, filtro, seleccionada, onSeleccionar, ahora, alto }: Props) {
   const visibles = unidades
     .filter((unidad) => cumpleFiltro(unidad, filtro))
     .sort(
@@ -59,7 +61,7 @@ export function TablaDeUnidades({ unidades, filtro, seleccionada, onSeleccionar,
     )
 
   return (
-    <Tabla columnas={COLUMNAS}>
+    <Tabla columnas={COLUMNAS} alto={alto}>
       {visibles.length === 0 ? (
         <TablaVacia>
           {filtro === null ? 'No hay unidades en la flota todavía.' : 'Ninguna unidad está en esa situación.'}

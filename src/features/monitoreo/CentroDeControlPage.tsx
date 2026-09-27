@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useState } from 'react'
-import { Text, YStack, type TamaguiElement } from 'tamagui'
+import { useEffect, useState } from 'react'
+import { Text, XStack, YStack } from 'tamagui'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { ActividadReciente } from './ActividadReciente'
@@ -10,14 +10,20 @@ import { cruzarConLaOperacion, useIncidentesAbiertos, usePosiciones, type Filtro
 import { operacionKeys, operacionQuery } from './queries'
 import { TablaDeUnidades } from './TablaDeUnidades'
 
-/** Debajo de esto el mapa deja de ser un mapa y pasa a ser una franja: mejor que la página scrollee. */
-const ALTO_MINIMO_MAPA = 380
-
 /**
- * Lo que se le deja al resto de la página debajo del mapa. Es a propósito que sea poco y no cero: el mapa se
- * queda con casi toda la ventana, pero asomando el arranque de la tabla se ve que la página sigue más abajo.
+ * El mapa tiene alto fijo y no medido. Medirlo contra la ventana parece más prolijo, pero el alto disponible se
+ * calculaba con `getBoundingClientRect().top`, que es relativo a la ventana y por lo tanto cambia al scrollear:
+ * el mapa crecía, la página se hacía más alta, se podía scrollear más, y el mapa volvía a crecer. Con un número
+ * fijo no hay nada que se retroalimente.
  */
-const ASOMO_DE_LA_TABLA = 120
+const ALTO_MAPA = 340
+
+/** Lo que ocupa todo lo que va arriba de los paneles: el marco de la página, el encabezado, la franja y el mapa. */
+const MARCO_SOBRE_LOS_PANELES = 640
+
+/** Piso para que la tabla siga siendo legible en pantallas bajas, y techo para que no se estire en monitores grandes. */
+const ALTO_MINIMO_PANELES = 260
+const ALTO_MAXIMO_PANELES = 520
 
 /** Cada cuánto se recalcula el "hace tanto". Un segundo, que es la unidad más chica que se muestra. */
 const TIC_RELOJ_MS = 1000
@@ -29,7 +35,7 @@ export function CentroDeControlPage() {
   const posiciones = usePosiciones()
   const incidentes = useIncidentesAbiertos()
   const ahora = useAhora()
-  const mapa = useAltoDelMapa()
+  const altoPaneles = useAltoDeLosPaneles()
   const [filtro, setFiltro] = useState<FiltroDeUnidades | null>(null)
   const [seleccionada, setSeleccionada] = useState<number | null>(null)
 
@@ -87,25 +93,30 @@ export function CentroDeControlPage() {
         </Text>
       ) : null}
 
-      {/* El alto del mapa se mide sobre este contenedor: ver `useAltoDelMapa`. */}
-      <YStack ref={mapa.medir}>
-        <MapaDeFlota
-          unidades={unidades}
-          incidentes={incidentes.lista}
-          enfocada={seleccionada}
-          alto={mapa.alto}
-        />
-      </YStack>
-
-      <TablaDeUnidades
+      <MapaDeFlota
         unidades={unidades}
-        filtro={filtro}
-        seleccionada={seleccionada}
-        onSeleccionar={setSeleccionada}
-        ahora={ahora}
+        incidentes={incidentes.lista}
+        enfocada={seleccionada}
+        alto={ALTO_MAPA}
       />
 
-      <ActividadReciente eventos={operacion.data.eventos} />
+      {/* Juntas y a la misma altura: la tabla es ancha porque tiene seis columnas, la actividad angosta porque
+          sus líneas son cortas. Verlas al mismo tiempo es lo que las hace útiles. */}
+      <XStack gap={16} items="stretch">
+        <YStack flex={1} minW={0}>
+          <TablaDeUnidades
+            unidades={unidades}
+            filtro={filtro}
+            seleccionada={seleccionada}
+            onSeleccionar={setSeleccionada}
+            ahora={ahora}
+            alto={altoPaneles}
+          />
+        </YStack>
+        <YStack width={340} shrink={0}>
+          <ActividadReciente eventos={operacion.data.eventos} alto={altoPaneles} />
+        </YStack>
+      </XStack>
     </>
   )
 }
@@ -120,46 +131,24 @@ function Encabezado() {
 }
 
 /**
- * El mapa de Google no dibuja nada si su contenedor mide cero, y eso es justo lo que pasa con un `flex` dentro
- * de un padre sin alto definido. Así que el alto va explícito, pero medido y no restado a mano: un número fijo
- * queda atado a que nadie toque el encabezado ni la franja, y se desfasa en silencio el día que alguien lo haga.
- * Midiendo dónde arranca el mapa, el resto de la ventana es suyo salga lo que salga arriba.
+ * Alto de los dos paneles de abajo, calculado sobre `window.innerHeight` y **solo** sobre eso. Es la diferencia
+ * que importa con la versión anterior: `innerHeight` no cambia al scrollear, así que el alto no puede crecer
+ * porque la página creció. Medir la posición del elemento sí dependía del scroll, y por eso el mapa se agrandaba
+ * solo cada vez que se desplegaba una fila.
  */
-function useAltoDelMapa() {
-  // La referencia va por estado y no por `useRef`: el contenedor recién existe cuando llegó la operación, y hay
-  // que enterarse de ese momento para medir. Un `useRef` se llena sin avisar.
-  const [contenedor, setContenedor] = useState<HTMLElement | null>(null)
-  const [alto, setAlto] = useState(ALTO_MINIMO_MAPA)
+function useAltoDeLosPaneles() {
+  const calcular = () =>
+    Math.min(ALTO_MAXIMO_PANELES, Math.max(ALTO_MINIMO_PANELES, window.innerHeight - MARCO_SOBRE_LOS_PANELES))
 
-  // Tamagui tipa la referencia como `HTMLElement | View` porque el mismo componente sirve en React Native.
-  // Acá siempre es un nodo del DOM, pero se comprueba en vez de forzar el tipo.
-  const medir = useCallback((nodo: TamaguiElement | null) => {
-    setContenedor(nodo instanceof HTMLElement ? nodo : null)
-  }, [])
+  const [alto, setAlto] = useState(calcular)
 
   useEffect(() => {
-    if (!contenedor) {
-      return
-    }
-    const recalcular = () => {
-      const libre = window.innerHeight - contenedor.getBoundingClientRect().top - ASOMO_DE_LA_TABLA
-      setAlto(Math.max(ALTO_MINIMO_MAPA, Math.round(libre)))
-    }
-    recalcular()
+    const recalcular = () => setAlto(calcular())
     window.addEventListener('resize', recalcular)
-    // La franja de arriba crece y se encoge según lo que haya sin cubrir: sin esto el mapa quedaría con la
-    // medida vieja justo cuando cambia lo único que la mueve.
-    const observador = new ResizeObserver(recalcular)
-    if (contenedor.parentElement) {
-      observador.observe(contenedor.parentElement)
-    }
-    return () => {
-      window.removeEventListener('resize', recalcular)
-      observador.disconnect()
-    }
-  }, [contenedor])
+    return () => window.removeEventListener('resize', recalcular)
+  }, [])
 
-  return { medir, alto }
+  return alto
 }
 
 /** El "hace tanto" tiene que envejecer solo: sin esto se quedaría clavado hasta la próxima posición. */

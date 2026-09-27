@@ -10,13 +10,19 @@ export type ColumnaTabla = {
 
 type PropsTabla = {
   columnas: ColumnaTabla[]
+  /**
+   * Alto fijo del panel. Con él, el encabezado se queda quieto y las filas scrollean adentro, así la tabla no
+   * empuja la página hacia abajo. Sin él, la tabla crece con su contenido, que es lo que quieren las pantallas
+   * de listado.
+   */
+  alto?: number
   children: ReactNode
 }
 
 /** Tabla de datos. Tamagui no trae una: se arma con filas y celdas de ancho fijo o flexible. */
-export function Tabla({ columnas, children }: PropsTabla) {
+export function Tabla({ columnas, alto, children }: PropsTabla) {
   return (
-    <YStack role="table" bg="$superficie" borderWidth={1} borderColor="$borde" rounded={12} overflow="hidden">
+    <YStack role="table" height={alto} bg="$superficie" borderWidth={1} borderColor="$borde" rounded={12} overflow="hidden">
       <XStack role="row" items="center" height={44} px={12} bg="$fondo">
         {columnas.map((columna) => (
           <XStack
@@ -34,7 +40,13 @@ export function Tabla({ columnas, children }: PropsTabla) {
           </XStack>
         ))}
       </XStack>
-      {children}
+      {alto ? (
+        <YStack flex={1} minH={0} overflow="scroll">
+          {children}
+        </YStack>
+      ) : (
+        children
+      )}
     </YStack>
   )
 }

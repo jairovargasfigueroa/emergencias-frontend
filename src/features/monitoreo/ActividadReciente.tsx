@@ -4,16 +4,19 @@ import { hora } from '../../shared/formato/fechas'
 import type { EventoDeOperacion } from './api'
 import { detalleDeEvento, TEXTO_EVENTO } from './textos'
 
-/** Con más alto que esto la actividad empuja al mapa fuera de la pantalla: a partir de acá scrollea sola. */
-const ALTO_MAXIMO = 300
-
 /**
  * Lo que acaba de pasar, del hito más nuevo al más viejo. Es la memoria corta de la pantalla: contesta "¿qué me
  * perdí mientras miraba otra cosa?" sin tener que abrir cada incidente.
  */
-export function ActividadReciente({ eventos }: { eventos: EventoDeOperacion[] }) {
+type Props = {
+  eventos: EventoDeOperacion[]
+  /** Mismo alto que la tabla de al lado, para que las dos terminen parejas. Los eventos scrollean adentro. */
+  alto: number
+}
+
+export function ActividadReciente({ eventos, alto }: Props) {
   return (
-    <YStack rounded={12} bg="$superficie" borderWidth={1} borderColor="$borde" overflow="hidden">
+    <YStack height={alto} rounded={12} bg="$superficie" borderWidth={1} borderColor="$borde" overflow="hidden">
       <XStack items="center" height={44} px={16} bg="$fondo">
         <Text fontSize={12} fontWeight="500" color="$textoSecundario">
           Actividad reciente
@@ -27,7 +30,7 @@ export function ActividadReciente({ eventos }: { eventos: EventoDeOperacion[] })
           </Text>
         </YStack>
       ) : (
-        <YStack maxH={ALTO_MAXIMO} overflow="scroll">
+        <YStack flex={1} minH={0} overflow="scroll">
           {eventos.map((evento) => (
             // El backend no manda un id por evento: la clave la forma el hito, que es único dentro de su atención.
             <Linea key={`${evento.atencionId}-${evento.tipo}`} evento={evento} />

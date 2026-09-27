@@ -23,8 +23,16 @@ export type RegistrarParamedico = {
   telefono: string
 }
 
+/** `EditarParamedicoRequest` del backend: lo único que se corrige de un paramédico. */
+export type EditarParamedico = {
+  nombreCompleto: string
+  telefono: string
+}
+
 export const personalApi = {
   listar: (signal?: AbortSignal) => api.get<Paramedico[]>('/paramedicos', signal),
   registrar: (datos: RegistrarParamedico) => api.post<Paramedico>('/paramedicos', datos),
+  editar: (id: number, datos: EditarParamedico) => api.put<Paramedico>(`/paramedicos/${id}`, datos),
   desactivar: (id: number) => api.post<Paramedico>(`/paramedicos/${id}/desactivar`),
+  activar: (id: number) => api.post<Paramedico>(`/paramedicos/${id}/activar`),
 }

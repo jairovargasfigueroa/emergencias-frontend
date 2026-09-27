@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Button, Menu, XStack, YStack } from 'tamagui'
+import { Menu, XStack, YStack } from 'tamagui'
 import { IconoAcciones } from './iconos'
 
 export type AccionDeMenu = {
@@ -36,8 +36,18 @@ type Props = {
 export function MenuAcciones({ etiqueta, acciones }: Props) {
   return (
     <Menu modal={false} placement="bottom-end" offset={6}>
-      <Menu.Trigger asChild>
-        <Button size="$3" circular chromeless aria-label={etiqueta} icon={<IconoAcciones size={18} />} />
+      <Menu.Trigger
+        width={32}
+        height={32}
+        items="center"
+        justify="center"
+        rounded={999}
+        cursor="pointer"
+        aria-label={etiqueta}
+        hoverStyle={{ bg: '$fondo' }}
+        pressStyle={{ bg: '$fondo' }}
+      >
+        <IconoAcciones size={18} />
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Content
@@ -50,7 +60,12 @@ export function MenuAcciones({ etiqueta, acciones }: Props) {
           bg="$superficie"
           borderWidth={1}
           borderColor="$borde"
-          elevate
+          // `elevate` es una variante de `Dialog.Content`, no de `Menu.Content`: acá se escapaba al DOM y React
+          // avisaba por consola. La sombra va a mano, con un negro translúcido que funciona sobre los dos temas
+          // porque el tema no tiene token de sombra.
+          shadowColor="rgba(15, 23, 42, 0.18)"
+          shadowRadius={16}
+          shadowOffset={{ width: 0, height: 4 }}
           transition="quick"
           enterStyle={{ opacity: 0, y: -6, scale: 0.97 }}
           exitStyle={{ opacity: 0, y: -6, scale: 0.97 }}

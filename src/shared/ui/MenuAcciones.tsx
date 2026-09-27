@@ -47,7 +47,7 @@ export function MenuAcciones({ etiqueta, acciones }: Props) {
   }
 
   return (
-    <Menu open={abierto} onOpenChange={setAbierto} modal={false} placement="bottom-end" offset={6}>
+    <Menu open={abierto} onOpenChange={setAbierto} placement="bottom-end" offset={6}>
       <Menu.Trigger
         width={32}
         height={32}
@@ -78,9 +78,9 @@ export function MenuAcciones({ etiqueta, acciones }: Props) {
           shadowColor="rgba(15, 23, 42, 0.18)"
           shadowRadius={16}
           shadowOffset={{ width: 0, height: 4 }}
-          transition="quick"
-          enterStyle={{ opacity: 0, y: -6, scale: 0.97 }}
-          exitStyle={{ opacity: 0, y: -6, scale: 0.97 }}
+          // Sin animación de entrada, a propósito. `Menu.Content` no acepta la prop `animation` de Tamagui, así
+          // que un `enterStyle` acá se aplica y nunca sale de ahí: el panel queda en opacity 0 y con
+          // `pointer-events: none`, se ve pero los clics lo atraviesan y ninguna acción se entera.
         >
           {acciones.map((accion) => {
             const apagada = accion.motivo !== undefined

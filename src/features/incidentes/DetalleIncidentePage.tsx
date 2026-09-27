@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Anchor, Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
 import { fechaHora, fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
@@ -20,10 +20,12 @@ import { InsigniaEstadoAtencion, InsigniaEstadoIncidente } from './InsigniasDeEs
 import { incidenteQuery } from './queries'
 import {
   TEXTO_ESTADO_ALERTA,
+  TEXTO_MOTIVO_CANCELACION_ALERTA,
   TEXTO_MOTIVO_CANCELACION_ATENCION,
   TEXTO_MOTIVO_CIERRE,
   TEXTO_MOTIVO_SIN_TRASLADO,
   TEXTO_ORIGEN_UBICACION,
+  textoEmisorEsPaciente,
 } from './textos'
 
 // El id lleva el prefijo de la ruta protegida, que es de la que cuelgan todas las pantallas del panel.
@@ -168,29 +170,55 @@ function TablaAlertas({ alertas }: { alertas: AlertaDeIncidente[] }) {
         <TablaVacia>Este incidente no tiene alertas.</TablaVacia>
       ) : (
         alertas.map((alerta) => (
-          <FilaTabla key={alerta.id} columnas={COLUMNAS_ALERTAS} alto={64}>
-            <Valor>{fechaHoraCorta(alerta.fechaHora)}</Valor>
-            <YStack flex={1} minW={0}>
-              <Valor>{alerta.emisor.nombreCompleto}</Valor>
-              <Nota>{alerta.emisor.telefono}</Nota>
-            </YStack>
-            {alerta.descripcion ? (
-              <Paragraph flex={1} minW={0} fontSize={14} lineHeight={20} color="$texto">
-                {alerta.descripcion}
-              </Paragraph>
-            ) : (
-              <Valor tenue>Sin describir</Valor>
-            )}
-            {alerta.cantidadAfectados === null ? <Valor tenue>—</Valor> : <Valor>{alerta.cantidadAfectados}</Valor>}
-            <YStack items="flex-start">
-              <Valor>{TEXTO_ORIGEN_UBICACION[alerta.origenUbicacion]}</Valor>
-              <EnlaceMapa ubicacion={alerta} />
-            </YStack>
-            <Valor>{TEXTO_ESTADO_ALERTA[alerta.estado]}</Valor>
-          </FilaTabla>
+          <Fragment key={alerta.id}>
+            <FilaTabla columnas={COLUMNAS_ALERTAS} alto={64}>
+              <Valor>{fechaHoraCorta(alerta.fechaHora)}</Valor>
+              <YStack flex={1} minW={0}>
+                <Valor>{alerta.emisor.nombreCompleto}</Valor>
+                <Nota>{alerta.emisor.telefono}</Nota>
+              </YStack>
+              {alerta.descripcion ? (
+                <Paragraph flex={1} minW={0} fontSize={14} lineHeight={20} color="$texto">
+                  {alerta.descripcion}
+                </Paragraph>
+              ) : (
+                <Valor tenue>Sin describir</Valor>
+              )}
+              {alerta.cantidadAfectados === null ? <Valor tenue>—</Valor> : <Valor>{alerta.cantidadAfectados}</Valor>}
+              <YStack items="flex-start">
+                <Valor>{TEXTO_ORIGEN_UBICACION[alerta.origenUbicacion]}</Valor>
+                <EnlaceMapa ubicacion={alerta} />
+              </YStack>
+              <Valor>{TEXTO_ESTADO_ALERTA[alerta.estado]}</Valor>
+            </FilaTabla>
+            {alerta.estado === 'CANCELADA' ? <RetiroDeAlerta alerta={alerta} /> : null}
+          </Fragment>
         ))
       )}
     </Tabla>
+  )
+}
+
+/** Cuándo y por qué el ciudadano retiró su pedido. Va debajo de la fila de la alerta, sin borde, como parte de ella. */
+function RetiroDeAlerta({ alerta }: { alerta: AlertaDeIncidente }) {
+  return (
+    <XStack flexWrap="wrap" rowGap={16} columnGap={48} px={24} pb={16}>
+      <Dato etiqueta="Se retiró">
+        {alerta.horaCancelacion ? (
+          <Valor>{fechaHoraCorta(alerta.horaCancelacion)}</Valor>
+        ) : (
+          <Valor tenue>Sin datos</Valor>
+        )}
+      </Dato>
+      <Dato etiqueta="Motivo">
+        {alerta.motivoCancelacion ? (
+          <Valor>{TEXTO_MOTIVO_CANCELACION_ALERTA[alerta.motivoCancelacion]}</Valor>
+        ) : (
+          <Valor tenue>Sin datos</Valor>
+        )}
+        {alerta.emisorEsPaciente === null ? null : <Nota>{textoEmisorEsPaciente(alerta.emisorEsPaciente)}</Nota>}
+      </Dato>
+    </XStack>
   )
 }
 
@@ -286,6 +314,12 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
         </XStack>
 
         <XStack flexWrap="wrap" rowGap={16} columnGap={48} pt={16} borderTopWidth={1} borderColor="$borde">
+          {atencion.paramedicoResponsable ? (
+            <Dato etiqueta="Paramédico responsable">
+              <Valor>{atencion.paramedicoResponsable.nombreCompleto}</Valor>
+              <Nota>{atencion.paramedicoResponsable.telefono}</Nota>
+            </Dato>
+          ) : null}
           <Dato etiqueta="Paciente">{paciente ? <Valor>{paciente}</Valor> : <Valor tenue>Sin datos</Valor>}</Dato>
           <Dato etiqueta="Destino">
             {destino ? (

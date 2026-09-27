@@ -6,6 +6,9 @@ export type MotivoCierreIncidente = 'FALSA_ALARMA_VERIFICADA' | 'ATENDIDO_EXTERN
 
 export type EstadoAlerta = 'RECIBIDA' | 'VINCULADA' | 'CANCELADA' | 'DESCARTADA'
 
+/** Por qué el ciudadano retiró su pedido. */
+export type MotivoCancelacionAlerta = 'YA_FUE_ATENDIDO' | 'FALSA_ALARMA' | 'ERROR' | 'OTRO'
+
 export type OrigenUbicacion = 'GPS' | 'MANUAL'
 
 export type EstadoAtencion =
@@ -81,6 +84,10 @@ export type AlertaDeIncidente = {
     nombreCompleto: string
     telefono: string
   }
+  motivoCancelacion: MotivoCancelacionAlerta | null
+  horaCancelacion: string | null
+  /** Si quien avisó era el paciente. Se pregunta al retirar el pedido, y contestarlo no es obligatorio. */
+  emisorEsPaciente: boolean | null
 }
 
 /** `AtencionDeIncidenteResponse` del backend. Cada hito trae su hora y su ubicación, `null` si no ocurrió. */
@@ -88,6 +95,12 @@ export type AtencionDeIncidente = {
   id: number
   ambulanciaId: number
   placa: string
+  /** El paramédico que responde por la atención; `null` si no tiene. */
+  paramedicoResponsable: {
+    id: number
+    nombreCompleto: string
+    telefono: string
+  } | null
   estado: EstadoAtencion
   horaToma: string
   horaLlegada: string | null

@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@tamagui/core": "2.7.7",
     "@tamagui/vite-plugin": "2.7.7",
     "@types/google.maps": "^3.66.4",
     "@types/node": "^24.13.3",

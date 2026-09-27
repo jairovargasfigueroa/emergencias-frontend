@@ -69,6 +69,19 @@ export function IconoTraslados(props: PropsIcono) {
   )
 }
 
+/** Una unidad emitiendo: la señal en vivo que mira el centro de control. */
+export function IconoMonitoreo(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="12" cy="12" r="1.8" />
+      <path d="M8.82 15.18a4.5 4.5 0 0 1 0-6.36" />
+      <path d="M15.18 8.82a4.5 4.5 0 0 1 0 6.36" />
+      <path d="M6.34 17.66a8 8 0 0 1 0-11.32" />
+      <path d="M17.66 6.34a8 8 0 0 1 0 11.32" />
+    </Icono>
+  )
+}
+
 export function IconoMas(props: PropsIcono) {
   return (
     <Icono {...props}>

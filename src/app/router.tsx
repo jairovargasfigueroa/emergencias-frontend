@@ -1,5 +1,6 @@
 import { createRouter } from '@tanstack/react-router'
 import { queryClient } from './queryClient'
+import { rutaCentroDeControl } from './rutas/centro-de-control'
 import { rutaFlota } from './rutas/flota'
 import { rutaIncidente } from './rutas/incidente'
 import { rutaIncidentes } from './rutas/incidentes'
@@ -23,6 +24,7 @@ const arbolDeRutas = rutaRaiz.addChildren([
     rutaIncidente,
     rutaTraslados,
     rutaTraslado,
+    rutaCentroDeControl,
   ]),
 ])
 

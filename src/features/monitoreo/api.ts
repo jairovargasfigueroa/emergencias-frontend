@@ -1,10 +1,14 @@
 import { onValue, ref, type Unsubscribe } from 'firebase/database'
+import { api } from '../../shared/api/cliente'
 import { baseDatosFirebase } from '../../shared/firebase/baseDatos'
+import type { EstadoAmbulancia, TipoUnidad } from '../flota/api'
+import type { EstadoIncidente } from '../incidentes/api'
+import type { EstadoAtencion, TrasladoDelPanel } from '../traslados/api'
 
 /** Nodo que publica el servidor: un hijo por ambulancia que alguna vez reportó, con su id como clave. */
 const NODO_POSICIONES = 'posiciones'
 
-/** Nodo de los incidentes abiertos. Acá solo interesa que cambió, no lo que dice. */
+/** Nodo de los incidentes abiertos: un hijo por incidente, con su id como clave. */
 const NODO_INCIDENTES_ABIERTOS = 'incidentes-abiertos'
 
 const SIN_ESCUCHA: Unsubscribe = () => {}
@@ -22,6 +26,122 @@ function referenciaA(ruta: string) {
   }
 }
 
+// --- REST: la foto completa de la operación ---------------------------------------------------------------
+
+export type OrigenAtencion = 'INCIDENTE' | 'TRASLADO'
+
+/**
+ * Los hitos de una atención vistos como lo que le pasó a la unidad. El backend los manda crudos; el texto en
+ * castellano lo arma el panel (ver `textos.ts`).
+ */
+export type TipoEvento =
+  | 'TOMA'
+  | 'LLEGADA'
+  | 'RECOGIDA'
+  | 'HOSPITAL'
+  | 'ENTREGA'
+  | 'SIN_TRASLADO'
+  | 'LIBERACION'
+  | 'CANCELACION'
+  | 'AVISO_NO_LISTO'
+
+/** `UnidadEnOperacionResponse.Tripulante`: lleva el teléfono porque el despacho a veces necesita llamarlo. */
+export type Tripulante = {
+  id: number
+  nombreCompleto: string
+  telefono: string
+}
+
+/** `AtencionEnCursoResponse.Hito` del backend. */
+export type Hito = {
+  clave: TipoEvento
+  hora: string
+}
+
+/** `AtencionEnCursoResponse` del backend: qué está haciendo la unidad y desde cuándo. */
+export type AtencionEnCurso = {
+  id: number
+  estado: EstadoAtencion
+  /** Hora del hito que dejó la atención en este estado, no la del comienzo: es "desde cuándo está así". */
+  desde: string
+  origen: OrigenAtencion
+  /** Exactamente uno de los dos tiene valor, según el origen. */
+  incidenteId: number | null
+  trasladoId: number | null
+  /** Con qué nombrarla en pantalla: el pasajero del traslado o lo que contó quien avisó. Puede faltar. */
+  etiqueta: string | null
+  /** Solo los hitos que ya ocurrieron, del más viejo al más nuevo. */
+  hitos: Hito[]
+}
+
+/** `UnidadEnOperacionResponse.Posicion` del backend: la última guardada en la base, no la de Firebase. */
+export type PosicionGuardada = {
+  latitud: number
+  longitud: number
+  en: string | null
+}
+
+/** `UnidadEnOperacionResponse` del backend. */
+export type UnidadEnOperacion = {
+  ambulanciaId: number
+  placa: string
+  tipoUnidad: TipoUnidad
+  estado: EstadoAmbulancia
+  activa: boolean
+  /** Quiénes tienen turno abierto en esta unidad. Vacía si no hay nadie adentro. */
+  tripulacion: Tripulante[]
+  /** El más viejo de los turnos abiertos, o null si no hay ninguno. */
+  turnoDesde: string | null
+  /** Null cuando la unidad no está atendiendo nada. */
+  atencion: AtencionEnCurso | null
+  /**
+   * Solo la pintada inicial del mapa: es la última posición que alcanzó a guardarse en la base y puede estar
+   * vieja. Firebase la pisa apenas llega la primera posición en vivo.
+   */
+  ultimaPosicion: PosicionGuardada | null
+}
+
+/** `IncidenteSinCubrirResponse` del backend: un incidente al que todavía no va nadie. */
+export type IncidenteSinCubrir = {
+  id: number
+  latitud: number
+  longitud: number
+  estado: EstadoIncidente
+  /** Desde cuándo existe el incidente, que para el despacho es "cuánto hace que nadie va". */
+  desde: string
+  referencia: string | null
+}
+
+/** `EventoDeOperacionResponse` del backend: una línea de la bitácora. */
+export type EventoDeOperacion = {
+  hora: string
+  ambulanciaId: number
+  placa: string
+  tipo: TipoEvento
+  atencionId: number
+  incidenteId: number | null
+  trasladoId: number | null
+  /** El motivo del cierre o de la cancelación, o el destino de la entrega. Null en los demás. */
+  detalle: string | null
+}
+
+/** `OperacionResponse` del backend: toda la pantalla en una sola llamada. */
+export type Operacion = {
+  unidades: UnidadEnOperacion[]
+  incidentesSinCubrir: IncidenteSinCubrir[]
+  trasladosSinCubrir: TrasladoDelPanel[]
+  /** Del evento más nuevo al más viejo. */
+  eventos: EventoDeOperacion[]
+  /** Segundos sin reportar posición a partir de los cuales la unidad se marca sin señal. */
+  umbralSinSenalSeg: number
+}
+
+export const operacionApi = {
+  estadoActual: (signal?: AbortSignal) => api.get<Operacion>('/operacion', signal),
+}
+
+// --- Firebase: lo que cambia entre refresco y refresco -----------------------------------------------------
+
 /**
  * Lo que el servidor escribe en `posiciones/{ambulanciaId}`. `en` es ISO-8601 y puede faltar: la publicación
  * lo omite cuando la posición llegó sin momento.
@@ -38,9 +158,9 @@ export type PosicionesPorAmbulancia = Record<number, PosicionPublicada>
 /**
  * Escucha el nodo completo de posiciones.
  *
- * Ojo: el nodo nunca se limpia. Guarda la última posición de toda ambulancia que alguna vez reportó, incluso
- * de las que hace semanas cerraron turno. Por eso lo que sale de acá no se pinta tal cual: manda la lista de
- * `/ambulancias` y esto solo responde "dónde estaba la unidad tal" (ver `cruzarConLaFlota`).
+ * Ojo: el nodo guarda la última posición de toda ambulancia que alguna vez reportó. Se agregó el borrado al
+ * cerrar turno, pero los datos viejos siguen ahí, así que lo que sale de acá no se pinta tal cual: manda la
+ * lista de `/operacion` y esto solo responde "dónde estaba la unidad tal" (ver `cruzarConLaOperacion`).
  */
 export function escucharPosiciones(
   alRecibir: (posiciones: PosicionesPorAmbulancia) => void,
@@ -81,25 +201,79 @@ function esPosicion(valor: Partial<PosicionPublicada> | null): valor is Posicion
   )
 }
 
+/** Un hijo de `incidentes-abiertos`, tal como lo escribe el servidor. */
+export type IncidenteAbierto = {
+  id: number
+  latitud: number
+  longitud: number
+  estado: EstadoIncidente
+  fechaHoraCreacion: string | null
+  /** Lo que contó cada quien que avisó, en orden. Vacío si nadie escribió nada. */
+  descripciones: string[]
+  unidadesAcudiendo: number
+  cantidadAfectados: number | null
+}
+
 /**
- * Avisa cuando se mueve el nodo de incidentes abiertos, sin leer lo que trae: que aparezca, cambie o se cierre
- * un incidente es señal casi segura de que alguna unidad cambió de estado, y el estado no viaja por Firebase.
- * Sirve para adelantarse al refresco periódico de `/ambulancias`.
+ * Escucha los incidentes abiertos y entrega su contenido.
  *
- * La primera respuesta no se cuenta: Firebase entrega el valor actual al suscribirse y eso no es un cambio.
+ * Que el nodo se mueva es además la señal de que alguna unidad cambió de estado, y el estado no viaja por
+ * Firebase: quien escucha aprovecha cada cambio para adelantarse al refresco periódico de `/operacion`.
  */
-export function escucharAvisoDeIncidentes(alCambiar: () => void): Unsubscribe {
+export function escucharIncidentesAbiertos(
+  alRecibir: (incidentes: IncidenteAbierto[]) => void,
+  alFallar: () => void,
+): Unsubscribe {
   const nodo = referenciaA(NODO_INCIDENTES_ABIERTOS)
   if (!nodo) {
+    alFallar()
     return SIN_ESCUCHA
   }
 
-  let primera = true
-  return onValue(nodo, () => {
-    if (primera) {
-      primera = false
-      return
-    }
-    alCambiar()
-  })
+  return onValue(
+    nodo,
+    (snapshot) => {
+      const incidentes: IncidenteAbierto[] = []
+      // Igual que las posiciones: forEach y nunca `.val()` del padre, que con ids numéricos devuelve un arreglo
+      // con huecos y se pierde de vista cuál incidente es cuál.
+      snapshot.forEach((hijo) => {
+        const incidente = comoIncidente(hijo.key, hijo.val())
+        if (incidente) {
+          incidentes.push(incidente)
+        }
+      })
+      alRecibir(incidentes)
+    },
+    alFallar,
+  )
+}
+
+/** Lo que llega de Firebase no está tipado: un hijo a medio escribir se descarta en vez de pintarse mal. */
+function comoIncidente(clave: string | null, valor: unknown): IncidenteAbierto | null {
+  const id = Number(clave)
+  if (!Number.isInteger(id) || valor === null || typeof valor !== 'object') {
+    return null
+  }
+  const datos = valor as Record<string, unknown>
+  const latitud = datos.latitud
+  const longitud = datos.longitud
+  if (typeof latitud !== 'number' || typeof longitud !== 'number') {
+    return null
+  }
+  if (Math.abs(latitud) > 90 || Math.abs(longitud) > 180) {
+    return null
+  }
+  return {
+    id,
+    latitud,
+    longitud,
+    estado: typeof datos.estado === 'string' ? (datos.estado as EstadoIncidente) : 'ACTIVO',
+    fechaHoraCreacion: typeof datos.fechaHoraCreacion === 'string' ? datos.fechaHoraCreacion : null,
+    descripciones: Array.isArray(datos.descripciones)
+      ? datos.descripciones.filter((texto): texto is string => typeof texto === 'string')
+      : [],
+    unidadesAcudiendo: typeof datos.unidadesAcudiendo === 'number' ? datos.unidadesAcudiendo : 0,
+    // El servidor omite el campo cuando nadie dijo a cuántos afectó: no es cero, es que no se sabe.
+    cantidadAfectados: typeof datos.cantidadAfectados === 'number' ? datos.cantidadAfectados : null,
+  }
 }

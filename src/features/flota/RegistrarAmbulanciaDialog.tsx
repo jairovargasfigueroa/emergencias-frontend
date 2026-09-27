@@ -1,13 +1,14 @@
 import { useForm } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Button, Dialog, Form, Input, Label, Spinner, Text, XStack, YStack, useToastController } from 'tamagui'
+import { Button, Dialog, Form, Input, Label, Spinner, XStack, YStack, useToastController } from 'tamagui'
 import { z } from 'zod'
 import { codigoDeError, mensajeDeError } from '../../shared/api/cliente'
 import { BotonPrimario } from '../../shared/ui/botones'
 import { MensajeDeCampo, textoDeErrores } from '../../shared/ui/EstadosDeCarga'
-import { DETALLE_TIPO_UNIDAD, TEXTO_TIPO_UNIDAD, TIPOS_UNIDAD, type TipoUnidad } from './api'
+import { TIPOS_UNIDAD, type TipoUnidad } from './api'
 import { registrarAmbulanciaMutation } from './queries'
+import { SelectorTipoUnidad } from './SelectorTipoUnidad'
 
 const esquema = z.object({
   placa: z.string().trim().min(1, 'La placa es obligatoria.'),
@@ -114,39 +115,7 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
                     <Label color="$texto" fontSize={13} fontWeight="500">
                       Tipo de unidad
                     </Label>
-                    <YStack gap={6}>
-                      {TIPOS_UNIDAD.map((tipo) => {
-                        const elegido = field.state.value === tipo
-                        return (
-                          <XStack
-                            key={tipo}
-                            role="radio"
-                            aria-checked={elegido}
-                            tabIndex={0}
-                            items="flex-start"
-                            gap={10}
-                            px={12}
-                            py={10}
-                            rounded={10}
-                            cursor="pointer"
-                            borderWidth={1}
-                            borderColor={elegido ? '$primario' : '$borde'}
-                            bg={elegido ? '$primarioTinte' : 'transparent'}
-                            hoverStyle={{ borderColor: '$bordeFuerte' }}
-                            onPress={() => field.handleChange(tipo)}
-                          >
-                            <YStack gap={2} flex={1} minW={0}>
-                              <Text fontSize={13} fontWeight="600" color="$texto">
-                                {TEXTO_TIPO_UNIDAD[tipo]}
-                              </Text>
-                              <Text fontSize={12} color="$textoSecundario">
-                                {DETALLE_TIPO_UNIDAD[tipo]}
-                              </Text>
-                            </YStack>
-                          </XStack>
-                        )
-                      })}
-                    </YStack>
+                    <SelectorTipoUnidad valor={field.state.value} onElegir={field.handleChange} />
                     <MensajeDeCampo texto={textoDeErrores(field.state.meta.errors)} />
                   </YStack>
                 )}

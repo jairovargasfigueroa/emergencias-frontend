@@ -6,56 +6,62 @@ import { z } from 'zod'
 import { codigoDeError, mensajeDeError } from '../../shared/api/cliente'
 import { BotonPrimario } from '../../shared/ui/botones'
 import { MensajeDeCampo, textoDeErrores } from '../../shared/ui/EstadosDeCarga'
-import { TIPOS_UNIDAD, type TipoUnidad } from './api'
-import { registrarAmbulanciaMutation } from './queries'
+import { TIPOS_UNIDAD, type Ambulancia } from './api'
+import { editarAmbulanciaMutation } from './queries'
 import { SelectorTipoUnidad } from './SelectorTipoUnidad'
 
+// Las mismas reglas que al registrar: la placa y el tipo se piden igual se esté creando o corrigiendo.
 const esquema = z.object({
   placa: z.string().trim().min(1, 'La placa es obligatoria.'),
   tipoUnidad: z.enum(TIPOS_UNIDAD, { message: 'Elegí el tipo de unidad.' }),
 })
 
+const MOTIVO_TIPO_BLOQUEADO =
+  'El tipo no se puede cambiar con una atención en curso: es lo que decide qué traslados toma la unidad, y cambiarlo a mitad de viaje dejaría a ese paciente con una ambulancia que no le corresponde.'
+
 type Props = {
-  abierto: boolean
-  onCambiarAbierto: (abierto: boolean) => void
+  ambulancia: Ambulancia
+  onCerrar: () => void
 }
 
-/** PB-01 CA-01 y CA-02: registrar una ambulancia; la placa duplicada se muestra en su campo. */
-export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) {
+/**
+ * Corrige la placa o el tipo de una ambulancia. Se monta solo cuando hay una ambulancia que editar, así el
+ * formulario siempre arranca con los datos de esa fila.
+ */
+export function EditarAmbulanciaDialog({ ambulancia, onCerrar }: Props) {
   const queryClient = useQueryClient()
   const toast = useToastController()
-  const registrar = useMutation(registrarAmbulanciaMutation(queryClient))
+  const editar = useMutation(editarAmbulanciaMutation(queryClient))
   const [errorPlaca, setErrorPlaca] = useState<string | null>(null)
 
+  const enAtencion = ambulancia.estado === 'EN_ATENCION'
+
   const form = useForm({
-    defaultValues: { placa: '', tipoUnidad: '' as TipoUnidad },
+    defaultValues: { placa: ambulancia.placa, tipoUnidad: ambulancia.tipoUnidad },
     validators: { onSubmit: esquema },
-    onSubmit: async ({ value, formApi }) => {
+    onSubmit: async ({ value }) => {
+      setErrorPlaca(null)
       try {
-        const ambulancia = await registrar.mutateAsync(esquema.parse(value))
-        toast.show('Ambulancia registrada', { message: `${ambulancia.placa} quedó disponible.` })
-        formApi.reset()
-        onCambiarAbierto(false)
+        const actualizada = await editar.mutateAsync({ id: ambulancia.id, datos: esquema.parse(value) })
+        toast.show('Ambulancia actualizada', { message: `Se guardaron los datos de ${actualizada.placa}.` })
+        onCerrar()
       } catch (error) {
+        // La placa repetida es un problema de ese campo: se muestra a su lado para corregirla ahí mismo, en vez
+        // de un aviso que tapa el dato que hay que cambiar.
         if (codigoDeError(error) === 'PLACA_DUPLICADA') {
           setErrorPlaca(mensajeDeError(error))
           return
         }
-        toast.show('No se pudo registrar la ambulancia', { message: mensajeDeError(error) })
+        // `AMBULANCIA_EN_ATENCION` llega si la unidad salió a atender mientras el diálogo estaba abierto: el
+        // selector se bloquea con lo que se sabía al abrirlo, así que el backend es el que tiene la última
+        // palabra. Su mensaje ya explica qué pasó.
+        toast.show('No se pudo guardar', { message: mensajeDeError(error) })
       }
     },
   })
 
-  function cambiarAbierto(siguiente: boolean) {
-    if (!siguiente) {
-      form.reset()
-      setErrorPlaca(null)
-    }
-    onCambiarAbierto(siguiente)
-  }
-
   return (
-    <Dialog modal open={abierto} onOpenChange={cambiarAbierto}>
+    <Dialog modal open onOpenChange={(abierto) => (abierto ? undefined : onCerrar())}>
       <Dialog.Portal>
         <Dialog.Overlay key="overlay" bg="$velo" transition="quick" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
         <Dialog.Content
@@ -75,10 +81,10 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
         >
           <YStack gap={6}>
             <Dialog.Title color="$texto" fontSize={18} lineHeight={26} fontWeight="600">
-              Registrar ambulancia
+              Editar ambulancia
             </Dialog.Title>
-            <Dialog.Description color="$textoSecundario" fontSize={14} lineHeight={20}>
-              Queda disponible y activa desde el registro.
+            <Dialog.Description color="$textoSecundario" fontSize={14} lineHeight={21}>
+              Corregí la placa o el tipo con que quedó registrada.
             </Dialog.Description>
           </YStack>
 
@@ -87,14 +93,13 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
               <form.Field name="placa">
                 {(field) => (
                   <YStack gap={6}>
-                    <Label htmlFor="placa" color="$texto" fontSize={13} fontWeight="500">
+                    <Label htmlFor="editarPlaca" color="$texto" fontSize={13} fontWeight="500">
                       Placa
                     </Label>
                     <Input
-                      id="placa"
+                      id="editarPlaca"
                       size="$4"
                       fontFamily="$mono"
-                      placeholder="Ej.: 3890-PLM"
                       autoFocus
                       value={field.state.value}
                       onChange={(evento) => {
@@ -115,7 +120,11 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
                     <Label color="$texto" fontSize={13} fontWeight="500">
                       Tipo de unidad
                     </Label>
-                    <SelectorTipoUnidad valor={field.state.value} onElegir={field.handleChange} />
+                    <SelectorTipoUnidad
+                      valor={field.state.value}
+                      onElegir={field.handleChange}
+                      motivoBloqueado={enAtencion ? MOTIVO_TIPO_BLOQUEADO : undefined}
+                    />
                     <MensajeDeCampo texto={textoDeErrores(field.state.meta.errors)} />
                   </YStack>
                 )}
@@ -125,7 +134,7 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
             <form.Subscribe selector={(estado) => [estado.isSubmitting] as const}>
               {([enviando]) => (
                 <XStack gap={8} justify="flex-end">
-                  <Button size="$4" variant="outlined" disabled={enviando} onPress={() => cambiarAbierto(false)}>
+                  <Button size="$4" variant="outlined" disabled={enviando} onPress={onCerrar}>
                     Cancelar
                   </Button>
                   <BotonPrimario
@@ -135,7 +144,7 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
                     opacity={enviando ? 0.6 : 1}
                     icon={enviando ? <Spinner size="small" color="$primarioTexto" /> : undefined}
                   >
-                    <Button.Text color="$primarioTexto">Registrar</Button.Text>
+                    <Button.Text color="$primarioTexto">Guardar</Button.Text>
                   </BotonPrimario>
                 </XStack>
               )}

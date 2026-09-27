@@ -57,10 +57,18 @@ export type RegistrarAmbulancia = {
   tipoUnidad: TipoUnidad
 }
 
+/** `EditarAmbulanciaRequest` del backend: lo único que se corrige de una ambulancia. */
+export type EditarAmbulancia = {
+  placa: string
+  tipoUnidad: TipoUnidad
+}
+
 export const ambulanciasApi = {
   listar: (signal?: AbortSignal) => api.get<Ambulancia[]>('/ambulancias', signal),
   registrar: (datos: RegistrarAmbulancia) => api.post<Ambulancia>('/ambulancias', datos),
+  editar: (id: number, datos: EditarAmbulancia) => api.put<Ambulancia>(`/ambulancias/${id}`, datos),
   marcarFueraDeServicio: (id: number) => api.post<Ambulancia>(`/ambulancias/${id}/fuera-de-servicio`),
   reactivar: (id: number) => api.post<Ambulancia>(`/ambulancias/${id}/reactivar`),
   desactivar: (id: number) => api.post<Ambulancia>(`/ambulancias/${id}/desactivar`),
+  activar: (id: number) => api.post<Ambulancia>(`/ambulancias/${id}/activar`),
 }

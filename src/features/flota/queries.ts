@@ -1,6 +1,6 @@
 import { mutationOptions, queryOptions, type QueryClient } from '@tanstack/react-query'
 import { personalKeys } from '../personal/queries'
-import { ambulanciasApi, type RegistrarAmbulancia } from './api'
+import { ambulanciasApi, type EditarAmbulancia, type RegistrarAmbulancia } from './api'
 
 export const flotaKeys = {
   todas: ['ambulancias'] as const,
@@ -27,6 +27,16 @@ export const registrarAmbulanciaMutation = (queryClient: QueryClient) =>
     onSuccess: () => refrescarFlota(queryClient),
   })
 
+/**
+ * Corrige la placa o el tipo. Puede fallar con 409 `PLACA_DUPLICADA` si otra unidad ya usa esa placa, o con
+ * `AMBULANCIA_EN_ATENCION` si se cambió el tipo con una atención en curso; la placa sí se puede cambiar siempre.
+ */
+export const editarAmbulanciaMutation = (queryClient: QueryClient) =>
+  mutationOptions({
+    mutationFn: ({ id, datos }: { id: number; datos: EditarAmbulancia }) => ambulanciasApi.editar(id, datos),
+    onSuccess: () => refrescarFlota(queryClient),
+  })
+
 export const marcarFueraDeServicioMutation = (queryClient: QueryClient) =>
   mutationOptions({
     mutationFn: (ambulanciaId: number) => ambulanciasApi.marcarFueraDeServicio(ambulanciaId),
@@ -42,5 +52,15 @@ export const reactivarAmbulanciaMutation = (queryClient: QueryClient) =>
 export const desactivarAmbulanciaMutation = (queryClient: QueryClient) =>
   mutationOptions({
     mutationFn: (ambulanciaId: number) => ambulanciasApi.desactivar(ambulanciaId),
+    onSuccess: () => refrescarFlota(queryClient),
+  })
+
+/**
+ * Deshace la baja. No es lo mismo que `reactivar`, que es volver de una avería: acá la unidad vuelve al sistema
+ * con el estado operativo que tenía cuando se la dio de baja.
+ */
+export const activarAmbulanciaMutation = (queryClient: QueryClient) =>
+  mutationOptions({
+    mutationFn: (ambulanciaId: number) => ambulanciasApi.activar(ambulanciaId),
     onSuccess: () => refrescarFlota(queryClient),
   })

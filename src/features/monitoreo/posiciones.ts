@@ -171,6 +171,16 @@ export function cruzarConLaOperacion(
     })
 }
 
+/** Los contadores de la franja son también los filtros de la tabla: tocar uno deja ver solo esas unidades. */
+export type FiltroDeUnidades = 'DISPONIBLE' | 'EN_ATENCION' | 'SIN_TURNO' | 'SIN_SENAL'
+
+export function cumpleFiltro(unidad: UnidadMonitoreada, filtro: FiltroDeUnidades | null): boolean {
+  if (filtro === null) {
+    return true
+  }
+  return filtro === 'SIN_SENAL' ? unidad.sinSenal : unidad.unidad.estado === filtro
+}
+
 /**
  * Cuál de las dos posiciones vale. La de `/operacion` es la pintada inicial y la de Firebase llega en vivo, pero
  * entre refresco y refresco cualquiera de las dos puede ser la más nueva: gana la que tenga la hora más reciente.

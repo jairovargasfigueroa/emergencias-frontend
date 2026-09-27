@@ -160,7 +160,6 @@ function PinDeUnidad({ unidad }: { unidad: UnidadEnMapa }) {
     <YStack items="center" opacity={unidad.desactualizada ? 0.55 : 1}>
       <XStack
         items="center"
-        gap={6}
         height={26}
         px={10}
         rounded={999}
@@ -170,7 +169,7 @@ function PinDeUnidad({ unidad }: { unidad: UnidadEnMapa }) {
         borderStyle={unidad.desactualizada ? 'dashed' : 'solid'}
         borderColor="$superficie"
       >
-        <Text fontSize={12} fontWeight="600" color="white" numberOfLines={1}>
+        <Text fontSize={12} fontWeight="600" color="$primarioTexto" numberOfLines={1}>
           {unidad.ambulancia.placa}
         </Text>
       </XStack>

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Menu, XStack, YStack } from 'tamagui'
 import { IconoAcciones } from './iconos'
 
@@ -34,8 +34,20 @@ type Props = {
  * bloquea el scroll ni se pelea el foco con los diálogos que abren estas mismas acciones.
  */
 export function MenuAcciones({ etiqueta, acciones }: Props) {
+  // El menú se controla desde acá porque el cierre lo hacemos nosotros: la acción se dispara con un clic del
+  // DOM y no con el `onSelect` de la librería, que depende de su sistema de pulsación y no llegaba a correr.
+  const [abierto, setAbierto] = useState(false)
+
+  function elegir(accion: AccionDeMenu) {
+    if (accion.motivo !== undefined) {
+      return
+    }
+    setAbierto(false)
+    accion.onElegir()
+  }
+
   return (
-    <Menu modal={false} placement="bottom-end" offset={6}>
+    <Menu open={abierto} onOpenChange={setAbierto} modal={false} placement="bottom-end" offset={6}>
       <Menu.Trigger
         width={32}
         height={32}
@@ -81,7 +93,7 @@ export function MenuAcciones({ etiqueta, acciones }: Props) {
                 key={accion.etiqueta}
                 textValue={accion.etiqueta}
                 disabled={apagada}
-                onSelect={accion.onElegir}
+                onClick={() => elegir(accion)}
                 minH={36}
                 py={apagada ? 8 : 0}
                 px={10}

@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link, Navigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
 import { Button, Spinner, Text, ToggleGroup, XStack, YStack } from 'tamagui'
 import type { Pagina } from '../../shared/api/cliente'
 import { fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
+import { useAhora } from '../../shared/reloj/useAhora'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/iconos'
@@ -46,13 +46,8 @@ export function IncidentesPage() {
   const navigate = rutaApi.useNavigate()
   const filtro = busqueda.estado ?? 'ABIERTOS'
   const pagina = (busqueda.pagina ?? 1) - 1
-  const [ahora, setAhora] = useState(() => Date.now())
+  const ahora = useAhora(INTERVALO_RELOJ_MS)
   const incidentes = useQuery(incidentesQuery(filtro, pagina))
-
-  useEffect(() => {
-    const reloj = setInterval(() => setAhora(Date.now()), INTERVALO_RELOJ_MS)
-    return () => clearInterval(reloj)
-  }, [])
 
   // Si la lista se achicó (por ejemplo, porque se cerraron incidentes) y la página ya no existe, se pasa a la última.
   const datos = incidentes.data

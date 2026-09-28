@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
-import { Fragment, useEffect, useState, type ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { Anchor, Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
 import { TEXTO_MOTIVO_CANCELACION_ATENCION, TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
 import { fechaHora, fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
+import { useAhora } from '../../shared/reloj/useAhora'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
@@ -32,7 +33,7 @@ import {
 // El id lleva el prefijo de la ruta protegida, que es de la que cuelgan todas las pantallas del panel.
 const rutaApi = getRouteApi('/protegida/incidentes/$incidenteId')
 
-/** Cada cuánto se recalcula el tiempo que lleva abierto el incidente. */
+/** Cada cuánto se recalcula el tiempo que lleva abierto el incidente, sin volver a consultar. */
 const INTERVALO_RELOJ_MS = 30_000
 
 const COLUMNAS_ALERTAS: ColumnaTabla[] = [
@@ -115,7 +116,7 @@ export function DetalleIncidentePage() {
 }
 
 function Resumen({ incidente }: { incidente: IncidenteDetalle }) {
-  const ahora = useAhora()
+  const ahora = useAhora(INTERVALO_RELOJ_MS)
   const abierto = estaAbierto(incidente.estado)
   const llegadas = incidente.atenciones.flatMap((atencion) =>
     atencion.horaLlegada ? [new Date(atencion.horaLlegada).getTime()] : [],
@@ -345,16 +346,6 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
       </YStack>
     </Tarjeta>
   )
-}
-
-/** La hora actual, renovada cada 30 s: el tiempo que lleva abierto avanza sin volver a consultar. */
-function useAhora() {
-  const [ahora, setAhora] = useState(() => Date.now())
-  useEffect(() => {
-    const reloj = setInterval(() => setAhora(Date.now()), INTERVALO_RELOJ_MS)
-    return () => clearInterval(reloj)
-  }, [])
-  return ahora
 }
 
 function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {

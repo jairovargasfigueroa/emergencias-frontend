@@ -1,4 +1,7 @@
 import { mutationOptions, queryOptions, type QueryClient } from '@tanstack/react-query'
+import { codigoDeError } from '../../shared/api/cliente'
+import { flotaKeys } from '../flota/queries'
+import { operacionKeys } from '../monitoreo/queries'
 import { personalApi, type EditarParamedico, type RegistrarParamedico } from './api'
 
 export const personalKeys = {
@@ -44,3 +47,29 @@ export const activarParamedicoMutation = (queryClient: QueryClient) =>
     mutationFn: (paramedicoId: number) => personalApi.activar(paramedicoId),
     onSuccess: () => refrescarPersonal(queryClient),
   })
+
+/**
+ * Cerrarle el turno a alguien también cambia su unidad: deja de tenerlo a bordo y, si era el único, se queda sin
+ * tripulación. Se recargan el personal, la flota y el centro de control, que muestra quién va en cada unidad.
+ *
+ * Falla con 409 `TRANSICION_INVALIDA` si su unidad tiene una atención en curso o si ya no tenía el turno abierto,
+ * por ejemplo porque lo acaba de cerrar él: lo que muestra la pantalla quedó viejo y se recarga.
+ */
+export const cerrarTurnoMutation = (queryClient: QueryClient) =>
+  mutationOptions({
+    mutationFn: (paramedicoId: number) => personalApi.cerrarTurno(paramedicoId),
+    onSuccess: () => refrescarTurnos(queryClient),
+    onError: (error) => {
+      if (codigoDeError(error) === 'TRANSICION_INVALIDA') {
+        void refrescarTurnos(queryClient)
+      }
+    },
+  })
+
+function refrescarTurnos(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.invalidateQueries({ queryKey: personalKeys.todos }),
+    queryClient.invalidateQueries({ queryKey: flotaKeys.todas }),
+    queryClient.invalidateQueries({ queryKey: operacionKeys.todo }),
+  ])
+}

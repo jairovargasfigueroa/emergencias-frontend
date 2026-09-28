@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { Fragment, useState } from 'react'
 import { Button, Text, XStack, YStack } from 'tamagui'
 import { hora, tiempoTranscurrido } from '../../shared/formato/fechas'
+import { DialogoCerrarTurno, type TurnoPorCerrar } from '../personal/DialogoCerrarTurno'
 import { cierreSegunEstado, type AtencionEnCurso, type CierreDesdeLaCentral } from './api'
 import { DialogoCerrarAtencion } from './DialogoCerrarAtencion'
 import type { UnidadMonitoreada } from './posiciones'
@@ -25,6 +26,7 @@ type AtencionPorCerrar = { atencion: AtencionEnCurso; cierre: CierreDesdeLaCentr
 export function DetalleDeUnidad({ unidad, ahora }: Props) {
   const { placa, tripulacion, turnoDesde, atencion } = unidad.unidad
   const [porCerrar, setPorCerrar] = useState<AtencionPorCerrar | null>(null)
+  const [turnoPorCerrar, setTurnoPorCerrar] = useState<TurnoPorCerrar | null>(null)
   const cierre = atencion ? cierreSegunEstado(atencion.estado) : null
 
   return (
@@ -40,7 +42,7 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
             </Text>
           ) : (
             tripulacion.map((tripulante) => (
-              <XStack key={tripulante.id} items="center" gap={10}>
+              <XStack key={tripulante.id} items="center" gap={10} flexWrap="wrap">
                 <Text fontSize={13} color="$texto">
                   {tripulante.nombreCompleto}
                 </Text>
@@ -49,9 +51,29 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
                     {tripulante.telefono}
                   </Text>
                 </a>
+                {/* Para quien se fue sin cerrarlo. Con una atención en curso se ve apagado: el motivo va debajo. */}
+                <Button
+                  size="$3"
+                  variant="outlined"
+                  disabled={atencion !== null}
+                  opacity={atencion ? 0.5 : 1}
+                  onPress={() =>
+                    setTurnoPorCerrar({ paramedicoId: tripulante.id, nombre: tripulante.nombreCompleto, placa })
+                  }
+                >
+                  <Button.Text fontSize={12} fontWeight="600" color="$texto">
+                    Cerrar turno
+                  </Button.Text>
+                </Button>
               </XStack>
             ))
           )}
+          {/* Una vez, y no en cada tripulante: el motivo es el mismo para todos. */}
+          {atencion && tripulacion.length > 0 ? (
+            <Text fontSize={12} color="$textoSecundario">
+              Para cerrar un turno, primero cierra la atención.
+            </Text>
+          ) : null}
           {turnoDesde ? (
             <Text fontSize={12} color="$textoSecundario">
               En turno desde las {hora(turnoDesde)}
@@ -100,6 +122,7 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
           onCerrar={() => setPorCerrar(null)}
         />
       ) : null}
+      <DialogoCerrarTurno turno={turnoPorCerrar} onCerrar={() => setTurnoPorCerrar(null)} />
     </YStack>
   )
 }

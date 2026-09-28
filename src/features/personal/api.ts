@@ -15,6 +15,8 @@ export type Paramedico = {
   telefono: string
   activo: boolean
   asignacionVigente: AsignacionVigente | null
+  /** Tiene un turno abierto ahora, en la unidad que tiene asignada. */
+  enTurno: boolean
 }
 
 /** `RegistrarParamedicoRequest` del backend. */
@@ -35,4 +37,6 @@ export const personalApi = {
   editar: (id: number, datos: EditarParamedico) => api.put<Paramedico>(`/paramedicos/${id}`, datos),
   desactivar: (id: number) => api.post<Paramedico>(`/paramedicos/${id}/desactivar`),
   activar: (id: number) => api.post<Paramedico>(`/paramedicos/${id}/activar`),
+  /** Le cierra el turno a quien se fue sin cerrarlo. Responde con el paramédico ya fuera de turno. */
+  cerrarTurno: (id: number) => api.post<Paramedico>(`/paramedicos/${id}/turno/cierre`),
 }

@@ -11,6 +11,7 @@ import {
   IconoApagar,
   IconoAsignar,
   IconoEditar,
+  IconoFinDeTurno,
   IconoHistorial,
   IconoMas,
   IconoQuitar,
@@ -24,6 +25,7 @@ import { AsignarAmbulanciaDialog } from '../asignaciones/AsignarAmbulanciaDialog
 import { HistorialAsignacionesDialog, type SujetoHistorial } from '../asignaciones/HistorialAsignacionesDialog'
 import { quitarDeLaUnidadMutation } from '../asignaciones/queries'
 import type { Paramedico } from './api'
+import { DialogoCerrarTurno, type TurnoPorCerrar } from './DialogoCerrarTurno'
 import { EditarParamedicoDialog } from './EditarParamedicoDialog'
 import { activarParamedicoMutation, desactivarParamedicoMutation, paramedicosQuery } from './queries'
 import { RegistrarParamedicoDialog } from './RegistrarParamedicoDialog'
@@ -97,6 +99,7 @@ export function PersonalPage() {
   const [porAsignar, setPorAsignar] = useState<Paramedico | null>(null)
   const [porEditar, setPorEditar] = useState<Paramedico | null>(null)
   const [confirmacion, setConfirmacion] = useState<Confirmacion | null>(null)
+  const [turnoPorCerrar, setTurnoPorCerrar] = useState<TurnoPorCerrar | null>(null)
   const [historial, setHistorial] = useState<SujetoHistorial | null>(null)
 
   const textos = confirmacion ? textosDe(confirmacion) : null
@@ -145,6 +148,21 @@ export function PersonalPage() {
         ? { etiqueta: 'Reasignar', icono: <IconoReasignar size={16} />, onElegir: () => setPorAsignar(paramedico) }
         : { etiqueta: 'Asignar', icono: <IconoAsignar size={16} />, onElegir: () => setPorAsignar(paramedico) },
       { etiqueta: 'Editar', icono: <IconoEditar size={16} />, onElegir: () => setPorEditar(paramedico) },
+      // Para quien se fue sin cerrarlo. Solo aparece con el turno abierto: a los demás no hay nada que cerrarles.
+      ...(paramedico.enTurno
+        ? [
+            {
+              etiqueta: 'Cerrar turno',
+              icono: <IconoFinDeTurno size={16} />,
+              onElegir: () =>
+                setTurnoPorCerrar({
+                  paramedicoId: paramedico.id,
+                  nombre: paramedico.nombreCompleto,
+                  placa: paramedico.asignacionVigente?.placa ?? null,
+                }),
+            },
+          ]
+        : []),
       ...(paramedico.asignacionVigente
         ? [
             {
@@ -202,9 +220,17 @@ export function PersonalPage() {
                 </Text>
                 {paramedico.asignacionVigente ? (
                   <YStack>
-                    <Text fontFamily="$mono" fontSize={13} fontWeight="500" color={paramedico.activo ? '$texto' : '$textoSecundario'}>
-                      {paramedico.asignacionVigente.placa}
-                    </Text>
+                    {/* El turno se abre en la unidad asignada: la marca va al lado de su placa. */}
+                    <XStack items="center" gap={8}>
+                      <Text fontFamily="$mono" fontSize={13} fontWeight="500" color={paramedico.activo ? '$texto' : '$textoSecundario'}>
+                        {paramedico.asignacionVigente.placa}
+                      </Text>
+                      {paramedico.enTurno ? (
+                        <Insignia tono="verde" conPunto>
+                          En turno
+                        </Insignia>
+                      ) : null}
+                    </XStack>
                     <Text fontSize={12} lineHeight={16} color="$textoSecundario">
                       desde {fechaHoraCorta(paramedico.asignacionVigente.fechaInicio)}
                     </Text>
@@ -244,6 +270,8 @@ export function PersonalPage() {
         pendiente={confirmando}
         onConfirmar={confirmar}
       />
+
+      <DialogoCerrarTurno turno={turnoPorCerrar} onCerrar={() => setTurnoPorCerrar(null)} />
 
       <HistorialAsignacionesDialog sujeto={historial} onCerrar={() => setHistorial(null)} />
     </>

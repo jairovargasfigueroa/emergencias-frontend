@@ -138,4 +138,6 @@ export const trasladosApi = {
     api.get<UnidadParaTraslado[]>(`/traslados/${id}/unidades`, signal),
   asignar: (id: number, ambulanciaId: number) =>
     api.post<TrasladoDelPanel>(`/traslados/${id}/asignar`, { ambulanciaId }),
+  /** Solo en un traslado NO_CUBIERTO: con esto sale de la bandeja. */
+  marcarFamiliaAvisada: (id: number) => api.post<TrasladoDelPanel>(`/traslados/${id}/familia-avisada`),
 }

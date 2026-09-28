@@ -13,7 +13,7 @@ import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
 import { TEXTO_TIPO_UNIDAD, TIPO_UNIDAD_CORTO } from '../flota/api'
 import { TEXTO_HITO } from '../monitoreo/textos'
 import { tipoCorregido, type Traslado, type TrasladoDelPanel } from './api'
-import { AvisoDelProblema } from './AvisosDeTraslado'
+import { AvisoDelProblema, BotonFamiliaAvisada } from './AvisosDeTraslado'
 import { DialogoAsignar } from './DialogoAsignar'
 import { InsigniaEstadoTraslado } from './InsigniasDeTraslado'
 import { trasladoQuery } from './queries'
@@ -106,18 +106,16 @@ function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) 
       {fila.problema ? (
         <Aviso
           tono={fila.problema === 'SIN_UNIDAD' ? 'neutro' : 'rojo'}
-          accion={
-            fila.problema === 'SIN_UNIDAD' ? (
-              <Button size="$3" variant="outlined" onPress={() => onAsignar(traslado)}>
-                <Button.Text fontSize={13} fontWeight="600" color="$texto">
-                  Asignar una unidad
-                </Button.Text>
-              </Button>
-            ) : undefined
-          }
+          accion={<AccionDelDetalle fila={fila} onAsignar={onAsignar} />}
         >
           <AvisoDelProblema fila={fila} ahora={ahora} />
         </Aviso>
+      ) : null}
+
+      {fila.horaFamiliaAvisada ? (
+        <Text fontSize={14} fontWeight="500" color="$disponibleTexto">
+          ✓ Familia avisada a las {hora(fila.horaFamiliaAvisada)}
+        </Text>
       ) : null}
 
       {/* Lo corrigió alguien que tuvo al paciente enfrente: cambia qué unidad sirve, así que va bien a la vista. */}
@@ -198,6 +196,32 @@ function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) 
       ) : null}
     </>
   )
+}
+
+type PropsAccion = {
+  fila: TrasladoDelPanel
+  onAsignar: (traslado: Traslado) => void
+}
+
+/**
+ * Lo que resuelve el problema del traslado, al lado del aviso. Lo que pide una decisión va destacado; asignar a mano
+ * no, porque mientras queda tiempo el sistema sigue buscando solo.
+ */
+function AccionDelDetalle({ fila, onAsignar }: PropsAccion) {
+  switch (fila.problema) {
+    case 'SIN_UNIDAD':
+      return (
+        <Button size="$3" variant="outlined" onPress={() => onAsignar(fila.traslado)}>
+          <Button.Text fontSize={13} fontWeight="600" color="$texto">
+            Asignar una unidad
+          </Button.Text>
+        </Button>
+      )
+    case 'NO_CUBIERTO':
+      return <BotonFamiliaAvisada traslado={fila.traslado} destacado />
+    default:
+      return null
+  }
 }
 
 /** Por qué está como está. Si fue una unidad y nadie viajó, el motivo que dio la tripulación completa la frase. */

@@ -55,6 +55,17 @@ export const unidadesParaTrasladoQuery = (id: number) =>
   })
 
 /**
+ * Lo que hace el administrador sobre un traslado le cambia el estado: el detalle toma la respuesta en el momento y
+ * se recarga todo lo de traslados. Y el centro de control, que lo muestra en su franja de problemas y esperaría al
+ * refresco para sacarlo de ahí.
+ */
+function recargarTraslado(queryClient: QueryClient, fila: TrasladoDelPanel) {
+  queryClient.setQueryData(trasladosKeys.detalle(fila.traslado.id), fila)
+  void queryClient.invalidateQueries({ queryKey: trasladosKeys.todos })
+  void queryClient.invalidateQueries({ queryKey: operacionKeys.todo })
+}
+
+/**
  * Un 409 de transición quiere decir que el traslado cambió mientras el administrador lo miraba, por ejemplo porque
  * el sistema le dio unidad en ese momento: lo que muestra la pantalla quedó viejo y se recarga.
  */
@@ -66,8 +77,7 @@ function recargarSiCambio(queryClient: QueryClient, error: Error) {
 }
 
 /**
- * Asignar a mano cambia la unidad y el estado: se recarga todo lo de traslados y también la flota. Y el centro
- * de control, que se asigna desde su franja de problemas y esperaría al refresco para sacarlo de la lista.
+ * Asignar a mano además ocupa la unidad: también se recarga la flota.
  *
  * Puede fallar con 409 `TRANSICION_INVALIDA` si el traslado ya no espera unidad, `AMBULANCIA_NO_DISPONIBLE` si la
  * unidad se ocupó o no tiene a nadie en turno, o `UNIDAD_INSUFICIENTE` si su tipo no alcanza.
@@ -77,10 +87,19 @@ export const asignarTrasladoMutation = (queryClient: QueryClient) =>
     mutationFn: ({ id, ambulanciaId }: { id: number; ambulanciaId: number }) =>
       trasladosApi.asignar(id, ambulanciaId),
     onSuccess: (fila: TrasladoDelPanel) => {
-      queryClient.setQueryData(trasladosKeys.detalle(fila.traslado.id), fila)
-      void queryClient.invalidateQueries({ queryKey: trasladosKeys.todos })
+      recargarTraslado(queryClient, fila)
       void queryClient.invalidateQueries({ queryKey: flotaKeys.todas })
-      void queryClient.invalidateQueries({ queryKey: operacionKeys.todo })
     },
+    onError: (error) => recargarSiCambio(queryClient, error),
+  })
+
+/**
+ * El administrador ya le avisó a la familia que no se consiguió unidad: el traslado sale de la bandeja. Falla con
+ * 409 `TRANSICION_INVALIDA` si el traslado no está no cubierto.
+ */
+export const marcarFamiliaAvisadaMutation = (queryClient: QueryClient) =>
+  mutationOptions({
+    mutationFn: (id: number) => trasladosApi.marcarFamiliaAvisada(id),
+    onSuccess: (fila: TrasladoDelPanel) => recargarTraslado(queryClient, fila),
     onError: (error) => recargarSiCambio(queryClient, error),
   })

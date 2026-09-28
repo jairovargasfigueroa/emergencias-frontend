@@ -119,6 +119,14 @@ export function tipoCorregido(traslado: Traslado) {
   return traslado.tipoUnidad !== traslado.tipoUnidadPedido
 }
 
+/**
+ * Minutos enteros que le quedan hasta la última salida posible, contados desde `ahora`. Negativo si ya pasó: el
+ * sistema lo da por no cubierto en su próxima vuelta.
+ */
+export function minutosParaLaUltimaSalida(traslado: Traslado, ahora: number) {
+  return Math.floor((new Date(traslado.horaLimiteSalida).getTime() - ahora) / 60_000)
+}
+
 export const trasladosApi = {
   /** Sin fecha, el backend devuelve el día de hoy en la zona de la empresa. */
   delDia: (dia: string | undefined, signal?: AbortSignal) =>

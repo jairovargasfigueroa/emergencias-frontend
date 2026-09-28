@@ -1,10 +1,12 @@
 import { Link } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
 import { Button, Text, XStack, YStack, type YStackProps } from 'tamagui'
-import { hora, tiempoDeSegundos, tiempoTranscurrido } from '../../shared/formato/fechas'
+import { tiempoDeSegundos, tiempoTranscurrido } from '../../shared/formato/fechas'
 import type { EstadoAmbulancia } from '../flota/api'
 import type { Traslado, TrasladoDelPanel } from '../traslados/api'
+import { AccionDelProblema, TiempoRestante } from '../traslados/AvisosDeTraslado'
 import { DialogoAsignar } from '../traslados/DialogoAsignar'
+import { avisoDelProblema } from '../traslados/textos'
 import type { IncidenteSinCubrir } from './api'
 import type { FiltroDeUnidades, UnidadMonitoreada } from './posiciones'
 
@@ -100,10 +102,7 @@ export function FranjaDeProblemas({
             ))}
 
             {trasladosSinCubrir.map((fila) => (
-              <Problema
-                key={`traslado-${fila.traslado.id}`}
-                texto={`Traslado #${fila.traslado.id} · ${fila.traslado.pasajero} · sale ${hora(fila.traslado.horaSalidaEstimada)}`}
-              >
+              <Problema key={`traslado-${fila.traslado.id}`} texto={<TextoDelTraslado fila={fila} ahora={ahora} />}>
                 <Link
                   to="/traslados/$trasladoId"
                   params={{ trasladoId: fila.traslado.id }}
@@ -115,11 +114,7 @@ export function FranjaDeProblemas({
                     </Button.Text>
                   </Button>
                 </Link>
-                <Button size="$3" variant="outlined" onPress={() => setAAsignar(fila.traslado)}>
-                  <Button.Text fontSize={12} fontWeight="600" color="$texto">
-                    Asignar
-                  </Button.Text>
-                </Button>
+                <AccionDelProblema fila={fila} onAsignar={setAAsignar} />
               </Problema>
             ))}
 
@@ -207,7 +202,27 @@ function Contador({ etiqueta, cantidad, color, activo, onPress }: PropsContador)
   )
 }
 
-function Problema({ texto, children }: { texto: string; children: ReactNode }) {
+/**
+ * Qué le pasa al traslado, con las mismas palabras que la bandeja de Traslados: cuánto le queda si todavía se busca
+ * unidad, o lo que hay que hacer.
+ */
+function TextoDelTraslado({ fila, ahora }: { fila: TrasladoDelPanel; ahora: number }) {
+  const { traslado } = fila
+  return (
+    <>
+      Traslado #{traslado.id} · {traslado.pasajero} ·{' '}
+      {fila.problema === 'SIN_UNIDAD' ? (
+        <>
+          Sin unidad · <TiempoRestante traslado={traslado} ahora={ahora} />
+        </>
+      ) : (
+        avisoDelProblema(fila)
+      )}
+    </>
+  )
+}
+
+function Problema({ texto, children }: { texto: ReactNode; children: ReactNode }) {
   return (
     <XStack items="center" justify="space-between" gap={16} px={16} py={10} borderTopWidth={1} borderColor="$borde">
       <Text fontSize={13} color="$texto" numberOfLines={1}>

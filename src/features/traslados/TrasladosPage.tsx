@@ -4,12 +4,14 @@ import { useState } from 'react'
 import { Button, Spinner, Text, ToggleGroup, XStack, YStack } from 'tamagui'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
 import { comoDia } from '../../shared/formato/fechas'
+import { useAhora } from '../../shared/reloj/useAhora'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/iconos'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { TIPO_UNIDAD_CORTO } from '../flota/api'
-import { esperaUnidad, type Traslado, type TrasladoDelPanel } from './api'
+import type { Traslado, TrasladoDelPanel } from './api'
+import { AccionDelProblema, AvisoDelProblema } from './AvisosDeTraslado'
 import { esVista, TEXTO_VISTA, VISTAS, type BusquedaTraslados } from './busqueda'
 import { DialogoAsignar } from './DialogoAsignar'
 import { InsigniaEstadoTraslado } from './InsigniasDeTraslado'
@@ -19,15 +21,18 @@ import { ventanaDeRecogida } from './textos'
 const rutaApi = getRouteApi('/protegida/traslados')
 
 // El recojo es la ventana que se le prometió a la familia, "10:05–10:25", y no la hora de salida: es con lo que se
-// compara para saber si la unidad viene atrasada.
+// compara para saber si la unidad viene atrasada. Lo que hay que hacer con cada fila no tiene columna: va debajo de
+// sus celdas, a todo el ancho, porque el aviso y su botón no entran en una columna angosta.
 const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Recojo', ancho: 124 },
   { titulo: 'Paciente', ancho: 180 },
   { titulo: 'Recorrido' },
   { titulo: 'Unidad', ancho: 160 },
   { titulo: 'Estado', ancho: 150 },
-  { titulo: '', ancho: 110, alinearDerecha: true },
 ]
+
+/** Cada cuánto se recalcula lo que le queda a cada traslado sin unidad. Se muestra en minutos: alcanza con esto. */
+const INTERVALO_RELOJ_MS = 15_000
 
 /** Los traslados del día y los que necesitan una decisión, en la misma tabla. */
 export function TrasladosPage() {
@@ -35,6 +40,7 @@ export function TrasladosPage() {
   const navigate = rutaApi.useNavigate()
   const vista = busqueda.vista ?? 'DIA'
   const dia = busqueda.dia
+  const ahora = useAhora(INTERVALO_RELOJ_MS)
   const [aAsignar, setAAsignar] = useState<Traslado | null>(null)
 
   const delDia = useQuery({ ...trasladosDelDiaQuery(dia), enabled: vista === 'DIA' })
@@ -144,12 +150,18 @@ export function TrasladosPage() {
             {consulta.data.length === 0 ? (
               <TablaVacia>
                 {vista === 'PROBLEMAS'
-                  ? 'Ningún traslado está esperando unidad.'
+                  ? 'Ningún traslado necesita que hagas algo ahora.'
                   : 'No hay traslados para este día.'}
               </TablaVacia>
             ) : (
               consulta.data.map((fila) => (
-                <FilaTraslado key={fila.traslado.id} fila={fila} busqueda={busqueda} onAsignar={setAAsignar} />
+                <FilaTraslado
+                  key={fila.traslado.id}
+                  fila={fila}
+                  busqueda={busqueda}
+                  ahora={ahora}
+                  onAsignar={setAAsignar}
+                />
               ))
             )}
           </Tabla>
@@ -173,13 +185,24 @@ type PropsFila = {
   fila: TrasladoDelPanel
   /** La vista y el día de esta lista: el detalle los guarda para volver a ella tal como estaba. */
   busqueda: BusquedaTraslados
+  ahora: number
   onAsignar: (traslado: Traslado) => void
 }
 
-/** Toda la fila lleva al detalle; el botón de asignar se resuelve sin salir de la tabla. */
-function FilaTraslado({ fila, busqueda, onAsignar }: PropsFila) {
+/**
+ * Toda la fila lleva al detalle. Si el traslado tiene un problema, debajo de las celdas va el aviso con el botón que
+ * lo resuelve, que se usa sin salir de la tabla.
+ */
+function FilaTraslado({ fila, busqueda, ahora, onAsignar }: PropsFila) {
   const { traslado } = fila
   const ventana = ventanaDeRecogida(traslado)
+  const pie = fila.problema ? (
+    <XStack flex={1} items="center" justify="space-between" gap={16} flexWrap="wrap">
+      <AvisoDelProblema fila={fila} ahora={ahora} />
+      <AccionDelProblema fila={fila} onAsignar={onAsignar} />
+    </XStack>
+  ) : undefined
+
   return (
     <Link
       to="/traslados/$trasladoId"
@@ -187,7 +210,7 @@ function FilaTraslado({ fila, busqueda, onAsignar }: PropsFila) {
       search={busqueda}
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
-      <FilaTabla columnas={COLUMNAS} interactiva>
+      <FilaTabla columnas={COLUMNAS} interactiva pie={pie}>
         <Text fontSize={14} fontFamily="$mono" color={ventana ? '$texto' : '$textoTenue'}>
           {ventana ?? '—'}
         </Text>
@@ -219,23 +242,6 @@ function FilaTraslado({ fila, busqueda, onAsignar }: PropsFila) {
         )}
 
         <InsigniaEstadoTraslado estado={traslado.estado} />
-
-        {esperaUnidad(traslado.estado) ? (
-          <Button
-            size="$3"
-            variant="outlined"
-            onPress={(evento) => {
-              // La fila entera es un enlace: sin esto, asignar también abriría el detalle.
-              evento.preventDefault()
-              evento.stopPropagation()
-              onAsignar(traslado)
-            }}
-          >
-            <Button.Text fontSize={12} fontWeight="600" color="$texto">
-              Asignar
-            </Button.Text>
-          </Button>
-        ) : null}
       </FilaTabla>
     </Link>
   )

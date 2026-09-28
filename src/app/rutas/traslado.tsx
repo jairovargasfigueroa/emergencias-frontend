@@ -1,4 +1,5 @@
 import { createRoute } from '@tanstack/react-router'
+import { validarBusquedaTraslados } from '../../features/traslados/busqueda'
 import { DetalleTrasladoPage } from '../../features/traslados/DetalleTrasladoPage'
 import { rutaProtegida } from './protegida'
 
@@ -10,5 +11,8 @@ export const rutaTraslado = createRoute({
     parse: ({ trasladoId }) => ({ trasladoId: Number(trasladoId) }),
     stringify: ({ trasladoId }) => ({ trasladoId: String(trasladoId) }),
   },
+  // La vista y el día de la lista desde la que se abrió, para volver a ella tal como estaba. Quien entra directo no
+  // trae nada y vuelve a los traslados de hoy.
+  validateSearch: validarBusquedaTraslados,
   component: DetalleTrasladoPage,
 })

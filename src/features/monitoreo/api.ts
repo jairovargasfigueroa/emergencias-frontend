@@ -53,7 +53,7 @@ export type Tripulante = {
   telefono: string
 }
 
-/** `AtencionEnCursoResponse.Hito` del backend. */
+/** `AtencionEnCursoResponse.Hito` del backend. El traslado del panel trae la misma lista de su unidad. */
 export type Hito = {
   clave: TipoEvento
   hora: string
@@ -130,6 +130,11 @@ export type EventoDeOperacion = {
 export type Operacion = {
   unidades: UnidadEnOperacion[]
   incidentesSinCubrir: IncidenteSinCubrir[]
+  /**
+   * Los traslados que necesitan que el administrador haga algo, cada uno con su `problema`. Es la misma lista de
+   * `/traslados/problemas` y en el mismo orden: las unidades atrasadas, los que esperan unidad (primero los
+   * devueltos) y los no cubiertos que todavía no se le avisaron a la familia.
+   */
   trasladosSinCubrir: TrasladoDelPanel[]
   /** Del evento más nuevo al más viejo. */
   eventos: EventoDeOperacion[]

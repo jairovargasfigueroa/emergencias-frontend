@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { Text, XStack, YStack } from 'tamagui'
+import { useAhora } from '../../shared/reloj/useAhora'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { ActividadReciente } from './ActividadReciente'
@@ -34,7 +35,7 @@ export function CentroDeControlPage() {
   const operacion = useQuery(operacionQuery())
   const posiciones = usePosiciones()
   const incidentes = useIncidentesAbiertos()
-  const ahora = useAhora()
+  const ahora = useAhora(TIC_RELOJ_MS)
   const altoPaneles = useAltoDeLosPaneles()
   const [filtro, setFiltro] = useState<FiltroDeUnidades | null>(null)
   const [seleccionada, setSeleccionada] = useState<number | null>(null)
@@ -149,16 +150,4 @@ function useAltoDeLosPaneles() {
   }, [])
 
   return alto
-}
-
-/** El "hace tanto" tiene que envejecer solo: sin esto se quedaría clavado hasta la próxima posición. */
-function useAhora() {
-  const [ahora, setAhora] = useState(() => Date.now())
-
-  useEffect(() => {
-    const tic = window.setInterval(() => setAhora(Date.now()), TIC_RELOJ_MS)
-    return () => window.clearInterval(tic)
-  }, [])
-
-  return ahora
 }

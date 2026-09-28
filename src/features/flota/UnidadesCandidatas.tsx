@@ -102,8 +102,8 @@ type PropsOpcion = {
 }
 
 /**
- * Una unidad de la lista, con lo que hace falta para elegirla: cuán lejos está y, si las tiene, las marcas por las
- * que el sistema no la elegiría. Con una posición vieja se dice de cuándo es, porque la distancia sale de ahí y la
+ * Una unidad de la lista, con lo que hace falta para elegirla: cuán lejos está y, si las tiene, las marcas que
+ * conviene mirar antes de mandarla. Con una posición vieja se dice de cuándo es, porque la distancia sale de ahí y la
  * unidad puede estar en otro lado.
  */
 function OpcionDeUnidad({ unidad, textos, consultadaEn, enviandoEsta, bloqueada, onElegir }: PropsOpcion) {

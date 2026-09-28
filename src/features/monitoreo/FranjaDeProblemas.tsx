@@ -146,11 +146,15 @@ export function FranjaDeProblemas({
  * Lo peor que está pasando, en una línea. Sin nada sin cubrir y con todas las unidades reportando, se queda en
  * el visto bueno y la caja entera ocupa solo esta franja.
  */
+/**
+ * "Por resolver" y no "sin cubrir": además de lo que no tiene unidad, cuenta los traslados cuya unidad no llega y los
+ * no cubiertos que esperan que alguien le avise a la familia.
+ */
 function Titular({ sinCubrir, sinSenal }: { sinCubrir: number; sinSenal: number }) {
   if (sinCubrir > 0) {
     return (
       <Text fontSize={15} fontWeight="600" color="$primarioPresionado">
-        ⚠ {sinCubrir} sin cubrir
+        ⚠ {sinCubrir} por resolver
       </Text>
     )
   }

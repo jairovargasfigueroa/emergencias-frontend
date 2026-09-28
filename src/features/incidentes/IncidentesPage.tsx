@@ -17,7 +17,9 @@ import { TEXTO_FILTRO } from './textos'
 // El id lleva el prefijo de la ruta protegida, que es de la que cuelgan todas las pantallas del panel.
 const rutaApi = getRouteApi('/protegida/incidentes')
 
+// El número va primero porque el resto del panel nombra a cada incidente por él: "Incidente #12".
 const COLUMNAS: ColumnaTabla[] = [
+  { titulo: '#', ancho: 72 },
   { titulo: 'Estado', ancho: 200 },
   { titulo: 'Creación', ancho: 150 },
   { titulo: 'Transcurrido o cierre', ancho: 170 },
@@ -172,6 +174,9 @@ function FilaIncidente({ incidente, ahora }: { incidente: IncidenteResumen; ahor
   return (
     <Link to="/incidentes/$incidenteId" params={{ incidenteId: incidente.id }} style={{ textDecoration: 'none' }}>
       <FilaTabla columnas={COLUMNAS} alto={64} interactiva>
+        <Text fontFamily="$mono" fontSize={13} fontWeight="500" color="$texto">
+          {incidente.id}
+        </Text>
         <InsigniaEstadoIncidente estado={incidente.estado} />
         <Text fontSize={14} color="$texto">
           {fechaHoraCorta(incidente.fechaHoraCreacion)}

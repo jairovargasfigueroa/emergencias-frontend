@@ -1,4 +1,5 @@
 import { mutationOptions, queryOptions, type QueryClient } from '@tanstack/react-query'
+import { codigoDeError } from '../../shared/api/cliente'
 import { flotaKeys } from '../flota/queries'
 import { operacionKeys } from '../monitoreo/queries'
 import { trasladosApi, type TrasladoDelPanel } from './api'
@@ -8,6 +9,7 @@ export const trasladosKeys = {
   dia: (dia: string | undefined) => [...trasladosKeys.todos, 'dia', dia ?? 'hoy'] as const,
   problemas: () => [...trasladosKeys.todos, 'problemas'] as const,
   detalle: (id: number) => [...trasladosKeys.todos, 'detalle', id] as const,
+  unidades: (id: number) => [...trasladosKeys.todos, 'unidades', id] as const,
 }
 
 /**
@@ -40,8 +42,35 @@ export const trasladoQuery = (id: number) =>
   })
 
 /**
+ * Con qué unidades se puede asignar a mano. Se pide cada vez que se abre el diálogo y no se guarda al cerrarlo: qué
+ * unidades están libres y dónde anda cada una cambia de un minuto a otro, y ofrecer una lista vieja es ofrecer
+ * unidades que ya salieron a otra cosa.
+ */
+export const unidadesParaTrasladoQuery = (id: number) =>
+  queryOptions({
+    queryKey: trasladosKeys.unidades(id),
+    queryFn: ({ signal }) => trasladosApi.unidades(id, signal),
+    staleTime: 0,
+    gcTime: 0,
+  })
+
+/**
+ * Un 409 de transición quiere decir que el traslado cambió mientras el administrador lo miraba, por ejemplo porque
+ * el sistema le dio unidad en ese momento: lo que muestra la pantalla quedó viejo y se recarga.
+ */
+function recargarSiCambio(queryClient: QueryClient, error: Error) {
+  if (codigoDeError(error) === 'TRANSICION_INVALIDA') {
+    void queryClient.invalidateQueries({ queryKey: trasladosKeys.todos })
+    void queryClient.invalidateQueries({ queryKey: operacionKeys.todo })
+  }
+}
+
+/**
  * Asignar a mano cambia la unidad y el estado: se recarga todo lo de traslados y también la flota. Y el centro
  * de control, que se asigna desde su franja de problemas y esperaría al refresco para sacarlo de la lista.
+ *
+ * Puede fallar con 409 `TRANSICION_INVALIDA` si el traslado ya no espera unidad, `AMBULANCIA_NO_DISPONIBLE` si la
+ * unidad se ocupó o no tiene a nadie en turno, o `UNIDAD_INSUFICIENTE` si su tipo no alcanza.
  */
 export const asignarTrasladoMutation = (queryClient: QueryClient) =>
   mutationOptions({
@@ -53,4 +82,5 @@ export const asignarTrasladoMutation = (queryClient: QueryClient) =>
       void queryClient.invalidateQueries({ queryKey: flotaKeys.todas })
       void queryClient.invalidateQueries({ queryKey: operacionKeys.todo })
     },
+    onError: (error) => recargarSiCambio(queryClient, error),
   })

@@ -32,16 +32,6 @@ export const DETALLE_TIPO_UNIDAD: Record<TipoUnidad, string> = {
   III: 'Monitor, medicación y vía, para pacientes inestables.',
 }
 
-/** Los tipos que hacen traslados, de menor a mayor capacidad. La IB queda fuera: rescata, no traslada. */
-const ESCALERA: TipoUnidad[] = ['IA', 'II', 'III']
-
-/** Si una unidad de este tipo alcanza para un traslado que pide otro. Una mejor sirve; una menor no. */
-export function cubreA(unidad: TipoUnidad, pedido: TipoUnidad) {
-  const propio = ESCALERA.indexOf(unidad)
-  const requerido = ESCALERA.indexOf(pedido)
-  return propio >= 0 && requerido >= 0 && propio >= requerido
-}
-
 /** `AmbulanciaResponse` del backend. */
 export type Ambulancia = {
   id: number

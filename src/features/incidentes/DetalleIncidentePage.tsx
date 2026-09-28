@@ -258,7 +258,7 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
   const hitos: Hito[] = [
     { nombre: 'Llegó al lugar', hora: atencion.horaLlegada, ubicacion: atencion.ubicacionLlegada },
     { nombre: 'Paciente a bordo', hora: atencion.horaRecogida, ubicacion: atencion.ubicacionRecogida },
-    { nombre: 'Llegó al hospital', hora: atencion.horaLlegadaHospital, ubicacion: atencion.ubicacionLlegadaHospital },
+    { nombre: 'Llegó al destino', hora: atencion.horaLlegadaHospital, ubicacion: atencion.ubicacionLlegadaHospital },
     { nombre: 'Entregó al paciente', hora: atencion.horaEntrega, ubicacion: atencion.ubicacionEntrega },
   ]
   // Una salida que se cortó ya no tiene hitos pendientes: quedan los que ocurrieron y cómo terminó.

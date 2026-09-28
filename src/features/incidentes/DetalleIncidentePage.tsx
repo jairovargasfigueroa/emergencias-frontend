@@ -363,6 +363,13 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
           </Text>
           {/* El punto dice que la ambulancia sigue tomada, aunque ya haya entregado al paciente. */}
           <InsigniaEstadoAtencion estado={atencion.estado} conPunto={ocupaLaUnidad(atencion)} />
+          {/* El último paso lo marcó la central y no la tripulación: su hora es la del cierre, no la real, y así se
+              sabe a quién preguntarle. */}
+          {atencion.cerradaPor ? (
+            <Text fontSize={13} color="$textoSecundario">
+              La cerró la central ({atencion.cerradaPor})
+            </Text>
+          ) : null}
         </XStack>
 
         <XStack flexWrap="wrap" rowGap={16} columnGap={48}>

@@ -110,6 +110,8 @@ export type AtencionDeIncidente = {
     nombre: string
   } | null
   destinoDescripcion: string | null
+  /** El administrador que la cerró porque la tripulación no podía. Null si la cerró la tripulación. */
+  cerradaPor: string | null
 }
 
 /**

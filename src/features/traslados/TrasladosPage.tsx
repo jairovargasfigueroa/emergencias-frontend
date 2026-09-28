@@ -10,7 +10,7 @@ import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { TIPO_UNIDAD_CORTO } from '../flota/api'
 import { esperaUnidad, type Traslado, type TrasladoDelPanel } from './api'
-import { esVista, TEXTO_VISTA, VISTAS } from './busqueda'
+import { esVista, TEXTO_VISTA, VISTAS, type BusquedaTraslados } from './busqueda'
 import { DialogoAsignar } from './DialogoAsignar'
 import { InsigniaEstadoTraslado } from './InsigniasDeTraslado'
 import { problemasQuery, trasladosDelDiaQuery } from './queries'
@@ -145,7 +145,9 @@ export function TrasladosPage() {
                   : 'No hay traslados para este día.'}
               </TablaVacia>
             ) : (
-              consulta.data.map((fila) => <FilaTraslado key={fila.traslado.id} fila={fila} onAsignar={setAAsignar} />)
+              consulta.data.map((fila) => (
+                <FilaTraslado key={fila.traslado.id} fila={fila} busqueda={busqueda} onAsignar={setAAsignar} />
+              ))
             )}
           </Tabla>
         )}
@@ -164,13 +166,21 @@ function etiquetaDelDia(dia: string | undefined) {
   return fecha.toLocaleDateString('es-BO', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
+type PropsFila = {
+  fila: TrasladoDelPanel
+  /** La vista y el día de esta lista: el detalle los guarda para volver a ella tal como estaba. */
+  busqueda: BusquedaTraslados
+  onAsignar: (traslado: Traslado) => void
+}
+
 /** Toda la fila lleva al detalle; el botón de asignar se resuelve sin salir de la tabla. */
-function FilaTraslado({ fila, onAsignar }: { fila: TrasladoDelPanel; onAsignar: (traslado: Traslado) => void }) {
+function FilaTraslado({ fila, busqueda, onAsignar }: PropsFila) {
   const { traslado } = fila
   return (
     <Link
       to="/traslados/$trasladoId"
       params={{ trasladoId: traslado.id }}
+      search={busqueda}
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       <FilaTabla columnas={COLUMNAS} interactiva>

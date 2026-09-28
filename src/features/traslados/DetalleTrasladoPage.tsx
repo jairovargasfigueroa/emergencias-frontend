@@ -20,6 +20,8 @@ const rutaApi = getRouteApi('/protegida/traslados/$trasladoId')
 /** Todo lo que el ciudadano cargó y lo que pasó después, para cuando el administrador necesita mirar de cerca. */
 export function DetalleTrasladoPage() {
   const { trasladoId } = rutaApi.useParams()
+  // La vista y el día de la lista desde la que se abrió. Vacía si se entró directo: se vuelve a los de hoy.
+  const busquedaDeLaLista = rutaApi.useSearch()
   const idValido = Number.isInteger(trasladoId) && trasladoId > 0
   const consulta = useQuery({ ...trasladoQuery(trasladoId), enabled: idValido })
   const noExiste = !idValido || (consulta.error instanceof ErrorApi && consulta.error.status === 404)
@@ -27,7 +29,11 @@ export function DetalleTrasladoPage() {
 
   return (
     <>
-      <Link to="/traslados" style={{ textDecoration: 'none', alignSelf: 'flex-start' }}>
+      <Link
+        to="/traslados"
+        search={busquedaDeLaLista}
+        style={{ textDecoration: 'none', alignSelf: 'flex-start' }}
+      >
         <XStack items="center" gap={6}>
           <IconoAnterior size={16} color="var(--textoSecundario)" />
           <Text fontSize={13} fontWeight="500" color="$textoSecundario">

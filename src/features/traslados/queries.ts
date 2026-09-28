@@ -10,27 +10,33 @@ export const trasladosKeys = {
   detalle: (id: number) => [...trasladosKeys.todos, 'detalle', id] as const,
 }
 
+/**
+ * Cada cuánto se vuelven a pedir la lista del día, la bandeja y el detalle. Los tres se refrescan solos: el barrido
+ * del servidor puede asignar una unidad en cualquier momento, la unidad avanza sin que nadie toque el panel, y el
+ * problema de cada traslado lo calcula el servidor al responder, así que envejece con la hora.
+ */
+const REFRESCO_MS = 30_000
+
 export const trasladosDelDiaQuery = (dia: string | undefined) =>
   queryOptions({
     queryKey: trasladosKeys.dia(dia),
     queryFn: ({ signal }) => trasladosApi.delDia(dia, signal),
+    refetchInterval: REFRESCO_MS,
   })
 
-/**
- * La bandeja se refresca sola: el barrido del servidor puede asignar una unidad en cualquier momento, y el
- * administrador está mirando esta pantalla justamente para enterarse.
- */
+/** El administrador está mirando la bandeja justamente para enterarse de lo que cambia. */
 export const problemasQuery = () =>
   queryOptions({
     queryKey: trasladosKeys.problemas(),
     queryFn: ({ signal }) => trasladosApi.problemas(signal),
-    refetchInterval: 30_000,
+    refetchInterval: REFRESCO_MS,
   })
 
 export const trasladoQuery = (id: number) =>
   queryOptions({
     queryKey: trasladosKeys.detalle(id),
     queryFn: ({ signal }) => trasladosApi.detalle(id, signal),
+    refetchInterval: REFRESCO_MS,
   })
 
 /**

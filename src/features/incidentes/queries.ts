@@ -2,7 +2,7 @@ import { keepPreviousData, mutationOptions, queryOptions, type QueryClient } fro
 import { codigoDeError } from '../../shared/api/cliente'
 import { flotaKeys } from '../flota/queries'
 import { operacionKeys } from '../monitoreo/queries'
-import { incidentesApi, type FiltroEstadoIncidente } from './api'
+import { incidentesApi, type FiltroEstadoIncidente, type MotivoCierreIncidente } from './api'
 
 /** La lista se pide de a 20 incidentes. */
 export const TAMANO_PAGINA = 20
@@ -66,6 +66,24 @@ export const despacharUnidadMutation = (queryClient: QueryClient) =>
     },
     onError: (error) => {
       if (codigoDeError(error) === 'INCIDENTE_CERRADO') {
+        recargarIncidentes(queryClient)
+      }
+    },
+  })
+
+/**
+ * Cerrar a mano un incidente que no se va a atender.
+ *
+ * Falla con 409 `TRANSICION_INVALIDA` si alguna unidad lo está trabajando, o `INCIDENTE_CERRADO` si ya se había
+ * cerrado: en los dos casos cambió mientras se lo miraba, y se recarga.
+ */
+export const cerrarIncidenteMutation = (queryClient: QueryClient) =>
+  mutationOptions({
+    mutationFn: ({ id, motivo }: { id: number; motivo: MotivoCierreIncidente }) => incidentesApi.cerrar(id, motivo),
+    onSuccess: () => recargarIncidentes(queryClient),
+    onError: (error) => {
+      const codigo = codigoDeError(error)
+      if (codigo === 'TRANSICION_INVALIDA' || codigo === 'INCIDENTE_CERRADO') {
         recargarIncidentes(queryClient)
       }
     },

@@ -22,6 +22,8 @@ export type MotivoCancelacionAtencion =
   | 'CANCELADA_POR_SOLICITANTE'
   /** Solo en traslados: la unidad no llegaba y el administrador se lo sacó para dárselo a otra. */
   | 'REASIGNADA'
+  /** La tripulación no podía cerrarla desde su app y la cerró la central, para que el caso siga con otra unidad. */
+  | 'CERRADA_POR_CENTRAL'
   | 'OTRO'
 
 /** Con qué se encontró la unidad cuando la salida terminó sin llevar a nadie. */

@@ -1,8 +1,9 @@
 import { Link } from '@tanstack/react-router'
-import { Fragment } from 'react'
-import { Text, XStack, YStack } from 'tamagui'
+import { Fragment, useState } from 'react'
+import { Button, Text, XStack, YStack } from 'tamagui'
 import { hora, tiempoTranscurrido } from '../../shared/formato/fechas'
-import type { AtencionEnCurso } from './api'
+import { cierreSegunEstado, type AtencionEnCurso, type CierreDesdeLaCentral } from './api'
+import { DialogoCerrarAtencion } from './DialogoCerrarAtencion'
 import type { UnidadMonitoreada } from './posiciones'
 import { TEXTO_HITO, TEXTO_ORIGEN } from './textos'
 
@@ -12,11 +13,19 @@ type Props = {
 }
 
 /**
+ * La atención que se va a cerrar y el cierre que le corresponde, tomados al abrir el diálogo: si la unidad avanza
+ * mientras está abierto, el diálogo no cambia de acción bajo el cursor, y el servidor rechaza lo que quedó viejo.
+ */
+type AtencionPorCerrar = { atencion: AtencionEnCurso; cierre: CierreDesdeLaCentral }
+
+/**
  * Lo que no entra en la fila y hace falta para decidir: a quién llamar, cuánto tardó en cada paso y por dónde
  * seguir. Se despliega debajo de la fila y no en un diálogo, para no tapar el resto de la flota.
  */
 export function DetalleDeUnidad({ unidad, ahora }: Props) {
-  const { tripulacion, turnoDesde, atencion } = unidad.unidad
+  const { placa, tripulacion, turnoDesde, atencion } = unidad.unidad
+  const [porCerrar, setPorCerrar] = useState<AtencionPorCerrar | null>(null)
+  const cierre = atencion ? cierreSegunEstado(atencion.estado) : null
 
   return (
     <YStack gap={16} px={24} py={16} bg="$fondo" borderTopWidth={1} borderColor="$borde">
@@ -61,7 +70,19 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
               Esta unidad no está atendiendo nada ahora.
             </Text>
           )}
-          {atencion ? <EnlaceAlTrabajo atencion={atencion} /> : null}
+          {atencion ? (
+            <XStack items="center" gap={16} flexWrap="wrap">
+              <EnlaceAlTrabajo atencion={atencion} />
+              {/* Para cuando la tripulación no puede cerrarla desde su app: la central la destraba. */}
+              {cierre ? (
+                <Button size="$3" variant="outlined" onPress={() => setPorCerrar({ atencion, cierre })}>
+                  <Button.Text fontSize={12} fontWeight="600" color="$texto">
+                    Cerrar la atención
+                  </Button.Text>
+                </Button>
+              ) : null}
+            </XStack>
+          ) : null}
         </YStack>
       </XStack>
 
@@ -69,6 +90,15 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
         <Text fontSize={12} color="$textoSecundario">
           Esta unidad nunca reportó su posición, así que no está en el mapa.
         </Text>
+      ) : null}
+
+      {porCerrar ? (
+        <DialogoCerrarAtencion
+          atencion={porCerrar.atencion}
+          cierre={porCerrar.cierre}
+          placa={placa}
+          onCerrar={() => setPorCerrar(null)}
+        />
       ) : null}
     </YStack>
   )

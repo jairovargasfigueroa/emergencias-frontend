@@ -10,3 +10,26 @@ export type EstadoAtencion =
   | 'PACIENTE_ENTREGADO'
   | 'SIN_TRASLADO'
   | 'CANCELADA'
+
+/** Por qué se cortó la salida. */
+export type MotivoCancelacionAtencion =
+  | 'AVERIA'
+  | 'NO_SE_ENCONTRO_PACIENTE'
+  | 'DESVIADA'
+  /** Solo en traslados: el paramédico devolvió el traslado que se le asignó. */
+  | 'RECHAZADA_POR_PARAMEDICO'
+  /** Solo en traslados: quien lo pidió lo retiró con la unidad ya en camino. */
+  | 'CANCELADA_POR_SOLICITANTE'
+  | 'OTRO'
+
+/** Con qué se encontró la unidad cuando la salida terminó sin llevar a nadie. */
+export type MotivoSinTraslado =
+  | 'ATENDIDO_EN_EL_LUGAR'
+  | 'PACIENTE_RECHAZO'
+  | 'NO_HABIA_PACIENTE'
+  | 'TRASLADO_POR_OTRO_MEDIO'
+  | 'FALLECIDO'
+  /** Solo en traslados: la unidad llegó y el paciente no estaba listo. */
+  | 'PACIENTE_NO_LISTO'
+  /** Solo en traslados: el paciente necesitaba más de lo que la unidad podía darle. */
+  | 'UNIDAD_NO_CORRESPONDE'

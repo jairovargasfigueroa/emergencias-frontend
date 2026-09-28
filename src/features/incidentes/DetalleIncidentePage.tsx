@@ -4,6 +4,7 @@ import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Anchor, Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
+import { TEXTO_MOTIVO_CANCELACION_ATENCION, TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
 import { fechaHora, fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
@@ -23,9 +24,7 @@ import { incidenteQuery } from './queries'
 import {
   TEXTO_ESTADO_ALERTA,
   TEXTO_MOTIVO_CANCELACION_ALERTA,
-  TEXTO_MOTIVO_CANCELACION_ATENCION,
   TEXTO_MOTIVO_CIERRE,
-  TEXTO_MOTIVO_SIN_TRASLADO,
   TEXTO_ORIGEN_UBICACION,
   textoEmisorEsPaciente,
 } from './textos'

@@ -1,5 +1,5 @@
-import type { MotivoCancelacionAtencion, MotivoSinTraslado } from '../incidentes/api'
-import { TEXTO_MOTIVO_CANCELACION_ATENCION, TEXTO_MOTIVO_SIN_TRASLADO } from '../incidentes/textos'
+import type { MotivoCancelacionAtencion, MotivoSinTraslado } from '../../shared/atencion/api'
+import { TEXTO_MOTIVO_CANCELACION_ATENCION, TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
 import type { EventoDeOperacion, OrigenAtencion, TipoEvento } from './api'
 
 // Textos en castellano de los valores crudos que llegan de `/operacion`. Se cambian solo acá.
@@ -40,7 +40,8 @@ export const TEXTO_ORIGEN: Record<OrigenAtencion, string> = {
 
 /**
  * El "por qué" o el "dónde" de un evento, ya legible. El backend manda el valor crudo: en la entrega es el
- * nombre del centro de salud o el destino escrito a mano, y en los otros dos es el nombre de un enum.
+ * nombre del centro de salud o el destino escrito a mano, y en los otros dos es el nombre de un enum. Un motivo
+ * que el panel todavía no conoce se omite: el nombre del enum no le dice nada a quien mira la pantalla.
  */
 export function detalleDeEvento(evento: EventoDeOperacion): string | null {
   if (!evento.detalle) {
@@ -48,9 +49,9 @@ export function detalleDeEvento(evento: EventoDeOperacion): string | null {
   }
   switch (evento.tipo) {
     case 'SIN_TRASLADO':
-      return TEXTO_MOTIVO_SIN_TRASLADO[evento.detalle as MotivoSinTraslado] ?? evento.detalle
+      return TEXTO_MOTIVO_SIN_TRASLADO[evento.detalle as MotivoSinTraslado] ?? null
     case 'CANCELACION':
-      return TEXTO_MOTIVO_CANCELACION_ATENCION[evento.detalle as MotivoCancelacionAtencion] ?? evento.detalle
+      return TEXTO_MOTIVO_CANCELACION_ATENCION[evento.detalle as MotivoCancelacionAtencion] ?? null
     default:
       return evento.detalle
   }

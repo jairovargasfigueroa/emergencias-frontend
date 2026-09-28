@@ -20,6 +20,8 @@ export type MotivoCancelacionAtencion =
   | 'RECHAZADA_POR_PARAMEDICO'
   /** Solo en traslados: quien lo pidió lo retiró con la unidad ya en camino. */
   | 'CANCELADA_POR_SOLICITANTE'
+  /** Solo en traslados: la unidad no llegaba y el administrador se lo sacó para dárselo a otra. */
+  | 'REASIGNADA'
   | 'OTRO'
 
 /** Con qué se encontró la unidad cuando la salida terminó sin llevar a nadie. */

@@ -1,6 +1,7 @@
 import { api } from '../../shared/api/cliente'
-import type { EstadoAtencion } from '../../shared/atencion/api'
+import type { EstadoAtencion, MotivoSinTraslado } from '../../shared/atencion/api'
 import type { TipoUnidad } from '../flota/api'
+import type { Hito } from '../monitoreo/api'
 
 export type EstadoTraslado =
   | 'PROGRAMADO'
@@ -24,10 +25,16 @@ export type Ubicacion = {
 export type Traslado = {
   id: number
   estado: EstadoTraslado
+  /** En qué va la unidad que lo tiene. Solo viene si está ASIGNADO, COMPLETADO o NO_REALIZADO. */
+  estadoUnidad: EstadoAtencion | null
   modoHorario: ModoHorario
   horaCita: string | null
   horaSalidaEstimada: string
+  /** La última salida que todavía llega: pasada esa hora sin unidad, el traslado queda no cubierto. */
   horaLimiteSalida: string
+  /** La ventana que se le promete a la familia: cuándo pasa la unidad por el origen. No es la hora de salida. */
+  horaRecogidaDesde: string | null
+  horaRecogidaHasta: string | null
   pasajero: string
   movilidad: Movilidad
   oxigeno: boolean
@@ -43,18 +50,39 @@ export type Traslado = {
   contactoNombre: string | null
   contactoTelefono: string | null
   destino: Ubicacion
+  /** El centro del catálogo, si el destino es uno. */
+  centroSaludDestinoId: number | null
   centroSaludDestino: string | null
   destinoDetalle: string | null
   fechaHoraCreacion: string
 }
 
+/**
+ * `ProblemaDeTraslado` del backend: por qué el traslado necesita que el administrador haga algo. No se guarda, lo
+ * calcula el servidor al responder.
+ * - `SIN_UNIDAD`: está buscando unidad; el sistema reintenta hasta la última salida posible.
+ * - `NO_CUBIERTO`: se venció sin unidad y todavía nadie le avisó a la familia.
+ * - `UNIDAD_ATRASADA`: la unidad sigue en camino y ya pasó la ventana de recogida.
+ */
+export type ProblemaDeTraslado = 'SIN_UNIDAD' | 'NO_CUBIERTO' | 'UNIDAD_ATRASADA'
+
 /** `TrasladoDelPanelResponse` del backend: el pedido más la unidad que lo está haciendo, si ya tiene una. */
 export type TrasladoDelPanel = {
   traslado: Traslado
+  /** Null si el traslado no necesita nada del administrador. */
+  problema: ProblemaDeTraslado | null
+  /** Cuándo el administrador marcó que le avisó a la familia. Solo en los no cubiertos. */
+  horaFamiliaAvisada: string | null
+  /** La última vez que volvió a la búsqueda. Mientras esté puesta, el traslado va primero en la fila. */
+  horaDevolucion: string | null
   atencionId: number | null
   placa: string | null
   estadoAtencion: EstadoAtencion | null
   paramedico: string | null
+  /** Los hitos de la unidad que lo tiene o lo terminó, del más viejo al más nuevo. Vacío si no hay unidad. */
+  hitos: Hito[]
+  /** Por qué no viajó nadie, cuando la unidad lo cerró sin traslado. */
+  motivoSinTraslado: MotivoSinTraslado | null
 }
 
 /** El pedido sigue vivo: espera su día, espera unidad, o la unidad está en camino. */

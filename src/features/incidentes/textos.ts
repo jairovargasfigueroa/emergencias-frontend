@@ -3,6 +3,7 @@ import type {
   EstadoAtencion,
   EstadoIncidente,
   FiltroEstadoIncidente,
+  MotivoCancelacionAlerta,
   MotivoCancelacionAtencion,
   MotivoCierreIncidente,
   MotivoSinTraslado,
@@ -38,6 +39,22 @@ export const TEXTO_ESTADO_ALERTA: Record<EstadoAlerta, string> = {
   VINCULADA: 'Vinculada',
   CANCELADA: 'Cancelada',
   DESCARTADA: 'Descartada',
+}
+
+/**
+ * Por qué el ciudadano retiró su pedido. Son las opciones de la app ("Ya no hace falta") contadas en tercera persona,
+ * como registro de lo que pasó. La app no ofrece falsa alarma, pero el backend la acepta.
+ */
+export const TEXTO_MOTIVO_CANCELACION_ALERTA: Record<MotivoCancelacionAlerta, string> = {
+  YA_FUE_ATENDIDO: 'Ya lo estaban atendiendo',
+  FALSA_ALARMA: 'Era una falsa alarma',
+  ERROR: 'Pidió ayuda por error',
+  OTRO: 'Ya no hacía falta',
+}
+
+/** La respuesta a "¿Quién necesitaba la ambulancia?", que la app pregunta al retirar el pedido. */
+export function textoEmisorEsPaciente(emisorEsPaciente: boolean): string {
+  return emisorEsPaciente ? 'Quien avisó era el paciente' : 'Avisó por otra persona'
 }
 
 export const TEXTO_ORIGEN_UBICACION: Record<OrigenUbicacion, string> = {

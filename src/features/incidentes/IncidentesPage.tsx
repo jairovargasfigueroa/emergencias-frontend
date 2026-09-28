@@ -9,7 +9,7 @@ import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/iconos'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { estaAbierto, type FiltroEstadoIncidente, type IncidenteResumen } from './api'
-import { esFiltro, FILTROS } from './busqueda'
+import { esFiltro, FILTROS, type BusquedaIncidentes } from './busqueda'
 import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidentesQuery } from './queries'
 import { TEXTO_FILTRO } from './textos'
@@ -154,7 +154,7 @@ export function IncidentesPage() {
                 <TablaVacia>{SIN_INCIDENTES[filtro]}</TablaVacia>
               ) : (
                 incidentes.data.contenido.map((incidente) => (
-                  <FilaIncidente key={incidente.id} incidente={incidente} ahora={ahora} />
+                  <FilaIncidente key={incidente.id} incidente={incidente} busqueda={busqueda} ahora={ahora} />
                 ))
               )}
             </Tabla>
@@ -168,11 +168,23 @@ export function IncidentesPage() {
   )
 }
 
+type PropsFila = {
+  incidente: IncidenteResumen
+  /** El filtro y la página de esta lista: el detalle los guarda para volver a ella tal como estaba. */
+  busqueda: BusquedaIncidentes
+  ahora: number
+}
+
 /** Toda la fila es un enlace al detalle del incidente. */
-function FilaIncidente({ incidente, ahora }: { incidente: IncidenteResumen; ahora: number }) {
+function FilaIncidente({ incidente, busqueda, ahora }: PropsFila) {
   const abierto = estaAbierto(incidente.estado)
   return (
-    <Link to="/incidentes/$incidenteId" params={{ incidenteId: incidente.id }} style={{ textDecoration: 'none' }}>
+    <Link
+      to="/incidentes/$incidenteId"
+      params={{ incidenteId: incidente.id }}
+      search={busqueda}
+      style={{ textDecoration: 'none' }}
+    >
       <FilaTabla columnas={COLUMNAS} alto={64} interactiva>
         <Text fontFamily="$mono" fontSize={13} fontWeight="500" color="$texto">
           {incidente.id}

@@ -50,13 +50,19 @@ const COLUMNAS_ALERTAS: ColumnaTabla[] = [
  */
 export function DetalleIncidentePage() {
   const { incidenteId } = rutaApi.useParams()
+  // El filtro y la página de la lista desde la que se abrió. Vacía si se entró directo: se vuelve a la de siempre.
+  const busquedaDeLaLista = rutaApi.useSearch()
   const idValido = Number.isInteger(incidenteId) && incidenteId > 0
   const incidente = useQuery({ ...incidenteQuery(incidenteId), enabled: idValido })
   const noExiste = !idValido || (incidente.error instanceof ErrorApi && incidente.error.status === 404)
 
   return (
     <>
-      <Link to="/incidentes" style={{ textDecoration: 'none', alignSelf: 'flex-start', marginBottom: -12 }}>
+      <Link
+        to="/incidentes"
+        search={busquedaDeLaLista}
+        style={{ textDecoration: 'none', alignSelf: 'flex-start', marginBottom: -12 }}
+      >
         <XStack items="center" gap={4} height={28} hoverStyle={{ opacity: 0.75 }}>
           <IconoAnterior size={16} color="var(--textoSecundario)" />
           <Text fontSize={13} fontWeight="500" color="$textoSecundario">

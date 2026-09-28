@@ -4,18 +4,25 @@ import { useState, type ReactNode } from 'react'
 import { Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
-import { fechaHora, fechaHoraCorta } from '../../shared/formato/fechas'
+import { TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
+import { fechaHora, fechaHoraCorta, hora } from '../../shared/formato/fechas'
+import { useAhora } from '../../shared/reloj/useAhora'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
-import { TEXTO_TIPO_UNIDAD } from '../flota/api'
-import { esperaUnidad, tipoCorregido, type Traslado, type TrasladoDelPanel } from './api'
+import { TEXTO_TIPO_UNIDAD, TIPO_UNIDAD_CORTO } from '../flota/api'
+import { TEXTO_HITO } from '../monitoreo/textos'
+import { tipoCorregido, type Traslado, type TrasladoDelPanel } from './api'
+import { AvisoDelProblema } from './AvisosDeTraslado'
 import { DialogoAsignar } from './DialogoAsignar'
 import { InsigniaEstadoTraslado } from './InsigniasDeTraslado'
 import { trasladoQuery } from './queries'
 import { EXPLICACION_ESTADO, TEXTO_MOVILIDAD } from './textos'
 
 const rutaApi = getRouteApi('/protegida/traslados/$trasladoId')
+
+/** Cada cuánto se recalcula lo que le queda si está sin unidad. Se muestra en minutos: alcanza con esto. */
+const INTERVALO_RELOJ_MS = 15_000
 
 /** Todo lo que el ciudadano cargó y lo que pasó después, para cuando el administrador necesita mirar de cerca. */
 export function DetalleTrasladoPage() {
@@ -71,7 +78,8 @@ type PropsContenido = {
 
 function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) {
   const { traslado } = fila
-  const explicacion = EXPLICACION_ESTADO[traslado.estado]
+  const ahora = useAhora(INTERVALO_RELOJ_MS)
+  const explicacion = explicacionDe(fila)
 
   return (
     <>
@@ -93,18 +101,47 @@ function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) 
 
       <XStack items="center" gap={12} flexWrap="wrap">
         <InsigniaEstadoTraslado estado={traslado.estado} />
-        {esperaUnidad(traslado.estado) ? (
-          <Button size="$3" variant="outlined" onPress={() => onAsignar(traslado)}>
-            <Button.Text fontSize={13} fontWeight="600" color="$texto">
-              Asignar una unidad
-            </Button.Text>
-          </Button>
-        ) : null}
       </XStack>
+
+      {fila.problema ? (
+        <Aviso
+          tono={fila.problema === 'SIN_UNIDAD' ? 'neutro' : 'rojo'}
+          accion={
+            fila.problema === 'SIN_UNIDAD' ? (
+              <Button size="$3" variant="outlined" onPress={() => onAsignar(traslado)}>
+                <Button.Text fontSize={13} fontWeight="600" color="$texto">
+                  Asignar una unidad
+                </Button.Text>
+              </Button>
+            ) : undefined
+          }
+        >
+          <AvisoDelProblema fila={fila} ahora={ahora} />
+        </Aviso>
+      ) : null}
+
+      {/* Lo corrigió alguien que tuvo al paciente enfrente: cambia qué unidad sirve, así que va bien a la vista. */}
+      {tipoCorregido(traslado) ? (
+        <Aviso tono="ambar">
+          <Text fontSize={13} fontWeight="600" color="$enAtencionTexto">
+            Pedido: {TIPO_UNIDAD_CORTO[traslado.tipoUnidadPedido]} · Hace falta: {TIPO_UNIDAD_CORTO[traslado.tipoUnidad]}{' '}
+            (lo corrigió la tripulación)
+          </Text>
+        </Aviso>
+      ) : null}
 
       {explicacion ? (
         <Paragraph fontSize={14} lineHeight={20} color="$textoSecundario">
           {explicacion}
+        </Paragraph>
+      ) : null}
+
+      {/* La devolución puede venir de la tripulación o del administrador: se cuenta sin decir quién. */}
+      {fila.horaDevolucion ? (
+        <Paragraph fontSize={14} lineHeight={20} color="$textoSecundario">
+          {traslado.estado === 'BUSCANDO_UNIDAD'
+            ? `Volvió a la búsqueda a las ${hora(fila.horaDevolucion)}, por eso va primero en la fila.`
+            : `Volvió a la búsqueda a las ${hora(fila.horaDevolucion)}.`}
         </Paragraph>
       ) : null}
 
@@ -132,19 +169,13 @@ function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) 
           etiqueta="Tiene que estar"
           valor={traslado.horaCita ? fechaHora(traslado.horaCita) : 'Pedido para lo antes posible'}
         />
+        <Dato etiqueta="Ventana de recogida" valor={textoDeLaRecogida(traslado)} />
         <Dato etiqueta="Salida estimada" valor={fechaHora(traslado.horaSalidaEstimada)} />
         <Dato etiqueta="Última salida posible" valor={fechaHora(traslado.horaLimiteSalida)} />
       </Seccion>
 
       <Seccion titulo="Unidad">
-        <Dato
-          etiqueta="Tipo que necesita"
-          valor={
-            tipoCorregido(traslado)
-              ? `${TEXTO_TIPO_UNIDAD[traslado.tipoUnidad]} (corregido; se pidió ${TEXTO_TIPO_UNIDAD[traslado.tipoUnidadPedido]})`
-              : TEXTO_TIPO_UNIDAD[traslado.tipoUnidad]
-          }
-        />
+        <Dato etiqueta="Tipo que necesita" valor={TEXTO_TIPO_UNIDAD[traslado.tipoUnidad]} />
         <Dato etiqueta="Unidad asignada" valor={fila.placa} />
         <Dato etiqueta="Paramédico" valor={fila.paramedico} />
         {fila.estadoAtencion ? (
@@ -156,8 +187,34 @@ function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) 
           </XStack>
         ) : null}
       </Seccion>
+
+      {/* Los hitos de la unidad que lo tiene o lo terminó. Sin unidad no hay nada que contar. */}
+      {fila.hitos.length > 0 ? (
+        <Seccion titulo="Lo que hizo la unidad">
+          {fila.hitos.map((hito) => (
+            <Dato key={hito.clave} etiqueta={TEXTO_HITO[hito.clave]} valor={hora(hito.hora)} />
+          ))}
+        </Seccion>
+      ) : null}
     </>
   )
+}
+
+/** Por qué está como está. Si fue una unidad y nadie viajó, el motivo que dio la tripulación completa la frase. */
+function explicacionDe(fila: TrasladoDelPanel): string | null {
+  const explicacion = EXPLICACION_ESTADO[fila.traslado.estado] ?? null
+  if (explicacion && fila.traslado.estado === 'NO_REALIZADO' && fila.motivoSinTraslado) {
+    return `${explicacion} ${TEXTO_MOTIVO_SIN_TRASLADO[fila.motivoSinTraslado]}.`
+  }
+  return explicacion
+}
+
+/** "Recoger entre 10:05 y 10:25": lo que se le prometió a la familia. Null en los pedidos anteriores a la ventana. */
+function textoDeLaRecogida(traslado: Traslado) {
+  if (!traslado.horaRecogidaDesde || !traslado.horaRecogidaHasta) {
+    return null
+  }
+  return `Recoger entre ${hora(traslado.horaRecogidaDesde)} y ${hora(traslado.horaRecogidaHasta)}`
 }
 
 function necesidades(traslado: Traslado) {
@@ -171,6 +228,37 @@ function necesidades(traslado: Traslado) {
 
 function coordenadas({ latitud, longitud }: { latitud: number; longitud: number }) {
   return `${latitud.toFixed(5)}, ${longitud.toFixed(5)}`
+}
+
+type PropsAviso = {
+  /** Rojo para lo que pide una decisión; ámbar para lo que conviene saber; neutro mientras el sistema sigue solo. */
+  tono: 'rojo' | 'ambar' | 'neutro'
+  /** El botón que lo resuelve, al lado del texto. */
+  accion?: ReactNode
+  children: ReactNode
+}
+
+/** Un aviso a todo el ancho, arriba de las secciones: es lo primero que hay que ver al abrir el traslado. */
+function Aviso({ tono, accion, children }: PropsAviso) {
+  return (
+    <XStack
+      items="center"
+      justify="space-between"
+      gap={16}
+      flexWrap="wrap"
+      px={16}
+      py={12}
+      rounded={12}
+      bg={tono === 'rojo' ? '$primarioTinte' : tono === 'ambar' ? '$enAtencionTinte' : '$superficie'}
+      borderWidth={1}
+      borderColor={tono === 'neutro' ? '$borde' : 'transparent'}
+    >
+      <YStack flex={1} minW={240}>
+        {children}
+      </YStack>
+      {accion}
+    </XStack>
+  )
 }
 
 function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {

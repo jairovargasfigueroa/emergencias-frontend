@@ -20,7 +20,8 @@ export const TEXTO_MOVILIDAD: Record<Movilidad, string> = {
 /** Por qué cada estado terminal terminó así, para el detalle. */
 export const EXPLICACION_ESTADO: Partial<Record<EstadoTraslado, string>> = {
   BUSCANDO_UNIDAD: 'Se sigue buscando una unidad que sirva. Pasada la hora límite, el pedido se cierra.',
-  NO_REALIZADO: 'Fue una unidad pero nadie viajó. El motivo está en la atención.',
+  // El detalle le suma el motivo que dio la tripulación.
+  NO_REALIZADO: 'Fue una unidad pero nadie viajó.',
   NO_CUBIERTO: 'Se pasó la última salida posible sin conseguir unidad.',
 }
 

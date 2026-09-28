@@ -124,7 +124,7 @@ export function PersonalPage() {
     })
   }
 
-  /** El menú de cada fila solo lleva lo que esa persona puede hacer hoy. */
+  /** El menú de cada fila lleva lo que esa persona puede hacer hoy, y apagado lo que va a poder al salir de turno. */
   function accionesDe(paramedico: Paramedico): AccionDeMenu[] {
     const historialDeAsignaciones: AccionDeMenu = {
       etiqueta: 'Historial',
@@ -142,6 +142,10 @@ export function PersonalPage() {
         historialDeAsignaciones,
       ]
     }
+
+    // Con el turno abierto no se lo puede dar de baja ni bajar de su unidad: se quedaría trabajando en algo que el
+    // sistema ya no le reconoce. Se ven apagadas, con el motivo, hasta que se le cierre el turno.
+    const motivoEnTurno = paramedico.enTurno ? 'Está en turno: ciérrale el turno primero' : undefined
 
     return [
       paramedico.asignacionVigente
@@ -168,6 +172,7 @@ export function PersonalPage() {
             {
               etiqueta: 'Quitar de la unidad',
               icono: <IconoQuitar size={16} />,
+              motivo: motivoEnTurno,
               onElegir: () => setConfirmacion({ tipo: 'quitar', paramedico }),
             },
           ]
@@ -176,6 +181,7 @@ export function PersonalPage() {
         etiqueta: 'Desactivar',
         icono: <IconoApagar size={16} color="var(--primarioPresionado)" />,
         tono: 'peligro',
+        motivo: motivoEnTurno,
         onElegir: () => setConfirmacion({ tipo: 'desactivar', paramedico }),
       },
       historialDeAsignaciones,

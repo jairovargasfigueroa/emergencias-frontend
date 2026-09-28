@@ -32,6 +32,7 @@ export const editarParamedicoMutation = (queryClient: QueryClient) =>
     onSuccess: () => refrescarPersonal(queryClient),
   })
 
+/** Falla con 409 `PARAMEDICO_EN_TURNO` si está en turno: primero hay que cerrárselo. */
 export const desactivarParamedicoMutation = (queryClient: QueryClient) =>
   mutationOptions({
     mutationFn: (paramedicoId: number) => personalApi.desactivar(paramedicoId),

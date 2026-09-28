@@ -39,6 +39,8 @@ export type Ambulancia = {
   tipoUnidad: TipoUnidad
   estado: EstadoAmbulancia
   activa: boolean
+  /** Cuántos paramédicos tienen turno abierto en ella. Con alguien adentro no se la puede desactivar. */
+  tripulantesEnTurno: number
 }
 
 /** `RegistrarAmbulanciaRequest` del backend. */

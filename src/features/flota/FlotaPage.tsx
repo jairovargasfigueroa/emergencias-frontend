@@ -31,8 +31,6 @@ const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Acciones', ancho: 96, alinearDerecha: true },
 ]
 
-const MOTIVO_EN_ATENCION = 'Tiene una atención en curso'
-
 /** Las dos acciones que se confirman antes de correr, porque cambian de golpe si la unidad se ofrece o no. */
 type Confirmacion = { tipo: 'desactivar' | 'activar'; ambulancia: Ambulancia }
 
@@ -127,9 +125,18 @@ export function FlotaPage() {
       ]
     }
 
-    // Con una atención en curso estas dos sí se van a poder al entregar al paciente: se muestran apagadas con el
-    // motivo, para que no parezca que la pantalla las perdió.
-    const motivo = ambulancia.estado === 'EN_ATENCION' ? MOTIVO_EN_ATENCION : undefined
+    // Mientras atiende no se la puede sacar de servicio ni dar de baja, y con gente de turno adentro tampoco darla de
+    // baja. Las dos se van a poder más tarde: se muestran apagadas con el motivo, que dice además cómo destrabarlas,
+    // para que no parezca que la pantalla las perdió.
+    const atendiendo = ambulancia.estado === 'EN_ATENCION'
+    const motivoFueraDeServicio = atendiendo
+      ? 'Está atendiendo: que la tripulación cancele por avería o cierra la atención en el Centro de control'
+      : undefined
+    const motivoDesactivar = atendiendo
+      ? 'Está atendiendo'
+      : ambulancia.tripulantesEnTurno > 0
+        ? 'Tiene gente de turno: ciérrales el turno primero'
+        : undefined
 
     return [
       { etiqueta: 'Editar', icono: <IconoEditar size={16} />, onElegir: () => setPorEditar(ambulancia) },
@@ -142,14 +149,14 @@ export function FlotaPage() {
         : {
             etiqueta: 'Fuera de servicio',
             icono: <IconoLlave size={16} />,
-            motivo,
+            motivo: motivoFueraDeServicio,
             onElegir: () => ejecutar(fueraDeServicio, ambulancia, 'Ambulancia fuera de servicio'),
           },
       {
         etiqueta: 'Desactivar',
         icono: <IconoApagar size={16} color="var(--primarioPresionado)" />,
         tono: 'peligro',
-        motivo,
+        motivo: motivoDesactivar,
         onElegir: () => setConfirmacion({ tipo: 'desactivar', ambulancia }),
       },
       historialDeAsignaciones,

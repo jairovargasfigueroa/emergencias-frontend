@@ -37,6 +37,7 @@ export const editarAmbulanciaMutation = (queryClient: QueryClient) =>
     onSuccess: () => refrescarFlota(queryClient),
   })
 
+/** Falla con 409 `AMBULANCIA_EN_ATENCION` si está atendiendo. */
 export const marcarFueraDeServicioMutation = (queryClient: QueryClient) =>
   mutationOptions({
     mutationFn: (ambulanciaId: number) => ambulanciasApi.marcarFueraDeServicio(ambulanciaId),
@@ -49,6 +50,7 @@ export const reactivarAmbulanciaMutation = (queryClient: QueryClient) =>
     onSuccess: () => refrescarFlota(queryClient),
   })
 
+/** Falla con 409 `AMBULANCIA_EN_ATENCION` si está atendiendo, o `PARAMEDICO_EN_TURNO` si tiene gente de turno. */
 export const desactivarAmbulanciaMutation = (queryClient: QueryClient) =>
   mutationOptions({
     mutationFn: (ambulanciaId: number) => ambulanciasApi.desactivar(ambulanciaId),

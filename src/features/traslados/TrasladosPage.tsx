@@ -3,7 +3,7 @@ import { getRouteApi, Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button, Spinner, Text, ToggleGroup, XStack, YStack } from 'tamagui'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
-import { comoDia, hora } from '../../shared/formato/fechas'
+import { comoDia } from '../../shared/formato/fechas'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/iconos'
@@ -14,11 +14,14 @@ import { esVista, TEXTO_VISTA, VISTAS, type BusquedaTraslados } from './busqueda
 import { DialogoAsignar } from './DialogoAsignar'
 import { InsigniaEstadoTraslado } from './InsigniasDeTraslado'
 import { problemasQuery, trasladosDelDiaQuery } from './queries'
+import { ventanaDeRecogida } from './textos'
 
 const rutaApi = getRouteApi('/protegida/traslados')
 
+// El recojo es la ventana que se le prometió a la familia, "10:05–10:25", y no la hora de salida: es con lo que se
+// compara para saber si la unidad viene atrasada.
 const COLUMNAS: ColumnaTabla[] = [
-  { titulo: 'Recojo', ancho: 90 },
+  { titulo: 'Recojo', ancho: 124 },
   { titulo: 'Paciente', ancho: 180 },
   { titulo: 'Recorrido' },
   { titulo: 'Unidad', ancho: 160 },
@@ -176,6 +179,7 @@ type PropsFila = {
 /** Toda la fila lleva al detalle; el botón de asignar se resuelve sin salir de la tabla. */
 function FilaTraslado({ fila, busqueda, onAsignar }: PropsFila) {
   const { traslado } = fila
+  const ventana = ventanaDeRecogida(traslado)
   return (
     <Link
       to="/traslados/$trasladoId"
@@ -184,8 +188,8 @@ function FilaTraslado({ fila, busqueda, onAsignar }: PropsFila) {
       style={{ textDecoration: 'none', color: 'inherit' }}
     >
       <FilaTabla columnas={COLUMNAS} interactiva>
-        <Text fontSize={14} fontFamily="$mono" color="$texto">
-          {hora(traslado.horaSalidaEstimada)}
+        <Text fontSize={14} fontFamily="$mono" color={ventana ? '$texto' : '$textoTenue'}>
+          {ventana ?? '—'}
         </Text>
 
         <YStack gap={2} minW={0}>

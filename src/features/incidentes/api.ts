@@ -1,5 +1,6 @@
 import { api, type Pagina } from '../../shared/api/cliente'
 import type { EstadoAtencion, MotivoCancelacionAtencion, MotivoSinTraslado } from '../../shared/atencion/api'
+import type { UnidadCandidata } from '../flota/api'
 
 export type EstadoIncidente = 'ACTIVO' | 'EN_ATENCION' | 'ATENDIDO' | 'FALSA_ALARMA' | 'ATENDIDO_EXTERNAMENTE' | 'CANCELADO'
 
@@ -128,4 +129,11 @@ export const incidentesApi = {
     return api.get<Pagina<IncidenteResumen>>(`/incidentes?${parametros}`, signal)
   },
   detalle: (id: number, signal?: AbortSignal) => api.get<IncidenteDetalle>(`/incidentes/${id}`, signal),
+  /** Las disponibles, de la más cercana al lugar a la más lejana; las que nunca reportaron posición, al final. */
+  unidades: (id: number, signal?: AbortSignal) => api.get<UnidadCandidata[]>(`/incidentes/${id}/unidades`, signal),
+  /**
+   * La central manda esa unidad y su tripulación recibe el aviso. Si el incidente ya tiene otra trabajando, esta se
+   * suma. Responde sin cuerpo.
+   */
+  despachar: (id: number, ambulanciaId: number) => api.post<void>(`/incidentes/${id}/despacho`, { ambulanciaId }),
 }

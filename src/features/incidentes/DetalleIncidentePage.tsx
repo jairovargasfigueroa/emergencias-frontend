@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 import { Anchor, Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
 import { TEXTO_MOTIVO_CANCELACION_ATENCION, TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
 import { fechaHora, fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
 import { useAhora } from '../../shared/reloj/useAhora'
+import { BotonPrimario } from '../../shared/ui/botones'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
@@ -20,6 +21,7 @@ import {
   type IncidenteDetalle,
   type Ubicacion,
 } from './api'
+import { DialogoEnviarUnidad, type IncidenteParaEnviar } from './DialogoEnviarUnidad'
 import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidenteQuery } from './queries'
 import {
@@ -46,8 +48,9 @@ const COLUMNAS_ALERTAS: ColumnaTabla[] = [
 ]
 
 /**
- * Detalle de un incidente, solo lectura: cómo está, las alertas que lo formaron y lo que hizo cada unidad, con la hora
- * de cada hito. En la operación lo que más importa es el tiempo, por eso cada hito dice cuánto tardó.
+ * Detalle de un incidente: cómo está, las alertas que lo formaron y lo que hizo cada unidad, con la hora de cada hito.
+ * En la operación lo que más importa es el tiempo, por eso cada hito dice cuánto tardó. Mientras está abierto, la
+ * central puede mandarle una unidad.
  */
 export function DetalleIncidentePage() {
   const { incidenteId } = rutaApi.useParams()
@@ -56,6 +59,7 @@ export function DetalleIncidentePage() {
   const idValido = Number.isInteger(incidenteId) && incidenteId > 0
   const incidente = useQuery({ ...incidenteQuery(incidenteId), enabled: idValido })
   const noExiste = !idValido || (incidente.error instanceof ErrorApi && incidente.error.status === 404)
+  const [aEnviar, setAEnviar] = useState<IncidenteParaEnviar | null>(null)
 
   return (
     <>
@@ -102,6 +106,9 @@ export function DetalleIncidentePage() {
         <ErrorAlCargar error={incidente.error} onReintentar={() => incidente.refetch()} />
       ) : (
         <>
+          {estaAbierto(incidente.data.estado) ? (
+            <AccionesDelIncidente incidente={incidente.data} onEnviar={() => setAEnviar(incidente.data)} />
+          ) : null}
           <Resumen incidente={incidente.data} />
           <Seccion titulo={`Alertas (${incidente.data.alertas.length})`}>
             <TablaAlertas alertas={incidente.data.alertas} />
@@ -111,7 +118,40 @@ export function DetalleIncidentePage() {
           </Seccion>
         </>
       )}
+
+      <DialogoEnviarUnidad incidente={aEnviar} onCerrar={() => setAEnviar(null)} />
     </>
+  )
+}
+
+type PropsAcciones = {
+  incidente: IncidenteDetalle
+  onEnviar: () => void
+}
+
+/**
+ * Lo que la central puede hacer con un incidente abierto, antes que el resto del detalle. Enviar una unidad va
+ * destacado cuando nadie lo está atendiendo, que es cuando hace falta que alguien decida.
+ */
+function AccionesDelIncidente({ incidente, onEnviar }: PropsAcciones) {
+  const nadieVa = incidente.unidadesAcudiendo === 0
+
+  return (
+    <XStack items="center" gap={12} flexWrap="wrap">
+      {nadieVa ? (
+        <BotonPrimario size="$3" onPress={onEnviar}>
+          <Button.Text color="$primarioTexto" fontSize={13} fontWeight="600">
+            Enviar una unidad
+          </Button.Text>
+        </BotonPrimario>
+      ) : (
+        <Button size="$3" variant="outlined" onPress={onEnviar}>
+          <Button.Text fontSize={13} fontWeight="600" color="$texto">
+            Enviar una unidad
+          </Button.Text>
+        </Button>
+      )}
+    </XStack>
   )
 }
 

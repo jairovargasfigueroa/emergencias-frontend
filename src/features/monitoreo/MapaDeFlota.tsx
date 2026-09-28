@@ -84,7 +84,7 @@ export function MapaDeFlota({ unidades, incidentes, enfocada, alto }: Props) {
             Falta configurar el mapa
           </Text>
           <Paragraph fontSize={13} lineHeight={18} color="$textoSecundario" text="center">
-            Completá VITE_GOOGLE_MAPS_API_KEY y VITE_GOOGLE_MAPS_MAP_ID en .env.local y volvé a levantar el panel.
+            Completa VITE_GOOGLE_MAPS_API_KEY y VITE_GOOGLE_MAPS_MAP_ID en .env.local y vuelve a levantar el panel.
           </Paragraph>
         </YStack>
       </Recuadro>

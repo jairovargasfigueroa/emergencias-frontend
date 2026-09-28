@@ -3,6 +3,8 @@ import { getRouteApi, Link } from '@tanstack/react-router'
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Anchor, Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
+import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
+import { TEXTO_MOTIVO_CANCELACION_ATENCION, TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
 import { fechaHora, fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
@@ -11,19 +13,18 @@ import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui
 import {
   atencionResuelta,
   estaAbierto,
+  ocupaLaUnidad,
   type AlertaDeIncidente,
   type AtencionDeIncidente,
   type IncidenteDetalle,
   type Ubicacion,
 } from './api'
-import { InsigniaEstadoAtencion, InsigniaEstadoIncidente } from './InsigniasDeEstado'
+import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidenteQuery } from './queries'
 import {
   TEXTO_ESTADO_ALERTA,
   TEXTO_MOTIVO_CANCELACION_ALERTA,
-  TEXTO_MOTIVO_CANCELACION_ATENCION,
   TEXTO_MOTIVO_CIERRE,
-  TEXTO_MOTIVO_SIN_TRASLADO,
   TEXTO_ORIGEN_UBICACION,
   textoEmisorEsPaciente,
 } from './textos'
@@ -49,13 +50,19 @@ const COLUMNAS_ALERTAS: ColumnaTabla[] = [
  */
 export function DetalleIncidentePage() {
   const { incidenteId } = rutaApi.useParams()
+  // El filtro y la página de la lista desde la que se abrió. Vacía si se entró directo: se vuelve a la de siempre.
+  const busquedaDeLaLista = rutaApi.useSearch()
   const idValido = Number.isInteger(incidenteId) && incidenteId > 0
   const incidente = useQuery({ ...incidenteQuery(incidenteId), enabled: idValido })
   const noExiste = !idValido || (incidente.error instanceof ErrorApi && incidente.error.status === 404)
 
   return (
     <>
-      <Link to="/incidentes" style={{ textDecoration: 'none', alignSelf: 'flex-start', marginBottom: -12 }}>
+      <Link
+        to="/incidentes"
+        search={busquedaDeLaLista}
+        style={{ textDecoration: 'none', alignSelf: 'flex-start', marginBottom: -12 }}
+      >
         <XStack items="center" gap={4} height={28} hoverStyle={{ opacity: 0.75 }}>
           <IconoAnterior size={16} color="var(--textoSecundario)" />
           <Text fontSize={13} fontWeight="500" color="$textoSecundario">
@@ -256,7 +263,7 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
   const hitos: Hito[] = [
     { nombre: 'Llegó al lugar', hora: atencion.horaLlegada, ubicacion: atencion.ubicacionLlegada },
     { nombre: 'Paciente a bordo', hora: atencion.horaRecogida, ubicacion: atencion.ubicacionRecogida },
-    { nombre: 'Llegó al hospital', hora: atencion.horaLlegadaHospital, ubicacion: atencion.ubicacionLlegadaHospital },
+    { nombre: 'Llegó al destino', hora: atencion.horaLlegadaHospital, ubicacion: atencion.ubicacionLlegadaHospital },
     { nombre: 'Entregó al paciente', hora: atencion.horaEntrega, ubicacion: atencion.ubicacionEntrega },
   ]
   // Una salida que se cortó ya no tiene hitos pendientes: quedan los que ocurrieron y cómo terminó.
@@ -290,7 +297,8 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
           <Text fontFamily="$mono" fontSize={15} fontWeight="600" color="$texto">
             {atencion.placa}
           </Text>
-          <InsigniaEstadoAtencion atencion={atencion} />
+          {/* El punto dice que la ambulancia sigue tomada, aunque ya haya entregado al paciente. */}
+          <InsigniaEstadoAtencion estado={atencion.estado} conPunto={ocupaLaUnidad(atencion)} />
         </XStack>
 
         <XStack flexWrap="wrap" rowGap={16} columnGap={48}>
@@ -321,13 +329,18 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
             </Dato>
           ) : null}
           <Dato etiqueta="Paciente">{paciente ? <Valor>{paciente}</Valor> : <Valor tenue>Sin datos</Valor>}</Dato>
-          <Dato etiqueta="Destino">
-            {destino ? (
-              <Valor>{destino}</Valor>
-            ) : (
-              <Valor tenue>{sinTraslado ? 'No hubo traslado' : atencion.horaEntrega ? 'Sin datos' : 'Todavía no se entrega'}</Valor>
-            )}
-          </Dato>
+          {/* Una cancelada no va a entregar a nadie: la línea de la cancelación, con su motivo, ya dice cómo terminó. */}
+          {cancelada ? null : (
+            <Dato etiqueta="Destino">
+              {destino ? (
+                <Valor>{destino}</Valor>
+              ) : (
+                <Valor tenue>
+                  {sinTraslado ? 'No hubo traslado' : atencion.horaEntrega ? 'Sin datos' : 'Todavía no se entrega'}
+                </Valor>
+              )}
+            </Dato>
+          )}
         </XStack>
       </YStack>
     </Tarjeta>

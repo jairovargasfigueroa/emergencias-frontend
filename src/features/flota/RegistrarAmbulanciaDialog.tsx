@@ -12,7 +12,7 @@ import { SelectorTipoUnidad } from './SelectorTipoUnidad'
 
 const esquema = z.object({
   placa: z.string().trim().min(1, 'La placa es obligatoria.'),
-  tipoUnidad: z.enum(TIPOS_UNIDAD, { message: 'Elegí el tipo de unidad.' }),
+  tipoUnidad: z.enum(TIPOS_UNIDAD, { message: 'Elige el tipo de unidad.' }),
 })
 
 type Props = {

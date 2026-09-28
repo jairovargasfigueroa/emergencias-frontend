@@ -1,9 +1,10 @@
 import { onValue, ref, type Unsubscribe } from 'firebase/database'
 import { api } from '../../shared/api/cliente'
+import type { EstadoAtencion } from '../../shared/atencion/api'
 import { baseDatosFirebase } from '../../shared/firebase/baseDatos'
 import type { EstadoAmbulancia, TipoUnidad } from '../flota/api'
 import type { EstadoIncidente } from '../incidentes/api'
-import type { EstadoAtencion, TrasladoDelPanel } from '../traslados/api'
+import type { TrasladoDelPanel } from '../traslados/api'
 
 /** Nodo que publica el servidor: un hijo por ambulancia que alguna vez reportó, con su id como clave. */
 const NODO_POSICIONES = 'posiciones'

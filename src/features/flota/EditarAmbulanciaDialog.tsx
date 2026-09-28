@@ -13,7 +13,7 @@ import { SelectorTipoUnidad } from './SelectorTipoUnidad'
 // Las mismas reglas que al registrar: la placa y el tipo se piden igual se esté creando o corrigiendo.
 const esquema = z.object({
   placa: z.string().trim().min(1, 'La placa es obligatoria.'),
-  tipoUnidad: z.enum(TIPOS_UNIDAD, { message: 'Elegí el tipo de unidad.' }),
+  tipoUnidad: z.enum(TIPOS_UNIDAD, { message: 'Elige el tipo de unidad.' }),
 })
 
 const MOTIVO_TIPO_BLOQUEADO =
@@ -84,7 +84,7 @@ export function EditarAmbulanciaDialog({ ambulancia, onCerrar }: Props) {
               Editar ambulancia
             </Dialog.Title>
             <Dialog.Description color="$textoSecundario" fontSize={14} lineHeight={21}>
-              Corregí la placa o el tipo con que quedó registrada.
+              Corrige la placa o el tipo con que quedó registrada.
             </Dialog.Description>
           </YStack>
 

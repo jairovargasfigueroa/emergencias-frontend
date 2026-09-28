@@ -1,4 +1,5 @@
 import { api, type Pagina } from '../../shared/api/cliente'
+import type { EstadoAtencion, MotivoCancelacionAtencion, MotivoSinTraslado } from '../../shared/atencion/api'
 
 export type EstadoIncidente = 'ACTIVO' | 'EN_ATENCION' | 'ATENDIDO' | 'FALSA_ALARMA' | 'ATENDIDO_EXTERNAMENTE' | 'CANCELADO'
 
@@ -10,25 +11,6 @@ export type EstadoAlerta = 'RECIBIDA' | 'VINCULADA' | 'CANCELADA' | 'DESCARTADA'
 export type MotivoCancelacionAlerta = 'YA_FUE_ATENDIDO' | 'FALSA_ALARMA' | 'ERROR' | 'OTRO'
 
 export type OrigenUbicacion = 'GPS' | 'MANUAL'
-
-export type EstadoAtencion =
-  | 'EN_CAMINO'
-  | 'EN_EL_LUGAR'
-  | 'PACIENTE_RECOGIDO'
-  | 'EN_HOSPITAL'
-  | 'PACIENTE_ENTREGADO'
-  | 'SIN_TRASLADO'
-  | 'CANCELADA'
-
-export type MotivoCancelacionAtencion = 'AVERIA' | 'NO_SE_ENCONTRO_PACIENTE' | 'DESVIADA' | 'OTRO'
-
-/** Con qué se encontró la unidad cuando la salida terminó sin llevar a nadie. */
-export type MotivoSinTraslado =
-  | 'ATENDIDO_EN_EL_LUGAR'
-  | 'PACIENTE_RECHAZO'
-  | 'NO_HABIA_PACIENTE'
-  | 'TRASLADO_POR_OTRO_MEDIO'
-  | 'FALLECIDO'
 
 /** `FiltroEstadoIncidente` del backend: ABIERTOS son ACTIVO y EN_ATENCION; CERRADOS, los cuatro estados finales. */
 export type FiltroEstadoIncidente = 'ABIERTOS' | 'CERRADOS' | 'TODOS'

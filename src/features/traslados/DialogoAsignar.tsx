@@ -1,14 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Dialog, Spinner, Text, XStack, YStack, useToastController } from 'tamagui'
+import { Button, Dialog, XStack, YStack, useToastController } from 'tamagui'
 import { codigoDeError, mensajeDeError } from '../../shared/api/cliente'
-import { textoDistancia } from '../../shared/formato/distancia'
-import { tiempoTranscurrido } from '../../shared/formato/fechas'
-import { BotonPrimario } from '../../shared/ui/botones'
-import { ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
-import { Insignia } from '../../shared/ui/Insignia'
-import { TIPO_UNIDAD_CORTO } from '../flota/api'
-import type { Traslado, UnidadParaTraslado } from './api'
+import { TIPO_UNIDAD_CORTO, type UnidadCandidata } from '../flota/api'
+import { UnidadesCandidatas, type TextosDeCandidatas } from '../flota/UnidadesCandidatas'
+import type { Traslado } from './api'
 import { asignarTrasladoMutation, unidadesParaTrasladoQuery } from './queries'
+
+const TEXTOS: TextosDeCandidatas = {
+  referencia: 'del origen',
+  yaLoTuvo: 'Ya lo tuvo',
+  sinUnidades:
+    'No hay ninguna unidad disponible que sirva para este traslado. Cuando alguna se libere, el sistema la asigna solo.',
+  elegir: 'Asignar',
+  marcadas: 'El sistema no elegiría las marcadas, pero puedes asignarlas igual si sabes que sirven.',
+}
 
 type Props = {
   traslado: Traslado | null
@@ -28,7 +33,7 @@ export function DialogoAsignar({ traslado, onCerrar }: Props) {
   const unidades = useQuery({ ...unidadesParaTrasladoQuery(traslado?.id ?? 0), enabled: traslado !== null })
   const asignar = useMutation(asignarTrasladoMutation(queryClient))
 
-  function elegir(unidad: UnidadParaTraslado) {
+  function elegir(unidad: UnidadCandidata) {
     if (!traslado) {
       return
     }
@@ -52,11 +57,6 @@ export function DialogoAsignar({ traslado, onCerrar }: Props) {
       },
     )
   }
-
-  // Reintentar después de un error no cambia el estado de la consulta hasta que termina: sin esto, el botón de
-  // reintentar no daría ninguna señal de que está pidiendo.
-  const buscando = unidades.isPending || (unidades.isError && unidades.isFetching)
-  const hayMarcadas = (unidades.data ?? []).some((unidad) => unidad.yaLoTuvo || !unidad.posicionReciente)
 
   return (
     <Dialog modal open={traslado !== null} onOpenChange={(abierto) => !abierto && onCerrar()}>
@@ -88,41 +88,12 @@ export function DialogoAsignar({ traslado, onCerrar }: Props) {
             </Dialog.Description>
           </YStack>
 
-          {buscando ? (
-            <XStack items="center" gap={8} py={12}>
-              <Spinner size="small" color="$textoSecundario" />
-              <Text fontSize={14} color="$textoSecundario">
-                Buscando unidades…
-              </Text>
-            </XStack>
-          ) : unidades.isError ? (
-            <ErrorAlCargar error={unidades.error} onReintentar={() => unidades.refetch()} />
-          ) : unidades.data.length === 0 ? (
-            <Text fontSize={14} lineHeight={20} color="$textoSecundario">
-              No hay ninguna unidad disponible que sirva para este traslado. Cuando alguna se libere, el sistema la
-              asigna solo.
-            </Text>
-          ) : (
-            <YStack gap={10}>
-              <YStack gap={8} maxH={320} overflow="scroll">
-                {unidades.data.map((unidad) => (
-                  <OpcionDeUnidad
-                    key={unidad.ambulanciaId}
-                    unidad={unidad}
-                    consultadaEn={unidades.dataUpdatedAt}
-                    asignando={asignar.isPending && asignar.variables.ambulanciaId === unidad.ambulanciaId}
-                    bloqueada={asignar.isPending}
-                    onElegir={() => elegir(unidad)}
-                  />
-                ))}
-              </YStack>
-              {hayMarcadas ? (
-                <Text fontSize={12} lineHeight={16} color="$textoSecundario">
-                  El sistema no elegiría las marcadas, pero puedes asignarlas igual si sabes que sirven.
-                </Text>
-              ) : null}
-            </YStack>
-          )}
+          <UnidadesCandidatas
+            consulta={unidades}
+            textos={TEXTOS}
+            enviando={asignar.isPending ? asignar.variables.ambulanciaId : null}
+            onElegir={elegir}
+          />
 
           <XStack justify="flex-end">
             <Button size="$4" variant="outlined" disabled={asignar.isPending} onPress={onCerrar}>
@@ -132,74 +103,5 @@ export function DialogoAsignar({ traslado, onCerrar }: Props) {
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog>
-  )
-}
-
-type PropsOpcion = {
-  unidad: UnidadParaTraslado
-  /** Cuándo llegó la lista: con eso se dice de hace cuánto es la posición de una unidad sin GPS reciente. */
-  consultadaEn: number
-  /** Es la que se está asignando ahora: lleva la ruedita. */
-  asignando: boolean
-  /** Mientras se asigna una, no se puede elegir otra. */
-  bloqueada: boolean
-  onElegir: () => void
-}
-
-/**
- * Una unidad de la lista, con lo que hace falta para elegirla: cuán lejos está del origen y, si las tiene, las
- * marcas por las que el barrido no la elegiría. Con una posición vieja se dice de cuándo es, porque la distancia
- * sale de ahí y la unidad puede estar en otro lado.
- */
-function OpcionDeUnidad({ unidad, consultadaEn, asignando, bloqueada, onElegir }: PropsOpcion) {
-  const distancia =
-    unidad.distanciaMetros === null
-      ? 'Nunca reportó su posición'
-      : !unidad.posicionReciente && unidad.posicionEn
-        ? `A ${textoDistancia(unidad.distanciaMetros)} del origen, según su posición de hace ${tiempoTranscurrido(unidad.posicionEn, consultadaEn)}`
-        : `A ${textoDistancia(unidad.distanciaMetros)} del origen`
-
-  return (
-    <XStack
-      items="center"
-      justify="space-between"
-      gap={12}
-      px={12}
-      py={10}
-      rounded={10}
-      borderWidth={1}
-      borderColor="$borde"
-    >
-      <YStack gap={4} flex={1} minW={0}>
-        <XStack items="baseline" gap={8}>
-          <Text fontSize={14} fontWeight="600" color="$texto" fontFamily="$mono">
-            {unidad.placa}
-          </Text>
-          <Text fontSize={12} color="$textoSecundario">
-            {TIPO_UNIDAD_CORTO[unidad.tipoUnidad]}
-          </Text>
-        </XStack>
-        <Text fontSize={12} lineHeight={16} color="$textoSecundario">
-          {distancia}
-        </Text>
-        {unidad.yaLoTuvo || !unidad.posicionReciente ? (
-          <XStack gap={6} flexWrap="wrap">
-            {unidad.yaLoTuvo ? <Insignia tono="ambar">Ya lo tuvo</Insignia> : null}
-            {unidad.posicionReciente ? null : <Insignia tono="ambar">Sin GPS reciente</Insignia>}
-          </XStack>
-        ) : null}
-      </YStack>
-      <BotonPrimario
-        size="$3"
-        disabled={bloqueada}
-        opacity={bloqueada && !asignando ? 0.6 : 1}
-        icon={asignando ? <Spinner size="small" color="$primarioTexto" /> : undefined}
-        onPress={onElegir}
-      >
-        <Button.Text color="$primarioTexto" fontSize={13} fontWeight="600">
-          Asignar
-        </Button.Text>
-      </BotonPrimario>
-    </XStack>
   )
 }

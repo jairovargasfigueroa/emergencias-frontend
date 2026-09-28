@@ -1,6 +1,6 @@
 import { api } from '../../shared/api/cliente'
 import type { EstadoAtencion, MotivoSinTraslado } from '../../shared/atencion/api'
-import type { TipoUnidad } from '../flota/api'
+import type { TipoUnidad, UnidadCandidata } from '../flota/api'
 import type { Hito } from '../monitoreo/api'
 
 export type EstadoTraslado =
@@ -85,25 +85,6 @@ export type TrasladoDelPanel = {
   motivoSinTraslado: MotivoSinTraslado | null
 }
 
-/**
- * `UnidadParaTrasladoResponse` del backend: una unidad disponible, activa y de un tipo que alcanza, con la que se
- * puede asignar a mano. Vienen también las que el barrido no usaría, marcadas: quien asigna a mano puede saber algo
- * que el sistema no.
- */
-export type UnidadParaTraslado = {
-  ambulanciaId: number
-  placa: string
-  tipoUnidad: TipoUnidad
-  /** En línea recta hasta el origen del traslado. Null si la unidad nunca reportó su posición. */
-  distanciaMetros: number | null
-  /** Cuándo reportó su posición por última vez. */
-  posicionEn: string | null
-  /** Reportó su posición en los últimos minutos. Sin eso el barrido no le asigna nada. */
-  posicionReciente: boolean
-  /** Ya tuvo este traslado y lo dejó. El barrido no se lo vuelve a ofrecer. */
-  yaLoTuvo: boolean
-}
-
 /** El pedido sigue vivo: espera su día, espera unidad, o la unidad está en camino. */
 export function trasladoVigente(estado: EstadoTraslado) {
   return estado === 'PROGRAMADO' || estado === 'BUSCANDO_UNIDAD' || estado === 'ASIGNADO'
@@ -133,9 +114,12 @@ export const trasladosApi = {
     api.get<TrasladoDelPanel[]>(dia ? `/traslados?dia=${dia}` : '/traslados', signal),
   problemas: (signal?: AbortSignal) => api.get<TrasladoDelPanel[]>('/traslados/problemas', signal),
   detalle: (id: number, signal?: AbortSignal) => api.get<TrasladoDelPanel>(`/traslados/${id}`, signal),
-  /** De la más cercana al origen a la más lejana; las que nunca reportaron posición, al final. */
+  /**
+   * Solo las de un tipo que alcanza, de la más cercana al origen a la más lejana; las que nunca reportaron posición,
+   * al final.
+   */
   unidades: (id: number, signal?: AbortSignal) =>
-    api.get<UnidadParaTraslado[]>(`/traslados/${id}/unidades`, signal),
+    api.get<UnidadCandidata[]>(`/traslados/${id}/unidades`, signal),
   asignar: (id: number, ambulanciaId: number) =>
     api.post<TrasladoDelPanel>(`/traslados/${id}/asignar`, { ambulanciaId }),
   /** Solo mientras la unidad viene en camino: se lo saca y el traslado vuelve a buscar unidad, primero en la fila. */

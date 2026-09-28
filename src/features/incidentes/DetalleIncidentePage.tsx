@@ -323,13 +323,18 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
             </Dato>
           ) : null}
           <Dato etiqueta="Paciente">{paciente ? <Valor>{paciente}</Valor> : <Valor tenue>Sin datos</Valor>}</Dato>
-          <Dato etiqueta="Destino">
-            {destino ? (
-              <Valor>{destino}</Valor>
-            ) : (
-              <Valor tenue>{sinTraslado ? 'No hubo traslado' : atencion.horaEntrega ? 'Sin datos' : 'Todavía no se entrega'}</Valor>
-            )}
-          </Dato>
+          {/* Una cancelada no va a entregar a nadie: la línea de la cancelación, con su motivo, ya dice cómo terminó. */}
+          {cancelada ? null : (
+            <Dato etiqueta="Destino">
+              {destino ? (
+                <Valor>{destino}</Valor>
+              ) : (
+                <Valor tenue>
+                  {sinTraslado ? 'No hubo traslado' : atencion.horaEntrega ? 'Sin datos' : 'Todavía no se entrega'}
+                </Valor>
+              )}
+            </Dato>
+          )}
         </XStack>
       </YStack>
     </Tarjeta>

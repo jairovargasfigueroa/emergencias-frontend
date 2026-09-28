@@ -31,6 +31,20 @@ export const TEXTO_MOTIVO_CIERRE: Record<MotivoCierreIncidente, string> = {
   OTRO: 'Otro motivo',
 }
 
+/**
+ * Los mismos motivos, como se ofrecen al cerrar un incidente a mano: dichos como los diría el despachador y con lo que
+ * quiere decir cada uno. Ya cerrado, el detalle lo cuenta con `TEXTO_MOTIVO_CIERRE`.
+ */
+export const OPCION_MOTIVO_CIERRE: Record<MotivoCierreIncidente, { titulo: string; detalle: string | null }> = {
+  FALSA_ALARMA_VERIFICADA: { titulo: 'Falsa alarma', detalle: 'Se comprobó que no había ninguna emergencia.' },
+  ATENDIDO_EXTERNAMENTE: {
+    titulo: 'Lo atendieron por otro medio',
+    detalle: 'Lo llevaron por su cuenta, llegó otra ambulancia o lo derivaron.',
+  },
+  SIN_COBERTURA: { titulo: 'Sin cobertura', detalle: 'No hay ninguna unidad que pueda ir.' },
+  OTRO: { titulo: 'Otro', detalle: null },
+}
+
 export const TEXTO_ESTADO_ALERTA: Record<EstadoAlerta, string> = {
   RECIBIDA: 'Recibida',
   VINCULADA: 'Vinculada',

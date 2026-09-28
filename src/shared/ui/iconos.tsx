@@ -126,6 +126,17 @@ export function IconoApagar(props: PropsIcono) {
   )
 }
 
+/** Una puerta y una flecha que sale: el turno que se termina. */
+export function IconoFinDeTurno(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+      <path d="M15 8l4 4-4 4" />
+      <path d="M19 12H9" />
+    </Icono>
+  )
+}
+
 export function IconoReasignar(props: PropsIcono) {
   return (
     <Icono {...props}>

@@ -39,6 +39,27 @@ export type Ambulancia = {
   tipoUnidad: TipoUnidad
   estado: EstadoAmbulancia
   activa: boolean
+  /** Cuántos paramédicos tienen turno abierto en ella. Con alguien adentro no se la puede desactivar. */
+  tripulantesEnTurno: number
+}
+
+/**
+ * `UnidadCandidataResponse` del backend: una unidad disponible y activa que se puede mandar a mano, a un traslado o a
+ * una emergencia. Vienen también las que el sistema no elegiría solo, marcadas: quien manda a mano puede saber algo
+ * que el sistema no.
+ */
+export type UnidadCandidata = {
+  ambulanciaId: number
+  placa: string
+  tipoUnidad: TipoUnidad
+  /** En línea recta hasta el origen del traslado o el lugar de la emergencia. Null si nunca reportó su posición. */
+  distanciaMetros: number | null
+  /** Cuándo reportó su posición por última vez. */
+  posicionEn: string | null
+  /** Reportó su posición en los últimos minutos. Sin eso el barrido no le asigna nada. */
+  posicionReciente: boolean
+  /** Ya estuvo en este caso y lo dejó. En un traslado, el barrido no se lo vuelve a ofrecer. */
+  yaLoTuvo: boolean
 }
 
 /** `RegistrarAmbulanciaRequest` del backend. */

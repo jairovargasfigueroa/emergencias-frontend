@@ -142,8 +142,45 @@ export type Operacion = {
   umbralSinSenalSeg: number
 }
 
+/** `CierreDesdeLaCentral` del backend: cómo cierra la central una atención que la tripulación no puede cerrar. */
+export type CierreDesdeLaCentral = 'CANCELAR' | 'DAR_POR_ENTREGADA' | 'LIBERAR'
+
+/** `CierreDesdeLaCentralRequest` del backend. El destino solo se usa al darla por entregada. */
+export type CerrarAtencion = {
+  cierre: CierreDesdeLaCentral
+  /** Con `false`, la unidad queda fuera de servicio hasta que la tripulación la reactive desde su app. */
+  dejarDisponible: boolean
+  /** Sin centro ni destino escrito, queda el que ya tenía, que en un traslado es el del pedido. */
+  centroSaludId?: number | null
+  destinoDescripcion?: string | null
+}
+
+/**
+ * El único cierre que admite cada estado, según dónde quedó la unidad: si todavía no tenía al paciente, deja el caso;
+ * si lo llevaba a bordo, el viaje terminó en el destino; y si ya había resuelto, solo le faltaba quedar libre. Una
+ * cancelada ya no ocupa la unidad, así que no hay nada que cerrar.
+ */
+export function cierreSegunEstado(estado: EstadoAtencion): CierreDesdeLaCentral | null {
+  switch (estado) {
+    case 'EN_CAMINO':
+    case 'EN_EL_LUGAR':
+      return 'CANCELAR'
+    case 'PACIENTE_RECOGIDO':
+    case 'EN_HOSPITAL':
+      return 'DAR_POR_ENTREGADA'
+    case 'PACIENTE_ENTREGADO':
+    case 'SIN_TRASLADO':
+      return 'LIBERAR'
+    default:
+      return null
+  }
+}
+
 export const operacionApi = {
   estadoActual: (signal?: AbortSignal) => api.get<Operacion>('/operacion', signal),
+  /** Responde sin cuerpo: el cambio se ve al volver a pedir la operación. */
+  cerrarAtencion: (atencionId: number, datos: CerrarAtencion) =>
+    api.post<void>(`/operacion/atenciones/${atencionId}/cierre`, datos),
 }
 
 // --- Firebase: lo que cambia entre refresco y refresco -----------------------------------------------------

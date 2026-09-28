@@ -13,8 +13,8 @@ export const TEXTO_ESTADO_ATENCION: Record<EstadoAtencion, string> = {
 }
 
 /**
- * Los que elige el paramédico al cancelar llevan el mismo texto que le ofrece su app. Los tres de traslados no salen
- * de esa lista, así que se cuentan como registro de lo que pasó.
+ * Los que elige el paramédico al cancelar llevan el mismo texto que le ofrece su app. Los tres de traslados y el de la
+ * central no salen de esa lista, así que se cuentan como registro de lo que pasó.
  */
 export const TEXTO_MOTIVO_CANCELACION_ATENCION: Record<MotivoCancelacionAtencion, string> = {
   AVERIA: 'Avería',
@@ -24,6 +24,7 @@ export const TEXTO_MOTIVO_CANCELACION_ATENCION: Record<MotivoCancelacionAtencion
   RECHAZADA_POR_PARAMEDICO: 'El paramédico lo devolvió',
   CANCELADA_POR_SOLICITANTE: 'Lo canceló quien lo pidió',
   REASIGNADA: 'Se lo sacó el administrador',
+  CERRADA_POR_CENTRAL: 'La cerró la central',
 }
 
 /**

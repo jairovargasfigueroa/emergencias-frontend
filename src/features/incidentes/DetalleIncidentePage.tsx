@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
-import { Fragment, type ReactNode } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 import { Anchor, Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
 import { TEXTO_MOTIVO_CANCELACION_ATENCION, TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
 import { fechaHora, fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
 import { useAhora } from '../../shared/reloj/useAhora'
+import { BotonPrimario } from '../../shared/ui/botones'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
@@ -20,6 +21,8 @@ import {
   type IncidenteDetalle,
   type Ubicacion,
 } from './api'
+import { DialogoCerrarIncidente } from './DialogoCerrarIncidente'
+import { DialogoEnviarUnidad, type IncidenteParaEnviar } from './DialogoEnviarUnidad'
 import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidenteQuery } from './queries'
 import {
@@ -46,8 +49,9 @@ const COLUMNAS_ALERTAS: ColumnaTabla[] = [
 ]
 
 /**
- * Detalle de un incidente, solo lectura: cómo está, las alertas que lo formaron y lo que hizo cada unidad, con la hora
- * de cada hito. En la operación lo que más importa es el tiempo, por eso cada hito dice cuánto tardó.
+ * Detalle de un incidente: cómo está, las alertas que lo formaron y lo que hizo cada unidad, con la hora de cada hito.
+ * En la operación lo que más importa es el tiempo, por eso cada hito dice cuánto tardó. Mientras está abierto, la
+ * central puede mandarle una unidad o, si no se va a atender, cerrarlo.
  */
 export function DetalleIncidentePage() {
   const { incidenteId } = rutaApi.useParams()
@@ -56,6 +60,8 @@ export function DetalleIncidentePage() {
   const idValido = Number.isInteger(incidenteId) && incidenteId > 0
   const incidente = useQuery({ ...incidenteQuery(incidenteId), enabled: idValido })
   const noExiste = !idValido || (incidente.error instanceof ErrorApi && incidente.error.status === 404)
+  const [aEnviar, setAEnviar] = useState<IncidenteParaEnviar | null>(null)
+  const [cerrando, setCerrando] = useState(false)
 
   return (
     <>
@@ -102,6 +108,13 @@ export function DetalleIncidentePage() {
         <ErrorAlCargar error={incidente.error} onReintentar={() => incidente.refetch()} />
       ) : (
         <>
+          {estaAbierto(incidente.data.estado) ? (
+            <AccionesDelIncidente
+              incidente={incidente.data}
+              onEnviar={() => setAEnviar(incidente.data)}
+              onCerrar={() => setCerrando(true)}
+            />
+          ) : null}
           <Resumen incidente={incidente.data} />
           <Seccion titulo={`Alertas (${incidente.data.alertas.length})`}>
             <TablaAlertas alertas={incidente.data.alertas} />
@@ -111,7 +124,55 @@ export function DetalleIncidentePage() {
           </Seccion>
         </>
       )}
+
+      <DialogoEnviarUnidad incidente={aEnviar} onCerrar={() => setAEnviar(null)} />
+      {cerrando ? <DialogoCerrarIncidente incidenteId={incidenteId} onCerrar={() => setCerrando(false)} /> : null}
     </>
+  )
+}
+
+type PropsAcciones = {
+  incidente: IncidenteDetalle
+  onEnviar: () => void
+  onCerrar: () => void
+}
+
+/**
+ * Lo que la central puede hacer con un incidente abierto, antes que el resto del detalle. Enviar una unidad va
+ * destacado cuando nadie lo está atendiendo, que es cuando hace falta que alguien decida.
+ *
+ * Con unidades trabajando, cerrarlo se ve apagado y con el motivo al lado: lo cierran ellas con lo que encuentren, y
+ * si alguna quedó trabada, se destraba desde el centro de control.
+ */
+function AccionesDelIncidente({ incidente, onEnviar, onCerrar }: PropsAcciones) {
+  const trabajando = incidente.unidadesAcudiendo > 0
+
+  return (
+    <XStack items="center" gap={12} flexWrap="wrap">
+      {trabajando ? (
+        <Button size="$3" variant="outlined" onPress={onEnviar}>
+          <Button.Text fontSize={13} fontWeight="600" color="$texto">
+            Enviar una unidad
+          </Button.Text>
+        </Button>
+      ) : (
+        <BotonPrimario size="$3" onPress={onEnviar}>
+          <Button.Text color="$primarioTexto" fontSize={13} fontWeight="600">
+            Enviar una unidad
+          </Button.Text>
+        </BotonPrimario>
+      )}
+      <Button size="$3" variant="outlined" disabled={trabajando} opacity={trabajando ? 0.5 : 1} onPress={onCerrar}>
+        <Button.Text fontSize={13} fontWeight="600" color="$texto">
+          Cerrar el incidente
+        </Button.Text>
+      </Button>
+      {trabajando ? (
+        <Text fontSize={12} lineHeight={16} color="$textoSecundario">
+          Hay unidades trabajando: lo cierran ellas al terminar, o cierra antes sus atenciones en el Centro de control.
+        </Text>
+      ) : null}
+    </XStack>
   )
 }
 
@@ -140,6 +201,8 @@ function Resumen({ incidente }: { incidente: IncidenteDetalle }) {
           <Dato etiqueta="Cierre">
             <Valor>{incidente.fechaHoraCierre ? fechaHora(incidente.fechaHoraCierre) : '—'}</Valor>
             {incidente.motivoCierre ? <Nota>{TEXTO_MOTIVO_CIERRE[incidente.motivoCierre]}</Nota> : null}
+            {/* Solo si lo cerró la central: los que se cierran solos no tienen a quién nombrar. */}
+            {incidente.cerradoPor ? <Nota>Lo cerró {incidente.cerradoPor}</Nota> : null}
           </Dato>
         )}
         <Dato etiqueta="Primera unidad en el lugar">
@@ -300,6 +363,13 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
           </Text>
           {/* El punto dice que la ambulancia sigue tomada, aunque ya haya entregado al paciente. */}
           <InsigniaEstadoAtencion estado={atencion.estado} conPunto={ocupaLaUnidad(atencion)} />
+          {/* El último paso lo marcó la central y no la tripulación: su hora es la del cierre, no la real, y así se
+              sabe a quién preguntarle. */}
+          {atencion.cerradaPor ? (
+            <Text fontSize={13} color="$textoSecundario">
+              La cerró la central ({atencion.cerradaPor})
+            </Text>
+          ) : null}
         </XStack>
 
         <XStack flexWrap="wrap" rowGap={16} columnGap={48}>

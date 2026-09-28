@@ -38,8 +38,9 @@ const SIN_INCIDENTES: Record<FiltroEstadoIncidente, string> = {
 const INTERVALO_RELOJ_MS = 30_000
 
 /**
- * Consulta de incidentes, solo lectura: los incidentes los crea el sistema a partir de las alertas y cambian solo por
- * la máquina de estados. El filtro y la página van en la URL, donde la página se cuenta desde 1.
+ * Consulta de incidentes, solo lectura: los incidentes los crea el sistema a partir de las alertas, y lo que la central
+ * hace con uno, mandarle una unidad o cerrarlo, se hace desde su detalle. El filtro y la página van en la URL, donde
+ * la página se cuenta desde 1.
  */
 export function IncidentesPage() {
   const busqueda = rutaApi.useSearch()

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react'
 import { Button, Text, XStack, YStack, type YStackProps } from 'tamagui'
 import { tiempoDeSegundos, tiempoTranscurrido } from '../../shared/formato/fechas'
 import type { EstadoAmbulancia } from '../flota/api'
+import { DialogoEnviarUnidad, type IncidenteParaEnviar } from '../incidentes/DialogoEnviarUnidad'
 import type { Traslado, TrasladoDelPanel } from '../traslados/api'
 import { AccionDelProblema, TiempoRestante } from '../traslados/AvisosDeTraslado'
 import { DialogoAsignar } from '../traslados/DialogoAsignar'
@@ -38,6 +39,7 @@ export function FranjaDeProblemas({
 }: Props) {
   const [aAsignar, setAAsignar] = useState<Traslado | null>(null)
   const [aDevolver, setADevolver] = useState<TrasladoDelPanel | null>(null)
+  const [aEnviar, setAEnviar] = useState<IncidenteParaEnviar | null>(null)
 
   const sinSenal = unidades.filter((unidad) => unidad.sinSenal)
   const sinCubrir = incidentesSinCubrir.length + trasladosSinCubrir.length
@@ -100,6 +102,16 @@ export function FranjaDeProblemas({
                     </Button.Text>
                   </Button>
                 </Link>
+                {/* Sin cubrir quiere decir que todavía no va nadie: la que se envíe es la primera. */}
+                <Button
+                  size="$3"
+                  variant="outlined"
+                  onPress={() => setAEnviar({ id: incidente.id, unidadesAcudiendo: 0 })}
+                >
+                  <Button.Text fontSize={12} fontWeight="600" color="$texto">
+                    Enviar unidad
+                  </Button.Text>
+                </Button>
               </Problema>
             ))}
 
@@ -138,6 +150,7 @@ export function FranjaDeProblemas({
 
       <DialogoAsignar traslado={aAsignar} onCerrar={() => setAAsignar(null)} />
       <DialogoDevolver fila={aDevolver} onCerrar={() => setADevolver(null)} />
+      <DialogoEnviarUnidad incidente={aEnviar} onCerrar={() => setAEnviar(null)} />
     </>
   )
 }

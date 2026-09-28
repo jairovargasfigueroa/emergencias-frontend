@@ -1,4 +1,5 @@
 import { api } from '../../shared/api/cliente'
+import type { EstadoAtencion } from '../../shared/atencion/api'
 import type { TipoUnidad } from '../flota/api'
 
 export type EstadoTraslado =
@@ -13,15 +14,6 @@ export type EstadoTraslado =
 export type ModoHorario = 'INMEDIATO' | 'PROGRAMADO'
 
 export type Movilidad = 'CAMINA_CON_AYUDA' | 'SILLA_DE_RUEDAS' | 'CAMILLA'
-
-export type EstadoAtencion =
-  | 'EN_CAMINO'
-  | 'EN_EL_LUGAR'
-  | 'PACIENTE_RECOGIDO'
-  | 'EN_HOSPITAL'
-  | 'PACIENTE_ENTREGADO'
-  | 'SIN_TRASLADO'
-  | 'CANCELADA'
 
 export type Ubicacion = {
   latitud: number

@@ -1,4 +1,5 @@
 import { api, type Pagina } from '../../shared/api/cliente'
+import type { EstadoAtencion } from '../../shared/atencion/api'
 
 export type EstadoIncidente = 'ACTIVO' | 'EN_ATENCION' | 'ATENDIDO' | 'FALSA_ALARMA' | 'ATENDIDO_EXTERNAMENTE' | 'CANCELADO'
 
@@ -10,15 +11,6 @@ export type EstadoAlerta = 'RECIBIDA' | 'VINCULADA' | 'CANCELADA' | 'DESCARTADA'
 export type MotivoCancelacionAlerta = 'YA_FUE_ATENDIDO' | 'FALSA_ALARMA' | 'ERROR' | 'OTRO'
 
 export type OrigenUbicacion = 'GPS' | 'MANUAL'
-
-export type EstadoAtencion =
-  | 'EN_CAMINO'
-  | 'EN_EL_LUGAR'
-  | 'PACIENTE_RECOGIDO'
-  | 'EN_HOSPITAL'
-  | 'PACIENTE_ENTREGADO'
-  | 'SIN_TRASLADO'
-  | 'CANCELADA'
 
 export type MotivoCancelacionAtencion = 'AVERIA' | 'NO_SE_ENCONTRO_PACIENTE' | 'DESVIADA' | 'OTRO'
 

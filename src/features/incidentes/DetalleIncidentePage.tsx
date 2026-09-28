@@ -3,6 +3,7 @@ import { getRouteApi, Link } from '@tanstack/react-router'
 import { Fragment, useEffect, useState, type ReactNode } from 'react'
 import { Anchor, Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
+import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
 import { fechaHora, fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
@@ -11,12 +12,13 @@ import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui
 import {
   atencionResuelta,
   estaAbierto,
+  ocupaLaUnidad,
   type AlertaDeIncidente,
   type AtencionDeIncidente,
   type IncidenteDetalle,
   type Ubicacion,
 } from './api'
-import { InsigniaEstadoAtencion, InsigniaEstadoIncidente } from './InsigniasDeEstado'
+import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidenteQuery } from './queries'
 import {
   TEXTO_ESTADO_ALERTA,
@@ -290,7 +292,8 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
           <Text fontFamily="$mono" fontSize={15} fontWeight="600" color="$texto">
             {atencion.placa}
           </Text>
-          <InsigniaEstadoAtencion atencion={atencion} />
+          {/* El punto dice que la ambulancia sigue tomada, aunque ya haya entregado al paciente. */}
+          <InsigniaEstadoAtencion estado={atencion.estado} conPunto={ocupaLaUnidad(atencion)} />
         </XStack>
 
         <XStack flexWrap="wrap" rowGap={16} columnGap={48}>

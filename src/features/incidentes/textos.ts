@@ -1,6 +1,5 @@
 import type {
   EstadoAlerta,
-  EstadoAtencion,
   EstadoIncidente,
   FiltroEstadoIncidente,
   MotivoCancelacionAlerta,
@@ -60,16 +59,6 @@ export function textoEmisorEsPaciente(emisorEsPaciente: boolean): string {
 export const TEXTO_ORIGEN_UBICACION: Record<OrigenUbicacion, string> = {
   GPS: 'GPS',
   MANUAL: 'Marcada en el mapa',
-}
-
-export const TEXTO_ESTADO_ATENCION: Record<EstadoAtencion, string> = {
-  EN_CAMINO: 'En camino',
-  EN_EL_LUGAR: 'En el lugar',
-  PACIENTE_RECOGIDO: 'Paciente recogido',
-  EN_HOSPITAL: 'En el hospital',
-  PACIENTE_ENTREGADO: 'Paciente entregado',
-  SIN_TRASLADO: 'Sin traslado',
-  CANCELADA: 'Cancelada',
 }
 
 /** Los mismos textos con los que la app del paramédico ofrece cada motivo. */

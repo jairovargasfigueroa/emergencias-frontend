@@ -143,14 +143,24 @@ export function PersonalPage() {
       ]
     }
 
-    // Con el turno abierto no se lo puede dar de baja ni bajar de su unidad: se quedaría trabajando en algo que el
-    // sistema ya no le reconoce. Se ven apagadas, con el motivo, hasta que se le cierre el turno.
+    // Con el turno abierto no se lo puede dar de baja ni cambiar o bajar de su unidad: se quedaría trabajando en algo
+    // que el sistema ya no le reconoce. Se ven apagadas, con el motivo, hasta que se le cierre el turno.
     const motivoEnTurno = paramedico.enTurno ? 'Está en turno: ciérrale el turno primero' : undefined
 
     return [
       paramedico.asignacionVigente
-        ? { etiqueta: 'Reasignar', icono: <IconoReasignar size={16} />, onElegir: () => setPorAsignar(paramedico) }
-        : { etiqueta: 'Asignar', icono: <IconoAsignar size={16} />, onElegir: () => setPorAsignar(paramedico) },
+        ? {
+            etiqueta: 'Reasignar',
+            icono: <IconoReasignar size={16} />,
+            motivo: motivoEnTurno,
+            onElegir: () => setPorAsignar(paramedico),
+          }
+        : {
+            etiqueta: 'Asignar',
+            icono: <IconoAsignar size={16} />,
+            motivo: motivoEnTurno,
+            onElegir: () => setPorAsignar(paramedico),
+          },
       { etiqueta: 'Editar', icono: <IconoEditar size={16} />, onElegir: () => setPorEditar(paramedico) },
       // Para quien se fue sin cerrarlo. Solo aparece con el turno abierto: a los demás no hay nada que cerrarles.
       ...(paramedico.enTurno

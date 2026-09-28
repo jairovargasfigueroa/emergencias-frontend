@@ -6,6 +6,7 @@ import type { EstadoAmbulancia } from '../flota/api'
 import type { Traslado, TrasladoDelPanel } from '../traslados/api'
 import { AccionDelProblema, TiempoRestante } from '../traslados/AvisosDeTraslado'
 import { DialogoAsignar } from '../traslados/DialogoAsignar'
+import { DialogoDevolver } from '../traslados/DialogoDevolver'
 import { avisoDelProblema } from '../traslados/textos'
 import type { IncidenteSinCubrir } from './api'
 import type { FiltroDeUnidades, UnidadMonitoreada } from './posiciones'
@@ -36,6 +37,7 @@ export function FranjaDeProblemas({
   ahora,
 }: Props) {
   const [aAsignar, setAAsignar] = useState<Traslado | null>(null)
+  const [aDevolver, setADevolver] = useState<TrasladoDelPanel | null>(null)
 
   const sinSenal = unidades.filter((unidad) => unidad.sinSenal)
   const sinCubrir = incidentesSinCubrir.length + trasladosSinCubrir.length
@@ -114,7 +116,7 @@ export function FranjaDeProblemas({
                     </Button.Text>
                   </Button>
                 </Link>
-                <AccionDelProblema fila={fila} onAsignar={setAAsignar} />
+                <AccionDelProblema fila={fila} onAsignar={setAAsignar} onDevolver={setADevolver} />
               </Problema>
             ))}
 
@@ -135,6 +137,7 @@ export function FranjaDeProblemas({
       </YStack>
 
       <DialogoAsignar traslado={aAsignar} onCerrar={() => setAAsignar(null)} />
+      <DialogoDevolver fila={aDevolver} onCerrar={() => setADevolver(null)} />
     </>
   )
 }

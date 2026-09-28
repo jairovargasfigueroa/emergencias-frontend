@@ -94,6 +94,20 @@ export const asignarTrasladoMutation = (queryClient: QueryClient) =>
   })
 
 /**
+ * Sacarle el traslado a la unidad que viene en camino: la unidad queda libre, así que también se recarga la flota.
+ * Falla con 409 `TRANSICION_INVALIDA` si el traslado ya no tiene unidad o la unidad ya llegó.
+ */
+export const devolverTrasladoMutation = (queryClient: QueryClient) =>
+  mutationOptions({
+    mutationFn: (id: number) => trasladosApi.devolverABusqueda(id),
+    onSuccess: (fila: TrasladoDelPanel) => {
+      recargarTraslado(queryClient, fila)
+      void queryClient.invalidateQueries({ queryKey: flotaKeys.todas })
+    },
+    onError: (error) => recargarSiCambio(queryClient, error),
+  })
+
+/**
  * El administrador ya le avisó a la familia que no se consiguió unidad: el traslado sale de la bandeja. Falla con
  * 409 `TRANSICION_INVALIDA` si el traslado no está no cubierto.
  */

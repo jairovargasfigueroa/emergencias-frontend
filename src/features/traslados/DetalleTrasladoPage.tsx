@@ -7,6 +7,7 @@ import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAten
 import { TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
 import { fechaHora, fechaHoraCorta, hora } from '../../shared/formato/fechas'
 import { useAhora } from '../../shared/reloj/useAhora'
+import { BotonPrimario } from '../../shared/ui/botones'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
@@ -15,6 +16,7 @@ import { TEXTO_HITO } from '../monitoreo/textos'
 import { tipoCorregido, type Traslado, type TrasladoDelPanel } from './api'
 import { AvisoDelProblema, BotonFamiliaAvisada } from './AvisosDeTraslado'
 import { DialogoAsignar } from './DialogoAsignar'
+import { DialogoDevolver } from './DialogoDevolver'
 import { InsigniaEstadoTraslado } from './InsigniasDeTraslado'
 import { trasladoQuery } from './queries'
 import { EXPLICACION_ESTADO, TEXTO_MOVILIDAD } from './textos'
@@ -33,6 +35,7 @@ export function DetalleTrasladoPage() {
   const consulta = useQuery({ ...trasladoQuery(trasladoId), enabled: idValido })
   const noExiste = !idValido || (consulta.error instanceof ErrorApi && consulta.error.status === 404)
   const [aAsignar, setAAsignar] = useState<Traslado | null>(null)
+  const [aDevolver, setADevolver] = useState<TrasladoDelPanel | null>(null)
 
   return (
     <>
@@ -61,10 +64,12 @@ export function DetalleTrasladoPage() {
           recargando={consulta.isFetching}
           onRecargar={() => consulta.refetch()}
           onAsignar={setAAsignar}
+          onDevolver={setADevolver}
         />
       )}
 
       <DialogoAsignar traslado={aAsignar} onCerrar={() => setAAsignar(null)} />
+      <DialogoDevolver fila={aDevolver} onCerrar={() => setADevolver(null)} />
     </>
   )
 }
@@ -74,12 +79,16 @@ type PropsContenido = {
   recargando: boolean
   onRecargar: () => void
   onAsignar: (traslado: Traslado) => void
+  onDevolver: (fila: TrasladoDelPanel) => void
 }
 
-function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) {
+function Contenido({ fila, recargando, onRecargar, onAsignar, onDevolver }: PropsContenido) {
   const { traslado } = fila
   const ahora = useAhora(INTERVALO_RELOJ_MS)
   const explicacion = explicacionDe(fila)
+  // Mientras la unidad viene en camino se le puede sacar siempre. Si ya está atrasada, el botón va destacado en el
+  // aviso y no se repite acá.
+  const devolverAca = fila.estadoAtencion === 'EN_CAMINO' && fila.problema !== 'UNIDAD_ATRASADA'
 
   return (
     <>
@@ -101,12 +110,19 @@ function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) 
 
       <XStack items="center" gap={12} flexWrap="wrap">
         <InsigniaEstadoTraslado estado={traslado.estado} />
+        {devolverAca ? (
+          <Button size="$3" variant="outlined" onPress={() => onDevolver(fila)}>
+            <Button.Text fontSize={13} fontWeight="600" color="$texto">
+              Devolver a la búsqueda
+            </Button.Text>
+          </Button>
+        ) : null}
       </XStack>
 
       {fila.problema ? (
         <Aviso
           tono={fila.problema === 'SIN_UNIDAD' ? 'neutro' : 'rojo'}
-          accion={<AccionDelDetalle fila={fila} onAsignar={onAsignar} />}
+          accion={<AccionDelDetalle fila={fila} onAsignar={onAsignar} onDevolver={onDevolver} />}
         >
           <AvisoDelProblema fila={fila} ahora={ahora} />
         </Aviso>
@@ -201,13 +217,14 @@ function Contenido({ fila, recargando, onRecargar, onAsignar }: PropsContenido) 
 type PropsAccion = {
   fila: TrasladoDelPanel
   onAsignar: (traslado: Traslado) => void
+  onDevolver: (fila: TrasladoDelPanel) => void
 }
 
 /**
  * Lo que resuelve el problema del traslado, al lado del aviso. Lo que pide una decisión va destacado; asignar a mano
  * no, porque mientras queda tiempo el sistema sigue buscando solo.
  */
-function AccionDelDetalle({ fila, onAsignar }: PropsAccion) {
+function AccionDelDetalle({ fila, onAsignar, onDevolver }: PropsAccion) {
   switch (fila.problema) {
     case 'SIN_UNIDAD':
       return (
@@ -219,6 +236,14 @@ function AccionDelDetalle({ fila, onAsignar }: PropsAccion) {
       )
     case 'NO_CUBIERTO':
       return <BotonFamiliaAvisada traslado={fila.traslado} destacado />
+    case 'UNIDAD_ATRASADA':
+      return (
+        <BotonPrimario size="$3" onPress={() => onDevolver(fila)}>
+          <Button.Text color="$primarioTexto" fontSize={13} fontWeight="600">
+            Devolver a la búsqueda
+          </Button.Text>
+        </BotonPrimario>
+      )
     default:
       return null
   }

@@ -62,15 +62,19 @@ export function AvisoDelProblema({ fila, ahora }: PropsAviso) {
 type PropsAccion = {
   fila: TrasladoDelPanel
   onAsignar: (traslado: Traslado) => void
+  /** Abre la confirmación para sacarle el traslado a la unidad atrasada. */
+  onDevolver: (fila: TrasladoDelPanel) => void
 }
 
 /** El botón que resuelve el problema de la fila, si hay uno que se resuelva desde ahí. */
-export function AccionDelProblema({ fila, onAsignar }: PropsAccion) {
+export function AccionDelProblema({ fila, onAsignar, onDevolver }: PropsAccion) {
   switch (fila.problema) {
     case 'SIN_UNIDAD':
       return <BotonDeFila texto="Asignar" onPress={() => onAsignar(fila.traslado)} />
     case 'NO_CUBIERTO':
       return <BotonFamiliaAvisada traslado={fila.traslado} />
+    case 'UNIDAD_ATRASADA':
+      return <BotonDeFila texto="Devolver a la búsqueda" onPress={() => onDevolver(fila)} />
     default:
       return null
   }

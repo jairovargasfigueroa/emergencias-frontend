@@ -14,6 +14,7 @@ import type { Traslado, TrasladoDelPanel } from './api'
 import { AccionDelProblema, AvisoDelProblema } from './AvisosDeTraslado'
 import { esVista, TEXTO_VISTA, VISTAS, type BusquedaTraslados } from './busqueda'
 import { DialogoAsignar } from './DialogoAsignar'
+import { DialogoDevolver } from './DialogoDevolver'
 import { InsigniaEstadoTraslado } from './InsigniasDeTraslado'
 import { problemasQuery, trasladosDelDiaQuery } from './queries'
 import { ventanaDeRecogida } from './textos'
@@ -42,6 +43,7 @@ export function TrasladosPage() {
   const dia = busqueda.dia
   const ahora = useAhora(INTERVALO_RELOJ_MS)
   const [aAsignar, setAAsignar] = useState<Traslado | null>(null)
+  const [aDevolver, setADevolver] = useState<TrasladoDelPanel | null>(null)
 
   const delDia = useQuery({ ...trasladosDelDiaQuery(dia), enabled: vista === 'DIA' })
   const problemas = useQuery(problemasQuery())
@@ -161,6 +163,7 @@ export function TrasladosPage() {
                   busqueda={busqueda}
                   ahora={ahora}
                   onAsignar={setAAsignar}
+                  onDevolver={setADevolver}
                 />
               ))
             )}
@@ -169,6 +172,7 @@ export function TrasladosPage() {
       </YStack>
 
       <DialogoAsignar traslado={aAsignar} onCerrar={() => setAAsignar(null)} />
+      <DialogoDevolver fila={aDevolver} onCerrar={() => setADevolver(null)} />
     </>
   )
 }
@@ -187,19 +191,20 @@ type PropsFila = {
   busqueda: BusquedaTraslados
   ahora: number
   onAsignar: (traslado: Traslado) => void
+  onDevolver: (fila: TrasladoDelPanel) => void
 }
 
 /**
  * Toda la fila lleva al detalle. Si el traslado tiene un problema, debajo de las celdas va el aviso con el botón que
  * lo resuelve, que se usa sin salir de la tabla.
  */
-function FilaTraslado({ fila, busqueda, ahora, onAsignar }: PropsFila) {
+function FilaTraslado({ fila, busqueda, ahora, onAsignar, onDevolver }: PropsFila) {
   const { traslado } = fila
   const ventana = ventanaDeRecogida(traslado)
   const pie = fila.problema ? (
     <XStack flex={1} items="center" justify="space-between" gap={16} flexWrap="wrap">
       <AvisoDelProblema fila={fila} ahora={ahora} />
-      <AccionDelProblema fila={fila} onAsignar={onAsignar} />
+      <AccionDelProblema fila={fila} onAsignar={onAsignar} onDevolver={onDevolver} />
     </XStack>
   ) : undefined
 

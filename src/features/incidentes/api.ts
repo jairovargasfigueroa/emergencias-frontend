@@ -1,31 +1,20 @@
 import { api, type Pagina } from '../../shared/api/cliente'
+import type { EstadoAtencion, MotivoCancelacionAtencion, MotivoSinTraslado } from '../../shared/atencion/api'
+import type { UnidadCandidata } from '../flota/api'
 
 export type EstadoIncidente = 'ACTIVO' | 'EN_ATENCION' | 'ATENDIDO' | 'FALSA_ALARMA' | 'ATENDIDO_EXTERNAMENTE' | 'CANCELADO'
 
-export type MotivoCierreIncidente = 'FALSA_ALARMA_VERIFICADA' | 'ATENDIDO_EXTERNAMENTE' | 'SIN_COBERTURA' | 'OTRO'
+/** En este orden se ofrecen al cerrar un incidente a mano. */
+export const MOTIVOS_CIERRE_INCIDENTE = ['FALSA_ALARMA_VERIFICADA', 'ATENDIDO_EXTERNAMENTE', 'SIN_COBERTURA', 'OTRO'] as const
+
+export type MotivoCierreIncidente = (typeof MOTIVOS_CIERRE_INCIDENTE)[number]
 
 export type EstadoAlerta = 'RECIBIDA' | 'VINCULADA' | 'CANCELADA' | 'DESCARTADA'
 
+/** Por qué el ciudadano retiró su pedido. */
+export type MotivoCancelacionAlerta = 'YA_FUE_ATENDIDO' | 'FALSA_ALARMA' | 'ERROR' | 'OTRO'
+
 export type OrigenUbicacion = 'GPS' | 'MANUAL'
-
-export type EstadoAtencion =
-  | 'EN_CAMINO'
-  | 'EN_EL_LUGAR'
-  | 'PACIENTE_RECOGIDO'
-  | 'EN_HOSPITAL'
-  | 'PACIENTE_ENTREGADO'
-  | 'SIN_TRASLADO'
-  | 'CANCELADA'
-
-export type MotivoCancelacionAtencion = 'AVERIA' | 'NO_SE_ENCONTRO_PACIENTE' | 'DESVIADA' | 'OTRO'
-
-/** Con qué se encontró la unidad cuando la salida terminó sin llevar a nadie. */
-export type MotivoSinTraslado =
-  | 'ATENDIDO_EN_EL_LUGAR'
-  | 'PACIENTE_RECHAZO'
-  | 'NO_HABIA_PACIENTE'
-  | 'TRASLADO_POR_OTRO_MEDIO'
-  | 'FALLECIDO'
 
 /** `FiltroEstadoIncidente` del backend: ABIERTOS son ACTIVO y EN_ATENCION; CERRADOS, los cuatro estados finales. */
 export type FiltroEstadoIncidente = 'ABIERTOS' | 'CERRADOS' | 'TODOS'
@@ -81,6 +70,10 @@ export type AlertaDeIncidente = {
     nombreCompleto: string
     telefono: string
   }
+  motivoCancelacion: MotivoCancelacionAlerta | null
+  horaCancelacion: string | null
+  /** Si quien avisó era el paciente. Se pregunta al retirar el pedido, y contestarlo no es obligatorio. */
+  emisorEsPaciente: boolean | null
 }
 
 /** `AtencionDeIncidenteResponse` del backend. Cada hito trae su hora y su ubicación, `null` si no ocurrió. */
@@ -88,6 +81,12 @@ export type AtencionDeIncidente = {
   id: number
   ambulanciaId: number
   placa: string
+  /** El paramédico que responde por la atención; `null` si no tiene. */
+  paramedicoResponsable: {
+    id: number
+    nombreCompleto: string
+    telefono: string
+  } | null
   estado: EstadoAtencion
   horaToma: string
   horaLlegada: string | null
@@ -111,6 +110,8 @@ export type AtencionDeIncidente = {
     nombre: string
   } | null
   destinoDescripcion: string | null
+  /** El administrador que la cerró porque la tripulación no podía. Null si la cerró la tripulación. */
+  cerradaPor: string | null
 }
 
 /**
@@ -125,6 +126,8 @@ export function ocupaLaUnidad(atencion: AtencionDeIncidente) {
 export type IncidenteDetalle = IncidenteResumen & {
   alertas: AlertaDeIncidente[]
   atenciones: AtencionDeIncidente[]
+  /** El administrador que lo cerró a mano. Null si se cerró solo, por lo que pasó con sus unidades o sus alertas. */
+  cerradoPor: string | null
 }
 
 export const incidentesApi = {
@@ -133,4 +136,16 @@ export const incidentesApi = {
     return api.get<Pagina<IncidenteResumen>>(`/incidentes?${parametros}`, signal)
   },
   detalle: (id: number, signal?: AbortSignal) => api.get<IncidenteDetalle>(`/incidentes/${id}`, signal),
+  /** Las disponibles, de la más cercana al lugar a la más lejana; las que nunca reportaron posición, al final. */
+  unidades: (id: number, signal?: AbortSignal) => api.get<UnidadCandidata[]>(`/incidentes/${id}/unidades`, signal),
+  /**
+   * La central manda esa unidad y su tripulación recibe el aviso. Si el incidente ya tiene otra trabajando, esta se
+   * suma. Responde sin cuerpo.
+   */
+  despachar: (id: number, ambulanciaId: number) => api.post<void>(`/incidentes/${id}/despacho`, { ambulanciaId }),
+  /**
+   * La central cierra un incidente que no se va a atender, solo sin unidades trabajándolo. A quienes pidieron la
+   * ambulancia les llega un aviso. Responde sin cuerpo.
+   */
+  cerrar: (id: number, motivo: MotivoCierreIncidente) => api.post<void>(`/incidentes/${id}/cierre`, { motivo }),
 }

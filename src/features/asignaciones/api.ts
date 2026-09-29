@@ -1,5 +1,5 @@
 import { api } from '../../shared/api/cliente'
-import type { AsignacionVigente } from '../personal/api'
+import type { AsignacionVigente, Paramedico } from '../personal/api'
 
 /** `AsignacionResponse` del backend. */
 export type Asignacion = {
@@ -27,6 +27,8 @@ export type ContextoReasignacion = {
 
 export const asignacionesApi = {
   asignar: (datos: AsignarParamedico) => api.post<Asignacion>('/asignaciones', datos),
+  /** Cierra la asignación vigente sin abrir otra. Responde con el paramédico ya sin ambulancia. */
+  quitarDeLaUnidad: (paramedicoId: number) => api.post<Paramedico>(`/paramedicos/${paramedicoId}/quitar-asignacion`),
   historialDeAmbulancia: (ambulanciaId: number, signal?: AbortSignal) =>
     api.get<Asignacion[]>(`/ambulancias/${ambulanciaId}/asignaciones`, signal),
   historialDeParamedico: (paramedicoId: number, signal?: AbortSignal) =>

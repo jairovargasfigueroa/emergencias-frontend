@@ -7,13 +7,27 @@ import { BotonPrimario } from '../../shared/ui/botones'
 import { DialogoConfirmacion } from '../../shared/ui/DialogoConfirmacion'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
-import { IconoApagar, IconoAsignar, IconoHistorial, IconoMas, IconoReasignar } from '../../shared/ui/iconos'
+import {
+  IconoApagar,
+  IconoAsignar,
+  IconoEditar,
+  IconoFinDeTurno,
+  IconoHistorial,
+  IconoMas,
+  IconoQuitar,
+  IconoReactivar,
+  IconoReasignar,
+} from '../../shared/ui/iconos'
 import { Insignia } from '../../shared/ui/Insignia'
+import { MenuAcciones, type AccionDeMenu } from '../../shared/ui/MenuAcciones'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { AsignarAmbulanciaDialog } from '../asignaciones/AsignarAmbulanciaDialog'
 import { HistorialAsignacionesDialog, type SujetoHistorial } from '../asignaciones/HistorialAsignacionesDialog'
+import { quitarDeLaUnidadMutation } from '../asignaciones/queries'
 import type { Paramedico } from './api'
-import { desactivarParamedicoMutation, paramedicosQuery } from './queries'
+import { DialogoCerrarTurno, type TurnoPorCerrar } from './DialogoCerrarTurno'
+import { EditarParamedicoDialog } from './EditarParamedicoDialog'
+import { activarParamedicoMutation, desactivarParamedicoMutation, paramedicosQuery } from './queries'
 import { RegistrarParamedicoDialog } from './RegistrarParamedicoDialog'
 
 const COLUMNAS: ColumnaTabla[] = [
@@ -21,8 +35,11 @@ const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Teléfono', ancho: 130 },
   { titulo: 'Ambulancia asignada', ancho: 210 },
   { titulo: 'Registro', ancho: 110 },
-  { titulo: 'Acciones', ancho: 360, alinearDerecha: true },
+  { titulo: 'Acciones', ancho: 96, alinearDerecha: true },
 ]
+
+/** Las tres acciones que se confirman antes de correr, porque cambian de golpe lo que la persona puede hacer. */
+type Confirmacion = { tipo: 'desactivar' | 'quitar' | 'activar'; paramedico: Paramedico }
 
 function iniciales(nombreCompleto: string) {
   return nombreCompleto
@@ -33,33 +50,152 @@ function iniciales(nombreCompleto: string) {
     .join('')
 }
 
+function textosDe(confirmacion: Confirmacion) {
+  const { nombreCompleto, asignacionVigente } = confirmacion.paramedico
+  switch (confirmacion.tipo) {
+    case 'desactivar':
+      return {
+        titulo: `¿Desactivar a ${nombreCompleto}?`,
+        descripcion: 'No estará disponible para la operación. Sus asignaciones se conservan.',
+        textoConfirmar: 'Desactivar',
+        tono: 'peligro' as const,
+        exito: 'Paramédico desactivado',
+        fallo: 'No se pudo desactivar',
+        detalle: `${nombreCompleto} ya no está disponible para la operación.`,
+      }
+    case 'quitar':
+      return {
+        titulo: `¿Quitar a ${nombreCompleto} de la ambulancia ${asignacionVigente?.placa ?? ''}?`,
+        descripcion: 'Se queda sin ambulancia y no podrá abrir turno hasta que se le asigne otra.',
+        textoConfirmar: 'Quitar',
+        tono: 'aviso' as const,
+        exito: 'Paramédico sin ambulancia',
+        fallo: 'No se pudo quitar de la unidad',
+        detalle: `${nombreCompleto} ya no opera ninguna unidad.`,
+      }
+    case 'activar':
+      return {
+        titulo: `¿Activar a ${nombreCompleto}?`,
+        descripcion: 'Vuelve a estar disponible para la operación y a entrar a su app.',
+        textoConfirmar: 'Activar',
+        tono: 'aviso' as const,
+        exito: 'Paramédico activado',
+        fallo: 'No se pudo activar',
+        detalle: `${nombreCompleto} vuelve a estar disponible para la operación.`,
+      }
+  }
+}
+
 /** PB-01: personal de la flota y la ambulancia que opera cada uno. No existe borrado: solo baja lógica (R4). */
 export function PersonalPage() {
   const queryClient = useQueryClient()
   const toast = useToastController()
   const paramedicos = useQuery(paramedicosQuery())
   const desactivar = useMutation(desactivarParamedicoMutation(queryClient))
+  const activar = useMutation(activarParamedicoMutation(queryClient))
+  const quitarDeLaUnidad = useMutation(quitarDeLaUnidadMutation(queryClient))
 
   const [registrarAbierto, setRegistrarAbierto] = useState(false)
   const [porAsignar, setPorAsignar] = useState<Paramedico | null>(null)
-  const [porDesactivar, setPorDesactivar] = useState<Paramedico | null>(null)
+  const [porEditar, setPorEditar] = useState<Paramedico | null>(null)
+  const [confirmacion, setConfirmacion] = useState<Confirmacion | null>(null)
+  const [turnoPorCerrar, setTurnoPorCerrar] = useState<TurnoPorCerrar | null>(null)
   const [historial, setHistorial] = useState<SujetoHistorial | null>(null)
 
-  function confirmarDesactivacion() {
-    if (!porDesactivar) {
+  const textos = confirmacion ? textosDe(confirmacion) : null
+  const confirmando = desactivar.isPending || activar.isPending || quitarDeLaUnidad.isPending
+
+  function confirmar() {
+    if (!confirmacion || !textos) {
       return
     }
-    const paramedico = porDesactivar
-    desactivar.mutate(paramedico.id, {
+    const { tipo, paramedico } = confirmacion
+    const accion = tipo === 'desactivar' ? desactivar : tipo === 'activar' ? activar : quitarDeLaUnidad
+    accion.mutate(paramedico.id, {
       onSuccess: () => {
-        setPorDesactivar(null)
-        toast.show('Paramédico desactivado', { message: `${paramedico.nombreCompleto} ya no está disponible para la operación.` })
+        setConfirmacion(null)
+        toast.show(textos.exito, { message: textos.detalle })
       },
       onError: (error) => {
-        setPorDesactivar(null)
-        toast.show('No se pudo desactivar', { message: mensajeDeError(error) })
+        // El backend explica en el mensaje qué hacer (salir de turno, liberar el teléfono): se muestra tal cual.
+        setConfirmacion(null)
+        toast.show(textos.fallo, { message: mensajeDeError(error) })
       },
     })
+  }
+
+  /** El menú de cada fila lleva lo que esa persona puede hacer hoy, y apagado lo que va a poder al salir de turno. */
+  function accionesDe(paramedico: Paramedico): AccionDeMenu[] {
+    const historialDeAsignaciones: AccionDeMenu = {
+      etiqueta: 'Historial',
+      icono: <IconoHistorial size={16} />,
+      onElegir: () => setHistorial({ tipo: 'paramedico', id: paramedico.id, nombre: paramedico.nombreCompleto }),
+    }
+
+    if (!paramedico.activo) {
+      return [
+        {
+          etiqueta: 'Activar',
+          icono: <IconoReactivar size={16} />,
+          onElegir: () => setConfirmacion({ tipo: 'activar', paramedico }),
+        },
+        historialDeAsignaciones,
+      ]
+    }
+
+    // Con el turno abierto no se lo puede dar de baja ni cambiar o bajar de su unidad: se quedaría trabajando en algo
+    // que el sistema ya no le reconoce. Se ven apagadas, con el motivo, hasta que se le cierre el turno.
+    const motivoEnTurno = paramedico.enTurno ? 'Está en turno: ciérrale el turno primero' : undefined
+
+    return [
+      paramedico.asignacionVigente
+        ? {
+            etiqueta: 'Reasignar',
+            icono: <IconoReasignar size={16} />,
+            motivo: motivoEnTurno,
+            onElegir: () => setPorAsignar(paramedico),
+          }
+        : {
+            etiqueta: 'Asignar',
+            icono: <IconoAsignar size={16} />,
+            motivo: motivoEnTurno,
+            onElegir: () => setPorAsignar(paramedico),
+          },
+      { etiqueta: 'Editar', icono: <IconoEditar size={16} />, onElegir: () => setPorEditar(paramedico) },
+      // Para quien se fue sin cerrarlo. Solo aparece con el turno abierto: a los demás no hay nada que cerrarles.
+      ...(paramedico.enTurno
+        ? [
+            {
+              etiqueta: 'Cerrar turno',
+              icono: <IconoFinDeTurno size={16} />,
+              onElegir: () =>
+                setTurnoPorCerrar({
+                  paramedicoId: paramedico.id,
+                  nombre: paramedico.nombreCompleto,
+                  placa: paramedico.asignacionVigente?.placa ?? null,
+                }),
+            },
+          ]
+        : []),
+      ...(paramedico.asignacionVigente
+        ? [
+            {
+              etiqueta: 'Quitar de la unidad',
+              icono: <IconoQuitar size={16} />,
+              motivo: motivoEnTurno,
+              onElegir: () => setConfirmacion({ tipo: 'quitar', paramedico }),
+            },
+          ]
+        : []),
+      {
+        etiqueta: 'Desactivar',
+        icono: <IconoApagar size={16} color="var(--primarioPresionado)" />,
+        tono: 'peligro',
+        motivo: motivoEnTurno,
+        onElegir: () => setConfirmacion({ tipo: 'desactivar', paramedico }),
+      },
+      historialDeAsignaciones,
+    ]
   }
 
   return (
@@ -100,9 +236,17 @@ export function PersonalPage() {
                 </Text>
                 {paramedico.asignacionVigente ? (
                   <YStack>
-                    <Text fontFamily="$mono" fontSize={13} fontWeight="500" color={paramedico.activo ? '$texto' : '$textoSecundario'}>
-                      {paramedico.asignacionVigente.placa}
-                    </Text>
+                    {/* El turno se abre en la unidad asignada: la marca va al lado de su placa. */}
+                    <XStack items="center" gap={8}>
+                      <Text fontFamily="$mono" fontSize={13} fontWeight="500" color={paramedico.activo ? '$texto' : '$textoSecundario'}>
+                        {paramedico.asignacionVigente.placa}
+                      </Text>
+                      {paramedico.enTurno ? (
+                        <Insignia tono="verde" conPunto>
+                          En turno
+                        </Insignia>
+                      ) : null}
+                    </XStack>
                     <Text fontSize={12} lineHeight={16} color="$textoSecundario">
                       desde {fechaHoraCorta(paramedico.asignacionVigente.fechaInicio)}
                     </Text>
@@ -117,45 +261,9 @@ export function PersonalPage() {
                     Activo
                   </Text>
                 ) : (
-                  <Insignia tono="contorno">Desactivado</Insignia>
+                  <Insignia tono="contorno">Inactivo</Insignia>
                 )}
-                <XStack gap={6} justify="flex-end">
-                  {paramedico.activo ? (
-                    paramedico.asignacionVigente ? (
-                      <Button size="$3" variant="outlined" icon={<IconoReasignar size={15} />} onPress={() => setPorAsignar(paramedico)}>
-                        Reasignar
-                      </Button>
-                    ) : (
-                      <Button
-                        size="$3"
-                        bg="$primarioTinte"
-                        borderColor="$primarioTinte"
-                        icon={<IconoAsignar size={15} color="var(--primarioPresionado)" />}
-                        onPress={() => setPorAsignar(paramedico)}
-                      >
-                        <Button.Text color="$primarioPresionado">Asignar</Button.Text>
-                      </Button>
-                    )
-                  ) : null}
-                  <Button
-                    size="$3"
-                    variant="outlined"
-                    icon={<IconoHistorial size={15} />}
-                    onPress={() => setHistorial({ tipo: 'paramedico', id: paramedico.id, nombre: paramedico.nombreCompleto })}
-                  >
-                    Historial
-                  </Button>
-                  {paramedico.activo ? (
-                    <Button
-                      size="$3"
-                      chromeless
-                      icon={<IconoApagar size={15} color="var(--primarioPresionado)" />}
-                      onPress={() => setPorDesactivar(paramedico)}
-                    >
-                      <Button.Text color="$primarioPresionado">Desactivar</Button.Text>
-                    </Button>
-                  ) : null}
-                </XStack>
+                <MenuAcciones etiqueta={`Acciones de ${paramedico.nombreCompleto}`} acciones={accionesDe(paramedico)} />
               </FilaTabla>
             ))
           )}
@@ -166,15 +274,20 @@ export function PersonalPage() {
 
       <AsignarAmbulanciaDialog paramedico={porAsignar} onCerrar={() => setPorAsignar(null)} />
 
+      {porEditar ? <EditarParamedicoDialog paramedico={porEditar} onCerrar={() => setPorEditar(null)} /> : null}
+
       <DialogoConfirmacion
-        abierto={porDesactivar !== null}
-        onCambiarAbierto={(abierto) => (abierto ? undefined : setPorDesactivar(null))}
-        titulo={`¿Desactivar a ${porDesactivar?.nombreCompleto ?? ''}?`}
-        descripcion="No estará disponible para la operación. Sus asignaciones se conservan."
-        textoConfirmar="Desactivar"
-        pendiente={desactivar.isPending}
-        onConfirmar={confirmarDesactivacion}
+        abierto={confirmacion !== null}
+        onCambiarAbierto={(abierto) => (abierto ? undefined : setConfirmacion(null))}
+        titulo={textos?.titulo ?? ''}
+        descripcion={textos?.descripcion ?? ''}
+        textoConfirmar={textos?.textoConfirmar ?? ''}
+        tono={textos?.tono}
+        pendiente={confirmando}
+        onConfirmar={confirmar}
       />
+
+      <DialogoCerrarTurno turno={turnoPorCerrar} onCerrar={() => setTurnoPorCerrar(null)} />
 
       <HistorialAsignacionesDialog sujeto={historial} onCerrar={() => setHistorial(null)} />
     </>

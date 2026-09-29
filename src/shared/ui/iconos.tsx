@@ -58,6 +58,30 @@ export function IconoIncidentes(props: PropsIcono) {
   )
 }
 
+/** Un punto de origen, un recorrido y un destino: el traslado de un lado al otro. */
+export function IconoTraslados(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="5.5" r="2.5" />
+      <path d="M8 18.5h5a3.5 3.5 0 0 0 0-7h-2a3.5 3.5 0 0 1 0-7h5" />
+    </Icono>
+  )
+}
+
+/** Una unidad emitiendo: la señal en vivo que mira el centro de control. */
+export function IconoMonitoreo(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="12" cy="12" r="1.8" />
+      <path d="M8.82 15.18a4.5 4.5 0 0 1 0-6.36" />
+      <path d="M15.18 8.82a4.5 4.5 0 0 1 0 6.36" />
+      <path d="M6.34 17.66a8 8 0 0 1 0-11.32" />
+      <path d="M17.66 6.34a8 8 0 0 1 0 11.32" />
+    </Icono>
+  )
+}
+
 export function IconoMas(props: PropsIcono) {
   return (
     <Icono {...props}>
@@ -102,6 +126,17 @@ export function IconoApagar(props: PropsIcono) {
   )
 }
 
+/** Una puerta y una flecha que sale: el turno que se termina. */
+export function IconoFinDeTurno(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+      <path d="M15 8l4 4-4 4" />
+      <path d="M19 12H9" />
+    </Icono>
+  )
+}
+
 export function IconoReasignar(props: PropsIcono) {
   return (
     <Icono {...props}>
@@ -117,6 +152,37 @@ export function IconoAsignar(props: PropsIcono) {
       <circle cx="9" cy="8" r="3.25" />
       <path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5" />
       <path d="M18.5 8v6M15.5 11h6" />
+    </Icono>
+  )
+}
+
+/** Los tres puntos que abren el menú de acciones de una fila. */
+export function IconoAcciones(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" />
+    </Icono>
+  )
+}
+
+export function IconoEditar(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M4 20h4L18.5 9.5a2.83 2.83 0 0 0-4-4L4 16z" />
+      <path d="M13.5 6.5l4 4" />
+    </Icono>
+  )
+}
+
+/** El contrario de IconoAsignar: la misma persona, pero restándole la unidad. */
+export function IconoQuitar(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="9" cy="8" r="3.25" />
+      <path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5" />
+      <path d="M15.5 11h6" />
     </Icono>
   )
 }

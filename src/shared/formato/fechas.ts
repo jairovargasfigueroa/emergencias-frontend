@@ -19,6 +19,30 @@ export function fechaHoraCorta(iso: string): string {
   return `${fecha.getDate()} ${MESES[fecha.getMonth()]}, ${dosDigitos(fecha.getHours())}:${dosDigitos(fecha.getMinutes())}`
 }
 
+/** Solo la hora, "09:20". Para tablas donde la fecha ya está en el encabezado. */
+export function hora(iso: string): string {
+  const fecha = new Date(iso)
+  return `${dosDigitos(fecha.getHours())}:${dosDigitos(fecha.getMinutes())}`
+}
+
+/** "2026-09-29" en la hora local: es como el backend espera el día de la tabla. */
+export function comoDia(fecha: Date): string {
+  return `${fecha.getFullYear()}-${dosDigitos(fecha.getMonth() + 1)}-${dosDigitos(fecha.getDate())}`
+}
+
+/** "5 s", "4 min", "2 h", "3 d" a partir de segundos ya contados, para cuando los segundos todavía importan. */
+export function tiempoDeSegundos(segundos: number): string {
+  if (segundos < 60) {
+    return `${segundos} s`
+  }
+  const minutos = Math.floor(segundos / 60)
+  if (minutos < 60) {
+    return `${minutos} min`
+  }
+  const horas = Math.floor(minutos / 60)
+  return horas < 24 ? `${horas} h` : `${Math.floor(horas / 24)} d`
+}
+
 /** Tiempo desde `iso` hasta `ahora` (en milisegundos): "menos de 1 min", "25 min", "3 h 10 min" o "2 d 5 h". */
 export function tiempoTranscurrido(iso: string, ahora: number): string {
   const minutos = Math.max(0, Math.floor((ahora - new Date(iso).getTime()) / 60_000))

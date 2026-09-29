@@ -1,4 +1,5 @@
 import { createRoute } from '@tanstack/react-router'
+import { validarBusquedaIncidentes } from '../../features/incidentes/busqueda'
 import { DetalleIncidentePage } from '../../features/incidentes/DetalleIncidentePage'
 import { rutaProtegida } from './protegida'
 
@@ -10,5 +11,8 @@ export const rutaIncidente = createRoute({
     parse: ({ incidenteId }) => ({ incidenteId: Number(incidenteId) }),
     stringify: ({ incidenteId }) => ({ incidenteId: String(incidenteId) }),
   },
+  // El filtro y la página de la lista desde la que se abrió, para volver a ella tal como estaba. Quien entra directo
+  // no trae nada y vuelve a la lista de siempre.
+  validateSearch: validarBusquedaIncidentes,
   component: DetalleIncidentePage,
 })

@@ -6,11 +6,13 @@ import { z } from 'zod'
 import { codigoDeError, mensajeDeError } from '../../shared/api/cliente'
 import { BotonPrimario } from '../../shared/ui/botones'
 import { MensajeDeCampo, textoDeErrores } from '../../shared/ui/EstadosDeCarga'
+import { TIPOS_UNIDAD, type TipoUnidad } from './api'
 import { registrarAmbulanciaMutation } from './queries'
+import { SelectorTipoUnidad } from './SelectorTipoUnidad'
 
 const esquema = z.object({
   placa: z.string().trim().min(1, 'La placa es obligatoria.'),
-  tipoUnidad: z.string().trim().min(1, 'El tipo de unidad es obligatorio.'),
+  tipoUnidad: z.enum(TIPOS_UNIDAD, { message: 'Elige el tipo de unidad.' }),
 })
 
 type Props = {
@@ -26,7 +28,7 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
   const [errorPlaca, setErrorPlaca] = useState<string | null>(null)
 
   const form = useForm({
-    defaultValues: { placa: '', tipoUnidad: '' },
+    defaultValues: { placa: '', tipoUnidad: '' as TipoUnidad },
     validators: { onSubmit: esquema },
     onSubmit: async ({ value, formApi }) => {
       try {
@@ -110,18 +112,10 @@ export function RegistrarAmbulanciaDialog({ abierto, onCambiarAbierto }: Props) 
               <form.Field name="tipoUnidad">
                 {(field) => (
                   <YStack gap={6}>
-                    <Label htmlFor="tipoUnidad" color="$texto" fontSize={13} fontWeight="500">
+                    <Label color="$texto" fontSize={13} fontWeight="500">
                       Tipo de unidad
                     </Label>
-                    <Input
-                      id="tipoUnidad"
-                      size="$4"
-                      placeholder="Ej.: Soporte vital básico"
-                      value={field.state.value}
-                      onChange={(evento) => field.handleChange(evento.currentTarget.value)}
-                      onBlur={field.handleBlur}
-                      borderColor={field.state.meta.isValid ? '$bordeFuerte' : '$primario'}
-                    />
+                    <SelectorTipoUnidad valor={field.state.value} onElegir={field.handleChange} />
                     <MensajeDeCampo texto={textoDeErrores(field.state.meta.errors)} />
                   </YStack>
                 )}

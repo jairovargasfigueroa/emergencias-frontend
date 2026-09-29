@@ -1,11 +1,9 @@
 import type {
   EstadoAlerta,
-  EstadoAtencion,
   EstadoIncidente,
   FiltroEstadoIncidente,
-  MotivoCancelacionAtencion,
+  MotivoCancelacionAlerta,
   MotivoCierreIncidente,
-  MotivoSinTraslado,
   OrigenUbicacion,
 } from './api'
 
@@ -33,6 +31,20 @@ export const TEXTO_MOTIVO_CIERRE: Record<MotivoCierreIncidente, string> = {
   OTRO: 'Otro motivo',
 }
 
+/**
+ * Los mismos motivos, como se ofrecen al cerrar un incidente a mano: dichos como los diría el despachador y con lo que
+ * quiere decir cada uno. Ya cerrado, el detalle lo cuenta con `TEXTO_MOTIVO_CIERRE`.
+ */
+export const OPCION_MOTIVO_CIERRE: Record<MotivoCierreIncidente, { titulo: string; detalle: string | null }> = {
+  FALSA_ALARMA_VERIFICADA: { titulo: 'Falsa alarma', detalle: 'Se comprobó que no había ninguna emergencia.' },
+  ATENDIDO_EXTERNAMENTE: {
+    titulo: 'Lo atendieron por otro medio',
+    detalle: 'Lo llevaron por su cuenta, llegó otra ambulancia o lo derivaron.',
+  },
+  SIN_COBERTURA: { titulo: 'Sin cobertura', detalle: 'No hay ninguna unidad que pueda ir.' },
+  OTRO: { titulo: 'Otro', detalle: null },
+}
+
 export const TEXTO_ESTADO_ALERTA: Record<EstadoAlerta, string> = {
   RECIBIDA: 'Recibida',
   VINCULADA: 'Vinculada',
@@ -40,37 +52,23 @@ export const TEXTO_ESTADO_ALERTA: Record<EstadoAlerta, string> = {
   DESCARTADA: 'Descartada',
 }
 
+/**
+ * Por qué el ciudadano retiró su pedido. Son las opciones de la app ("Ya no hace falta") contadas en tercera persona,
+ * como registro de lo que pasó. La app no ofrece falsa alarma, pero el backend la acepta.
+ */
+export const TEXTO_MOTIVO_CANCELACION_ALERTA: Record<MotivoCancelacionAlerta, string> = {
+  YA_FUE_ATENDIDO: 'Ya lo estaban atendiendo',
+  FALSA_ALARMA: 'Era una falsa alarma',
+  ERROR: 'Pidió ayuda por error',
+  OTRO: 'Ya no hacía falta',
+}
+
+/** La respuesta a "¿Quién necesitaba la ambulancia?", que la app pregunta al retirar el pedido. */
+export function textoEmisorEsPaciente(emisorEsPaciente: boolean): string {
+  return emisorEsPaciente ? 'Quien avisó era el paciente' : 'Avisó por otra persona'
+}
+
 export const TEXTO_ORIGEN_UBICACION: Record<OrigenUbicacion, string> = {
   GPS: 'GPS',
   MANUAL: 'Marcada en el mapa',
-}
-
-export const TEXTO_ESTADO_ATENCION: Record<EstadoAtencion, string> = {
-  EN_CAMINO: 'En camino',
-  EN_EL_LUGAR: 'En el lugar',
-  PACIENTE_RECOGIDO: 'Paciente recogido',
-  EN_HOSPITAL: 'En el hospital',
-  PACIENTE_ENTREGADO: 'Paciente entregado',
-  SIN_TRASLADO: 'Sin traslado',
-  CANCELADA: 'Cancelada',
-}
-
-/** Los mismos textos con los que la app del paramédico ofrece cada motivo. */
-export const TEXTO_MOTIVO_CANCELACION_ATENCION: Record<MotivoCancelacionAtencion, string> = {
-  AVERIA: 'Avería',
-  NO_SE_ENCONTRO_PACIENTE: 'No se encontró al paciente',
-  DESVIADA: 'Desviada a otra emergencia',
-  OTRO: 'Otro motivo',
-}
-
-/**
- * Cómo terminó una salida que no trasladó a nadie. En la app el paramédico los elige en primera persona ("Lo atendí
- * acá"); acá se lee un registro de lo que pasó, así que van contados en tercera.
- */
-export const TEXTO_MOTIVO_SIN_TRASLADO: Record<MotivoSinTraslado, string> = {
-  ATENDIDO_EN_EL_LUGAR: 'Se lo atendió en el lugar',
-  PACIENTE_RECHAZO: 'El paciente rechazó el traslado',
-  NO_HABIA_PACIENTE: 'No había nadie en el lugar',
-  TRASLADO_POR_OTRO_MEDIO: 'Ya se lo habían llevado por otro medio',
-  FALLECIDO: 'Falleció en el lugar',
 }

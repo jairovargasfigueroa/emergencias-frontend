@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link, Navigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
 import { Button, Spinner, Text, ToggleGroup, XStack, YStack } from 'tamagui'
 import type { Pagina } from '../../shared/api/cliente'
 import { fechaHoraCorta, tiempoTranscurrido } from '../../shared/formato/fechas'
+import { useAhora } from '../../shared/reloj/useAhora'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/iconos'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { estaAbierto, type FiltroEstadoIncidente, type IncidenteResumen } from './api'
-import { esFiltro, FILTROS } from './busqueda'
+import { esFiltro, FILTROS, type BusquedaIncidentes } from './busqueda'
 import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
 import { incidentesQuery } from './queries'
 import { TEXTO_FILTRO } from './textos'
@@ -17,7 +17,9 @@ import { TEXTO_FILTRO } from './textos'
 // El id lleva el prefijo de la ruta protegida, que es de la que cuelgan todas las pantallas del panel.
 const rutaApi = getRouteApi('/protegida/incidentes')
 
+// El número va primero porque el resto del panel nombra a cada incidente por él: "Incidente #12".
 const COLUMNAS: ColumnaTabla[] = [
+  { titulo: '#', ancho: 72 },
   { titulo: 'Estado', ancho: 200 },
   { titulo: 'Creación', ancho: 150 },
   { titulo: 'Transcurrido o cierre', ancho: 170 },
@@ -36,21 +38,17 @@ const SIN_INCIDENTES: Record<FiltroEstadoIncidente, string> = {
 const INTERVALO_RELOJ_MS = 30_000
 
 /**
- * Consulta de incidentes, solo lectura: los incidentes los crea el sistema a partir de las alertas y cambian solo por
- * la máquina de estados. El filtro y la página van en la URL, donde la página se cuenta desde 1.
+ * Consulta de incidentes, solo lectura: los incidentes los crea el sistema a partir de las alertas, y lo que la central
+ * hace con uno, mandarle una unidad o cerrarlo, se hace desde su detalle. El filtro y la página van en la URL, donde
+ * la página se cuenta desde 1.
  */
 export function IncidentesPage() {
   const busqueda = rutaApi.useSearch()
   const navigate = rutaApi.useNavigate()
   const filtro = busqueda.estado ?? 'ABIERTOS'
   const pagina = (busqueda.pagina ?? 1) - 1
-  const [ahora, setAhora] = useState(() => Date.now())
+  const ahora = useAhora(INTERVALO_RELOJ_MS)
   const incidentes = useQuery(incidentesQuery(filtro, pagina))
-
-  useEffect(() => {
-    const reloj = setInterval(() => setAhora(Date.now()), INTERVALO_RELOJ_MS)
-    return () => clearInterval(reloj)
-  }, [])
 
   // Si la lista se achicó (por ejemplo, porque se cerraron incidentes) y la página ya no existe, se pasa a la última.
   const datos = incidentes.data
@@ -152,7 +150,7 @@ export function IncidentesPage() {
                 <TablaVacia>{SIN_INCIDENTES[filtro]}</TablaVacia>
               ) : (
                 incidentes.data.contenido.map((incidente) => (
-                  <FilaIncidente key={incidente.id} incidente={incidente} ahora={ahora} />
+                  <FilaIncidente key={incidente.id} incidente={incidente} busqueda={busqueda} ahora={ahora} />
                 ))
               )}
             </Tabla>
@@ -166,12 +164,27 @@ export function IncidentesPage() {
   )
 }
 
+type PropsFila = {
+  incidente: IncidenteResumen
+  /** El filtro y la página de esta lista: el detalle los guarda para volver a ella tal como estaba. */
+  busqueda: BusquedaIncidentes
+  ahora: number
+}
+
 /** Toda la fila es un enlace al detalle del incidente. */
-function FilaIncidente({ incidente, ahora }: { incidente: IncidenteResumen; ahora: number }) {
+function FilaIncidente({ incidente, busqueda, ahora }: PropsFila) {
   const abierto = estaAbierto(incidente.estado)
   return (
-    <Link to="/incidentes/$incidenteId" params={{ incidenteId: incidente.id }} style={{ textDecoration: 'none' }}>
+    <Link
+      to="/incidentes/$incidenteId"
+      params={{ incidenteId: incidente.id }}
+      search={busqueda}
+      style={{ textDecoration: 'none' }}
+    >
       <FilaTabla columnas={COLUMNAS} alto={64} interactiva>
+        <Text fontFamily="$mono" fontSize={13} fontWeight="500" color="$texto">
+          {incidente.id}
+        </Text>
         <InsigniaEstadoIncidente estado={incidente.estado} />
         <Text fontSize={14} color="$texto">
           {fechaHoraCorta(incidente.fechaHoraCreacion)}

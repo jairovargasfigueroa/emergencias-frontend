@@ -1,2 +1,17 @@
+# pnpm solo deja accesibles los paquetes que este proyecto declara. El compilador de Tamagui genera
+# .tamagui/tamagui.config.mjs importando paquetes suyos por nombre (@tamagui/core, @tamagui/web y los que
+# agregue despues), y esos llegan como dependencias indirectas: sin esto no los encuentra, la compilacion de la
+# config falla en silencio y los estilos terminan resolviendose en el navegador en vez de al compilar.
+publicHoistPattern:
+  - '@tamagui/*'
+  # Los de fabrica de pnpm, que esta lista reemplaza: sin repetirlos, eslint deja de encontrar sus plugins.
+  - '*eslint*'
+  - '*prettier*'
+
 allowBuilds:
+  # Su postinstall solo sirve para hornear la configuración de Firebase App Hosting desde una variable de entorno.
+  # Acá la configuración entra por las VITE_*, así que no hace falta.
+  '@firebase/util': false
   esbuild: true
+  # Llega arrastrado por Firestore, que el panel no importa: el bundle ni lo incluye.
+  protobufjs: false

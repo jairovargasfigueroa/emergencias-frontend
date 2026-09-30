@@ -33,6 +33,7 @@ import { RegistrarParamedicoDialog } from './RegistrarParamedicoDialog'
 const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Nombre' },
   { titulo: 'Teléfono', ancho: 130 },
+  { titulo: 'Acceso', ancho: 140 },
   { titulo: 'Ambulancia asignada', ancho: 210 },
   { titulo: 'Registro', ancho: 110 },
   { titulo: 'Acciones', ancho: 96, alinearDerecha: true },
@@ -48,6 +49,20 @@ function iniciales(nombreCompleto: string) {
     .slice(0, 2)
     .map((parte) => parte[0]?.toUpperCase())
     .join('')
+}
+
+/**
+ * Si puede entrar a su app. El bloqueo va primero: quien lo tiene ya había activado su app, pero no entra hasta que
+ * se le genere un código nuevo.
+ */
+function InsigniaDeAcceso({ paramedico }: { paramedico: Paramedico }) {
+  if (paramedico.bloqueado) {
+    return <Insignia tono="rojo">PIN bloqueado</Insignia>
+  }
+  if (paramedico.activado) {
+    return <Insignia tono="verde">Activado</Insignia>
+  }
+  return <Insignia tono="ambar">Sin activar</Insignia>
 }
 
 function textosDe(confirmacion: Confirmacion) {
@@ -234,6 +249,10 @@ export function PersonalPage() {
                 <Text fontSize={14} color={paramedico.activo ? '$texto' : '$textoTenue'}>
                   {paramedico.telefono}
                 </Text>
+                {/* Dado de baja no entra a su app aunque la haya activado: su acceso se apaga con el resto de la fila. */}
+                <XStack opacity={paramedico.activo ? 1 : 0.55}>
+                  <InsigniaDeAcceso paramedico={paramedico} />
+                </XStack>
                 {paramedico.asignacionVigente ? (
                   <YStack>
                     {/* El turno se abre en la unidad asignada: la marca va al lado de su placa. */}

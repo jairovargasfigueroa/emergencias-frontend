@@ -69,7 +69,7 @@ export function RegistrarParamedicoDialog({ abierto, onCambiarAbierto }: Props) 
               Registrar paramédico
             </Dialog.Title>
             <Dialog.Description color="$textoSecundario" fontSize={14} lineHeight={20}>
-              Con su teléfono se identificará en la app del paramédico.
+              Para entrar a su app va a necesitar este teléfono y el código de activación que le generes después.
             </Dialog.Description>
           </YStack>
 

@@ -187,6 +187,21 @@ export function IconoQuitar(props: PropsIcono) {
   )
 }
 
+/**
+ * Una llave de puerta: el código con que el paramédico activa su app en un teléfono. `IconoLlave` es otra: la llave
+ * de taller de "Fuera de servicio".
+ */
+export function IconoAcceso(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <circle cx="8" cy="15" r="4.5" />
+      <path d="M11.2 11.8L20 3" />
+      <path d="M17 6l2.5 2.5" />
+      <path d="M14.5 8.5l2 2" />
+    </Icono>
+  )
+}
+
 export function IconoCerrar(props: PropsIcono) {
   return (
     <Icono {...props}>
@@ -209,6 +224,16 @@ export function IconoCheck(props: PropsIcono) {
   return (
     <Icono {...props}>
       <path d="M6 12.5l4 4L18 8.5" />
+    </Icono>
+  )
+}
+
+/** Dos hojas encimadas: copiar al portapapeles. */
+export function IconoCopiar(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" />
     </Icono>
   )
 }

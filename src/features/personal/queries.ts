@@ -74,3 +74,14 @@ function refrescarTurnos(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: operacionKeys.todo }),
   ])
 }
+
+/**
+ * No recarga el personal al terminar: generar el código no cambia nada de la fila hasta que el paramédico lo usa. La
+ * lista se recarga al cerrar el diálogo que lo muestra.
+ *
+ * Falla con 409 `PARAMEDICO_INACTIVO` si está desactivado: primero hay que activarlo.
+ */
+export const generarCodigoActivacionMutation = () =>
+  mutationOptions({
+    mutationFn: (paramedicoId: number) => personalApi.generarCodigoActivacion(paramedicoId),
+  })

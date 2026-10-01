@@ -153,11 +153,16 @@ export function PersonalPage() {
       onElegir: () => setHistorial({ tipo: 'paramedico', id: paramedico.id, nombre: paramedico.nombreCompleto }),
     }
 
-    // Dado de baja no puede entrar a su app, así que un código recién le sirve después de activarlo.
+    // Dado de baja no puede entrar a su app, así que un código recién le sirve después de activarlo. En turno tampoco
+    // se genera: el código le cierra la app, y su unidad seguiría figurando con él adentro.
     const codigoDeActivacion: AccionDeMenu = {
       etiqueta: 'Generar código de activación',
       icono: <IconoAcceso size={16} />,
-      motivo: paramedico.activo ? undefined : 'Está desactivado: actívalo primero',
+      motivo: !paramedico.activo
+        ? 'Está desactivado: actívalo primero'
+        : paramedico.enTurno
+          ? 'Está en turno: ciérrale el turno primero'
+          : undefined,
       onElegir: () => setCodigoPara(paramedico),
     }
 

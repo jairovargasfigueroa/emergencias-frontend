@@ -18,8 +18,9 @@ type Props = {
  * bloqueó. La central se lo entrega en persona, como la credencial a quien entra a trabajar, y él lo usa una sola vez
  * para crear el PIN que le piden al iniciar cada turno.
  *
- * Se genera al confirmar y no al abrir el diálogo, porque cada código nuevo anula al anterior que no haya usado. Y
- * solo se ve acá: el servidor lo guarda cifrado y no lo puede volver a mostrar.
+ * Se genera al confirmar y no al abrir el diálogo, porque cada código nuevo anula al anterior que no haya usado y
+ * también su acceso de antes: el PIN y el teléfono dejan de servir y su app se cierra. Y solo se ve acá: el servidor
+ * lo guarda cifrado y no lo puede volver a mostrar.
  *
  * Se monta solo al abrirlo, así cada vez arranca sin código.
  */
@@ -32,8 +33,8 @@ export function DialogoCodigoActivacion({ paramedico, onCerrar }: Props) {
   const codigo = generar.data
   const primerNombre = paramedico.nombreCompleto.split(/\s+/)[0] ?? paramedico.nombreCompleto
 
-  // La lista se recarga al cerrar y no apenas sale el código: su fila no cambia hasta que él lo usa, y puede estar
-  // usándolo mientras se le dicta. Al cerrar ya se ve cómo quedó.
+  // La lista se recarga al cerrar y no apenas sale el código: su fila cambia al generarlo, porque queda sin activar, y
+  // otra vez cuando él lo usa, que puede ser mientras se le dicta. Al cerrar ya se ve cómo quedó.
   function cerrar() {
     void queryClient.invalidateQueries({ queryKey: personalKeys.todos })
     onCerrar()
@@ -128,13 +129,13 @@ export function DialogoCodigoActivacion({ paramedico, onCerrar }: Props) {
             </>
           ) : (
             <>
-              {/* Solo quien ya activó su app tiene un teléfono que puede quedar afuera. */}
+              {/* Solo quien ya activó su app tiene un PIN y un teléfono que pueden quedar afuera. */}
               {paramedico.activado ? (
                 <XStack px={12} py={10} rounded={10} bg="$enAtencionTinte">
                   <Paragraph fontSize={13} lineHeight={19} color="$enAtencionTexto">
-                    {primerNombre} ya activó su app. Un código nuevo sirve para un teléfono nuevo o un PIN olvidado.
-                    Cuando lo use, su app va a funcionar solo en el teléfono donde lo ingrese: si es otro, el que tiene
-                    ahora deja de servir.
+                    {primerNombre} ya activó su app. Al generar el código, su PIN y su teléfono dejan de servir en el
+                    acto y su app se cierra: para volver a entrar tendrá que activarla con este código y crear un PIN
+                    nuevo. Sirve para un teléfono perdido o cambiado, o un PIN olvidado.
                   </Paragraph>
                 </XStack>
               ) : null}

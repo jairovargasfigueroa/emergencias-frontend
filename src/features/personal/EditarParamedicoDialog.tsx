@@ -24,8 +24,8 @@ type Props = {
 }
 
 /**
- * Corrige el nombre y el teléfono de un paramédico. El teléfono es su única credencial, no un dato de contacto:
- * por eso se avisa debajo del campo y se confirma aparte antes de cambiarlo.
+ * Corrige el nombre y el teléfono de un paramédico. El teléfono no es solo un dato de contacto: junto con su PIN, es
+ * con lo que entra a su app. Por eso se avisa debajo del campo y se confirma aparte antes de cambiarlo.
  *
  * Se monta solo cuando hay un paramédico que editar, así el formulario siempre arranca con los datos de esa fila.
  */
@@ -103,7 +103,7 @@ export function EditarParamedicoDialog({ paramedico, onCerrar }: Props) {
             </Dialog.Title>
             <Dialog.Description color="$textoSecundario" fontSize={14} lineHeight={21}>
               {paso.tipo === 'confirmarTelefono'
-                ? `${primerNombre} va a entrar a su app con el número nuevo. Con el anterior ya no va a poder.`
+                ? `${primerNombre} va a entrar a su app con el número nuevo y su mismo PIN. Con el anterior ya no va a poder.`
                 : 'Corrige el nombre o el teléfono con que quedó registrado.'}
             </Dialog.Description>
           </YStack>
@@ -181,7 +181,7 @@ export function EditarParamedicoDialog({ paramedico, onCerrar }: Props) {
                         borderColor={field.state.meta.isValid && !errorDeTelefono ? '$bordeFuerte' : '$primario'}
                       />
                       <Paragraph color="$textoSecundario" fontSize={12} lineHeight={16}>
-                        Con este número entra a su app. Si lo cambias, cambia cómo inicia sesión.
+                        Con este número y su PIN entra a su app. Si lo cambias, avísale que use el número nuevo.
                       </Paragraph>
                       <MensajeDeCampo texto={errorDeTelefono ?? textoDeErrores(field.state.meta.errors)} />
                     </YStack>

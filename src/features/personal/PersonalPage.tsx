@@ -8,6 +8,7 @@ import { DialogoConfirmacion } from '../../shared/ui/DialogoConfirmacion'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import {
+  IconoAcceso,
   IconoApagar,
   IconoAsignar,
   IconoEditar,
@@ -26,6 +27,7 @@ import { HistorialAsignacionesDialog, type SujetoHistorial } from '../asignacion
 import { quitarDeLaUnidadMutation } from '../asignaciones/queries'
 import type { Paramedico } from './api'
 import { DialogoCerrarTurno, type TurnoPorCerrar } from './DialogoCerrarTurno'
+import { DialogoCodigoActivacion } from './DialogoCodigoActivacion'
 import { EditarParamedicoDialog } from './EditarParamedicoDialog'
 import { activarParamedicoMutation, desactivarParamedicoMutation, paramedicosQuery } from './queries'
 import { RegistrarParamedicoDialog } from './RegistrarParamedicoDialog'
@@ -33,6 +35,7 @@ import { RegistrarParamedicoDialog } from './RegistrarParamedicoDialog'
 const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Nombre' },
   { titulo: 'Teléfono', ancho: 130 },
+  { titulo: 'Acceso', ancho: 140 },
   { titulo: 'Ambulancia asignada', ancho: 210 },
   { titulo: 'Registro', ancho: 110 },
   { titulo: 'Acciones', ancho: 96, alinearDerecha: true },
@@ -48,6 +51,20 @@ function iniciales(nombreCompleto: string) {
     .slice(0, 2)
     .map((parte) => parte[0]?.toUpperCase())
     .join('')
+}
+
+/**
+ * Si puede entrar a su app. El bloqueo va primero: quien lo tiene ya había activado su app, pero no entra hasta que
+ * se le genere un código nuevo.
+ */
+function InsigniaDeAcceso({ paramedico }: { paramedico: Paramedico }) {
+  if (paramedico.bloqueado) {
+    return <Insignia tono="rojo">PIN bloqueado</Insignia>
+  }
+  if (paramedico.activado) {
+    return <Insignia tono="verde">Activado</Insignia>
+  }
+  return <Insignia tono="ambar">Sin activar</Insignia>
 }
 
 function textosDe(confirmacion: Confirmacion) {
@@ -100,6 +117,7 @@ export function PersonalPage() {
   const [porEditar, setPorEditar] = useState<Paramedico | null>(null)
   const [confirmacion, setConfirmacion] = useState<Confirmacion | null>(null)
   const [turnoPorCerrar, setTurnoPorCerrar] = useState<TurnoPorCerrar | null>(null)
+  const [codigoPara, setCodigoPara] = useState<Paramedico | null>(null)
   const [historial, setHistorial] = useState<SujetoHistorial | null>(null)
 
   const textos = confirmacion ? textosDe(confirmacion) : null
@@ -124,12 +142,28 @@ export function PersonalPage() {
     })
   }
 
-  /** El menú de cada fila lleva lo que esa persona puede hacer hoy, y apagado lo que va a poder al salir de turno. */
+  /**
+   * El menú de cada fila lleva lo que esa persona puede hacer hoy, y apagado lo que va a poder más adelante: al salir
+   * de turno o, si está dada de baja, al activarla.
+   */
   function accionesDe(paramedico: Paramedico): AccionDeMenu[] {
     const historialDeAsignaciones: AccionDeMenu = {
       etiqueta: 'Historial',
       icono: <IconoHistorial size={16} />,
       onElegir: () => setHistorial({ tipo: 'paramedico', id: paramedico.id, nombre: paramedico.nombreCompleto }),
+    }
+
+    // Dado de baja no puede entrar a su app, así que un código recién le sirve después de activarlo. En turno tampoco
+    // se genera: el código le cierra la app, y su unidad seguiría figurando con él adentro.
+    const codigoDeActivacion: AccionDeMenu = {
+      etiqueta: 'Generar código de activación',
+      icono: <IconoAcceso size={16} />,
+      motivo: !paramedico.activo
+        ? 'Está desactivado: actívalo primero'
+        : paramedico.enTurno
+          ? 'Está en turno: ciérrale el turno primero'
+          : undefined,
+      onElegir: () => setCodigoPara(paramedico),
     }
 
     if (!paramedico.activo) {
@@ -139,6 +173,7 @@ export function PersonalPage() {
           icono: <IconoReactivar size={16} />,
           onElegir: () => setConfirmacion({ tipo: 'activar', paramedico }),
         },
+        codigoDeActivacion,
         historialDeAsignaciones,
       ]
     }
@@ -162,6 +197,7 @@ export function PersonalPage() {
             onElegir: () => setPorAsignar(paramedico),
           },
       { etiqueta: 'Editar', icono: <IconoEditar size={16} />, onElegir: () => setPorEditar(paramedico) },
+      codigoDeActivacion,
       // Para quien se fue sin cerrarlo. Solo aparece con el turno abierto: a los demás no hay nada que cerrarles.
       ...(paramedico.enTurno
         ? [
@@ -234,6 +270,10 @@ export function PersonalPage() {
                 <Text fontSize={14} color={paramedico.activo ? '$texto' : '$textoTenue'}>
                   {paramedico.telefono}
                 </Text>
+                {/* Dado de baja no entra a su app aunque la haya activado: su acceso se apaga con el resto de la fila. */}
+                <XStack opacity={paramedico.activo ? 1 : 0.55}>
+                  <InsigniaDeAcceso paramedico={paramedico} />
+                </XStack>
                 {paramedico.asignacionVigente ? (
                   <YStack>
                     {/* El turno se abre en la unidad asignada: la marca va al lado de su placa. */}
@@ -275,6 +315,8 @@ export function PersonalPage() {
       <AsignarAmbulanciaDialog paramedico={porAsignar} onCerrar={() => setPorAsignar(null)} />
 
       {porEditar ? <EditarParamedicoDialog paramedico={porEditar} onCerrar={() => setPorEditar(null)} /> : null}
+
+      {codigoPara ? <DialogoCodigoActivacion paramedico={codigoPara} onCerrar={() => setCodigoPara(null)} /> : null}
 
       <DialogoConfirmacion
         abierto={confirmacion !== null}

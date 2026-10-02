@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
-import { Fragment, useState, type ReactNode } from 'react'
-import { Anchor, Button, H2, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
+import { Fragment, useState } from 'react'
+import { Anchor, Button, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
 import { ErrorApi } from '../../shared/api/cliente'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
 import { TEXTO_MOTIVO_CANCELACION_ATENCION, TEXTO_MOTIVO_SIN_TRASLADO } from '../../shared/atencion/textos'
@@ -24,6 +24,7 @@ import {
 import { DialogoCerrarIncidente } from './DialogoCerrarIncidente'
 import { DialogoEnviarUnidad, type IncidenteParaEnviar } from './DialogoEnviarUnidad'
 import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
+import { Dato, Nota, Seccion, Tarjeta, Valor } from './PiezasDelDetalle'
 import { incidenteQuery } from './queries'
 import {
   TEXTO_ESTADO_ALERTA,
@@ -415,59 +416,6 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
         </XStack>
       </YStack>
     </Tarjeta>
-  )
-}
-
-function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <YStack render="section" gap={12}>
-      <H2 color="$texto" fontSize={16} lineHeight={24} fontWeight="600">
-        {titulo}
-      </H2>
-      {children}
-    </YStack>
-  )
-}
-
-function Tarjeta({ children }: { children: ReactNode }) {
-  return (
-    <YStack px={24} py={20} bg="$superficie" borderWidth={1} borderColor="$borde" rounded={12}>
-      {children}
-    </YStack>
-  )
-}
-
-/** Un dato con su etiqueta encima. */
-function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
-  return (
-    <YStack gap={4} items="flex-start" minW={140}>
-      <Text fontSize={12} lineHeight={16} fontWeight="500" color="$textoSecundario">
-        {etiqueta}
-      </Text>
-      {children}
-    </YStack>
-  )
-}
-
-function Valor({ children, tenue = false, mono = false }: { children: ReactNode; tenue?: boolean; mono?: boolean }) {
-  return (
-    <Text
-      fontSize={mono ? 13 : 14}
-      lineHeight={20}
-      fontFamily={mono ? '$mono' : undefined}
-      fontWeight={mono ? '500' : '400'}
-      color={tenue ? '$textoTenue' : '$texto'}
-    >
-      {children}
-    </Text>
-  )
-}
-
-function Nota({ children }: { children: ReactNode }) {
-  return (
-    <Text fontSize={12} lineHeight={16} color="$textoSecundario">
-      {children}
-    </Text>
   )
 }
 

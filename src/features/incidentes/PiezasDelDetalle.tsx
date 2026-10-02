@@ -1,15 +1,19 @@
 import type { ReactNode } from 'react'
-import { H2, Text, YStack } from 'tamagui'
+import { H2, Text, XStack, YStack } from 'tamagui'
 
 // Las piezas con que se arma el detalle de un incidente. Viven aparte para que las secciones que se suman al detalle
 // desde otras features se vean igual que las de la página.
 
-export function Seccion({ titulo, children }: { titulo: string; children: ReactNode }) {
+/** `etiqueta` va al lado del título, para decir de dónde sale lo que muestra la sección. */
+export function Seccion({ titulo, etiqueta, children }: { titulo: string; etiqueta?: ReactNode; children: ReactNode }) {
   return (
     <YStack render="section" gap={12}>
-      <H2 color="$texto" fontSize={16} lineHeight={24} fontWeight="600">
-        {titulo}
-      </H2>
+      <XStack items="center" gap={10} flexWrap="wrap">
+        <H2 color="$texto" fontSize={16} lineHeight={24} fontWeight="600">
+          {titulo}
+        </H2>
+        {etiqueta}
+      </XStack>
       {children}
     </YStack>
   )

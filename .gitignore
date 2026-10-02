@@ -15,6 +15,9 @@ dist-ssr
 # Configuración empaquetada por el compilador de Tamagui
 .tamagui
 
+# Variables de entorno locales: llevan claves de Firebase y Google Maps
+.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

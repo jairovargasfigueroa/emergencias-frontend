@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi, Link } from '@tanstack/react-router'
 import { Fragment, useState } from 'react'
 import { Anchor, Button, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui'
@@ -11,6 +11,8 @@ import { BotonPrimario } from '../../shared/ui/botones'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
+import { resumenIaKeys } from '../resumen-ia/queries'
+import { ResumenIaDelIncidente } from '../resumen-ia/ResumenIaDelIncidente'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import {
   atencionResuelta,
@@ -56,6 +58,7 @@ const COLUMNAS_ALERTAS: ColumnaTabla[] = [
  */
 export function DetalleIncidentePage() {
   const { incidenteId } = rutaApi.useParams()
+  const queryClient = useQueryClient()
   // El filtro y la página de la lista desde la que se abrió. Vacía si se entró directo: se vuelve a la de siempre.
   const busquedaDeLaLista = rutaApi.useSearch()
   const idValido = Number.isInteger(incidenteId) && incidenteId > 0
@@ -89,7 +92,11 @@ export function DetalleIncidentePage() {
               variant="outlined"
               icon={incidente.isFetching ? <Spinner size="small" color="$textoSecundario" /> : <IconoActualizar size={16} />}
               disabled={incidente.isFetching}
-              onPress={() => incidente.refetch()}
+              onPress={() => {
+                void incidente.refetch()
+                // El resumen de la IA se actualiza solo con el aviso de Firebase, pero sin Firebase este es el camino.
+                void queryClient.invalidateQueries({ queryKey: resumenIaKeys.delIncidente(incidenteId) })
+              }}
             >
               Actualizar
             </Button>
@@ -117,6 +124,7 @@ export function DetalleIncidentePage() {
             />
           ) : null}
           <Resumen incidente={incidente.data} />
+          <ResumenIaDelIncidente incidenteId={incidenteId} alertas={incidente.data.alertas} />
           <Seccion titulo={`Alertas (${incidente.data.alertas.length})`}>
             <TablaAlertas alertas={incidente.data.alertas} />
           </Seccion>

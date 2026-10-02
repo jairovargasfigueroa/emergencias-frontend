@@ -1,7 +1,7 @@
-import { onValue, ref, type Unsubscribe } from 'firebase/database'
+import { onValue, type Unsubscribe } from 'firebase/database'
 import { api } from '../../shared/api/cliente'
 import type { EstadoAtencion } from '../../shared/atencion/api'
-import { baseDatosFirebase } from '../../shared/firebase/baseDatos'
+import { referenciaA, SIN_ESCUCHA } from '../../shared/firebase/baseDatos'
 import type { EstadoAmbulancia, TipoUnidad } from '../flota/api'
 import type { EstadoIncidente } from '../incidentes/api'
 import type { TrasladoDelPanel } from '../traslados/api'
@@ -11,21 +11,6 @@ const NODO_POSICIONES = 'posiciones'
 
 /** Nodo de los incidentes abiertos: un hijo por incidente, con su id como clave. */
 const NODO_INCIDENTES_ABIERTOS = 'incidentes-abiertos'
-
-const SIN_ESCUCHA: Unsubscribe = () => {}
-
-/**
- * Sin la configuración de Firebase en .env.local no hay a qué conectarse y el SDK lanza al pedir la base. Se
- * devuelve null en vez de dejar que reviente: la pantalla se sostiene con lo que llega por REST, que es el
- * estado de cada unidad, y avisa que las posiciones no están llegando.
- */
-function referenciaA(ruta: string) {
-  try {
-    return ref(baseDatosFirebase(), ruta)
-  } catch {
-    return null
-  }
-}
 
 // --- REST: la foto completa de la operación ---------------------------------------------------------------
 

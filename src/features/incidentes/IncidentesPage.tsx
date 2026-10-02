@@ -8,6 +8,8 @@ import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/iconos'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
+import { useResumenesPublicados } from '../resumen-ia/avisos'
+import { MarcaResumenIa } from '../resumen-ia/MarcaResumenIa'
 import { estaAbierto, type FiltroEstadoIncidente, type IncidenteResumen } from './api'
 import { esFiltro, FILTROS, type BusquedaIncidentes } from './busqueda'
 import { InsigniaEstadoIncidente } from './InsigniasDeEstado'
@@ -24,7 +26,7 @@ const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Creación', ancho: 150 },
   { titulo: 'Transcurrido o cierre', ancho: 170 },
   { titulo: 'Afectados', ancho: 120 },
-  { titulo: 'Alertas', ancho: 90 },
+  { titulo: 'Alertas', ancho: 120 },
   { titulo: 'Unidades' },
 ]
 
@@ -49,6 +51,8 @@ export function IncidentesPage() {
   const pagina = (busqueda.pagina ?? 1) - 1
   const ahora = useAhora(INTERVALO_RELOJ_MS)
   const incidentes = useQuery(incidentesQuery(filtro, pagina))
+  // Qué incidentes tienen resumen de la IA sale de Firebase, no de la lista: la lista no lo trae.
+  const resumenes = useResumenesPublicados()
 
   // Si la lista se achicó (por ejemplo, porque se cerraron incidentes) y la página ya no existe, se pasa a la última.
   const datos = incidentes.data
@@ -150,7 +154,13 @@ export function IncidentesPage() {
                 <TablaVacia>{SIN_INCIDENTES[filtro]}</TablaVacia>
               ) : (
                 incidentes.data.contenido.map((incidente) => (
-                  <FilaIncidente key={incidente.id} incidente={incidente} busqueda={busqueda} ahora={ahora} />
+                  <FilaIncidente
+                    key={incidente.id}
+                    incidente={incidente}
+                    conResumen={resumenes.versiones.has(incidente.id)}
+                    busqueda={busqueda}
+                    ahora={ahora}
+                  />
                 ))
               )}
             </Tabla>
@@ -166,13 +176,15 @@ export function IncidentesPage() {
 
 type PropsFila = {
   incidente: IncidenteResumen
+  /** Tiene resumen de la IA. Se marca debajo de las alertas, que son de donde sale. */
+  conResumen: boolean
   /** El filtro y la página de esta lista: el detalle los guarda para volver a ella tal como estaba. */
   busqueda: BusquedaIncidentes
   ahora: number
 }
 
 /** Toda la fila es un enlace al detalle del incidente. */
-function FilaIncidente({ incidente, busqueda, ahora }: PropsFila) {
+function FilaIncidente({ incidente, conResumen, busqueda, ahora }: PropsFila) {
   const abierto = estaAbierto(incidente.estado)
   return (
     <Link
@@ -210,9 +222,12 @@ function FilaIncidente({ incidente, busqueda, ahora }: PropsFila) {
             {incidente.cantidadAfectados}
           </Text>
         )}
-        <Text fontSize={14} color="$texto">
-          {incidente.cantidadAlertas}
-        </Text>
+        <YStack items="flex-start">
+          <Text fontSize={14} color="$texto">
+            {incidente.cantidadAlertas}
+          </Text>
+          {conResumen ? <MarcaResumenIa /> : null}
+        </YStack>
         {incidente.unidades.length === 0 ? (
           <Text fontSize={14} color="$textoTenue">
             Ninguna

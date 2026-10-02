@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp } from 'firebase/app'
-import { getDatabase, type Database } from 'firebase/database'
+import { getDatabase, ref, type Database, type DatabaseReference, type Unsubscribe } from 'firebase/database'
 
 /** Configuración de la app web del proyecto de Firebase. Se completa en .env.local. */
 const configuracion = {
@@ -13,4 +13,20 @@ const configuracion = {
 export function baseDatosFirebase(): Database {
   const app = getApps().length > 0 ? getApp() : initializeApp(configuracion)
   return getDatabase(app)
+}
+
+/** Lo que devuelve una escucha que no llegó a empezar: no hay nada que cortar. */
+export const SIN_ESCUCHA: Unsubscribe = () => {}
+
+/**
+ * Sin la configuración de Firebase en .env.local no hay a qué conectarse y el SDK lanza al pedir la base. Se
+ * devuelve null en vez de dejar que reviente: cada pantalla se sostiene con lo que llega por REST y avisa, si le
+ * importa, que lo en vivo no está llegando.
+ */
+export function referenciaA(ruta: string): DatabaseReference | null {
+  try {
+    return ref(baseDatosFirebase(), ruta)
+  } catch {
+    return null
+  }
 }

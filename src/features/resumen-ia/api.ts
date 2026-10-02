@@ -1,4 +1,6 @@
+import { onValue, type Unsubscribe } from 'firebase/database'
 import { api } from '../../shared/api/cliente'
+import { referenciaA, SIN_ESCUCHA } from '../../shared/firebase/baseDatos'
 
 // Los vocabularios cerrados los fija el servicio de análisis (emergencias-mia): el backend guarda su resumen tal cual,
 // sin traducir ni renombrar. El texto en castellano lo arma el panel (ver `textos.ts`).
@@ -120,4 +122,69 @@ export const resumenIaApi = {
   /** El archivo se lee directo del almacén con esta URL, sin pasar por el backend ni llevar el token. */
   lectura: (evidenciaId: number, signal?: AbortSignal) =>
     api.get<LecturaEvidencia>(`/evidencias/${evidenciaId}/url`, signal),
+}
+
+// --- Firebase: el aviso de que hay una versión nueva ------------------------------------------------------
+
+/**
+ * Nodo que publica el servidor: un hijo por incidente que tiene resumen, con su id como clave y `{incidenteId,
+ * version, actualizadoEn}` como valor. Lleva solo la señal: el contenido se pide por REST, que es la que controla
+ * quién puede verlo.
+ */
+const NODO_RESUMENES = 'resumenes'
+
+/** La versión vigente del resumen de cada incidente que tiene uno, por su id. */
+export type VersionesDeResumen = ReadonlyMap<number, number>
+
+/**
+ * Escucha el aviso de un incidente y entrega la última versión publicada, o null mientras no tenga resumen.
+ */
+export function escucharResumen(
+  incidenteId: number,
+  alRecibir: (version: number | null) => void,
+  alFallar: () => void,
+): Unsubscribe {
+  const nodo = referenciaA(`${NODO_RESUMENES}/${incidenteId}`)
+  if (!nodo) {
+    alFallar()
+    return SIN_ESCUCHA
+  }
+  return onValue(nodo, (snapshot) => alRecibir(versionDe(snapshot.val())), alFallar)
+}
+
+/**
+ * Escucha el nodo completo: qué incidentes tienen resumen y en qué versión. Alcanza para marcarlos en una lista sin
+ * pedirle nada al backend.
+ */
+export function escucharResumenes(alRecibir: (versiones: VersionesDeResumen) => void, alFallar: () => void): Unsubscribe {
+  const nodo = referenciaA(NODO_RESUMENES)
+  if (!nodo) {
+    alFallar()
+    return SIN_ESCUCHA
+  }
+  return onValue(
+    nodo,
+    (snapshot) => {
+      const versiones = new Map<number, number>()
+      // Como en los demás nodos: forEach y nunca `.val()` del padre, que con ids numéricos devuelve un arreglo.
+      snapshot.forEach((hijo) => {
+        const id = Number(hijo.key)
+        const version = versionDe(hijo.val())
+        if (Number.isInteger(id) && version !== null) {
+          versiones.set(id, version)
+        }
+      })
+      alRecibir(versiones)
+    },
+    alFallar,
+  )
+}
+
+/** Lo que llega de Firebase no está tipado: un hijo a medio escribir cuenta como si no hubiera aviso. */
+function versionDe(valor: unknown): number | null {
+  if (valor === null || typeof valor !== 'object') {
+    return null
+  }
+  const version = (valor as Record<string, unknown>).version
+  return typeof version === 'number' && Number.isInteger(version) ? version : null
 }

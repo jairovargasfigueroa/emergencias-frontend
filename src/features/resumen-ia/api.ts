@@ -82,12 +82,23 @@ export type Modalidad = 'IMAGEN' | 'AUDIO' | 'VIDEO'
  */
 export type EstadoEvidencia = 'SUBIDA' | 'ANALIZADA' | 'FALLIDA'
 
-/** `EvidenciaResponse` del backend. */
+/** Un momento del video, en segundos desde el inicio, y lo que pasa ahí. */
+export type MomentoDelVideo = {
+  segundo: number
+  texto: string
+}
+
+/**
+ * `EvidenciaDelIncidenteResponse` del backend. `transcripcion` llega en audio y video, y `lineaDeTiempo` en video:
+ * las dos vienen nulas mientras no hay análisis o si el análisis no las trae.
+ */
 export type EvidenciaDelIncidente = {
   evidenciaId: number
   alertaId: number
   modalidad: Modalidad
   estado: EstadoEvidencia
+  transcripcion: string | null
+  lineaDeTiempo: MomentoDelVideo[] | null
 }
 
 /**

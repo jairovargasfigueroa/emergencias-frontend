@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
-import { useRef, useState, type ReactNode, type SyntheticEvent } from 'react'
-import { Button, Dialog, Spinner, Text, XStack, YStack } from 'tamagui'
+import { useRef, useState, type ReactNode, type RefObject, type SyntheticEvent } from 'react'
+import { Button, Dialog, ScrollView, Spinner, Text, XStack, YStack } from 'tamagui'
 import { hora } from '../../shared/formato/fechas'
 import { Insignia, type TonoInsignia } from '../../shared/ui/Insignia'
 import type { AlertaDeIncidente } from '../incidentes/api'
 import { Nota, Seccion } from '../incidentes/PiezasDelDetalle'
-import type { EstadoEvidencia, EvidenciaDelIncidente, LecturaEvidencia } from './api'
+import type { EstadoEvidencia, EvidenciaDelIncidente, LecturaEvidencia, MomentoDelVideo } from './api'
 import { lecturaEvidenciaQuery, lecturaVencida } from './queries'
 import { TEXTO_ESTADO_EVIDENCIA, TEXTO_MODALIDAD, textoDe } from './textos'
 
@@ -14,6 +14,9 @@ const ANCHO_EVIDENCIA = 260
 
 /** Alto del recuadro de la foto o el video dentro de la tarjeta. */
 const ALTO_MEDIO = 160
+
+/** Hasta dónde crecen la transcripción y la línea de tiempo antes de desplazarse, para no estirar la grilla. */
+const ALTO_MAXIMO_TEXTO = 140
 
 const TONO_ESTADO: Record<EstadoEvidencia, TonoInsignia> = {
   SUBIDA: 'contorno',
@@ -59,10 +62,26 @@ function TarjetaEvidencia({ evidencia, usada, alerta }: PropsTarjeta) {
   const titulo = `${textoDe(TEXTO_MODALIDAD, evidencia.modalidad)} de ${
     alerta ? `${alerta.emisor.nombreCompleto} (${hora(alerta.fechaHora)})` : `la alerta #${evidencia.alertaId}`
   }`
+  const video = useRef<HTMLVideoElement>(null)
+  const momentos = evidencia.modalidad === 'VIDEO' ? (evidencia.lineaDeTiempo ?? []) : []
+
+  /** Lleva el video al momento elegido y lo reproduce desde ahí. */
+  function irA(segundo: number) {
+    const elemento = video.current
+    if (!elemento) {
+      return
+    }
+    elemento.currentTime = segundo
+    void elemento.play().catch(() => undefined)
+  }
 
   return (
     <YStack width={ANCHO_EVIDENCIA} gap={10} p={12} bg="$superficie" borderWidth={1} borderColor="$borde" rounded={12}>
-      <Medio evidencia={evidencia} titulo={titulo} />
+      {evidencia.modalidad !== 'IMAGEN' && evidencia.transcripcion ? (
+        <Transcripcion texto={evidencia.transcripcion} />
+      ) : null}
+      <Medio evidencia={evidencia} titulo={titulo} refVideo={video} />
+      {momentos.length > 0 ? <LineaDeTiempo momentos={momentos} onElegir={irA} /> : null}
       <YStack gap={6}>
         <Text fontSize={13} lineHeight={18} fontWeight="500" color="$texto" numberOfLines={2}>
           {titulo}
@@ -85,7 +104,14 @@ function TarjetaEvidencia({ evidencia, usada, alerta }: PropsTarjeta) {
  * pide otra y, en un audio o video, se retoma desde donde iba. Una sola vez por URL vigente, salvo que esté vencida:
  * un archivo que el navegador no sabe reproducir fallaría con cualquier URL, y pedir otra no lo arregla.
  */
-function Medio({ evidencia, titulo }: { evidencia: EvidenciaDelIncidente; titulo: string }) {
+type PropsMedio = {
+  evidencia: EvidenciaDelIncidente
+  titulo: string
+  /** El elemento del video, para que la línea de tiempo pueda llevarlo a un momento. */
+  refVideo: RefObject<HTMLVideoElement | null>
+}
+
+function Medio({ evidencia, titulo, refVideo }: PropsMedio) {
   const lectura = useQuery(lecturaEvidenciaQuery(evidencia.evidenciaId))
   const [renovadaPara, setRenovadaPara] = useState<string | null>(null)
   const [roto, setRoto] = useState(false)
@@ -179,6 +205,7 @@ function Medio({ evidencia, titulo }: { evidencia: EvidenciaDelIncidente; titulo
     case 'VIDEO':
       return (
         <video
+          ref={refVideo}
           src={url}
           controls
           preload="metadata"
@@ -190,6 +217,62 @@ function Medio({ evidencia, titulo }: { evidencia: EvidenciaDelIncidente; titulo
     default:
       return null
   }
+}
+
+/** Lo que se dice en el audio o el video, para leerlo sin tener que escucharlo. */
+function Transcripcion({ texto }: { texto: string }) {
+  return (
+    <YStack gap={4}>
+      <Text fontSize={12} lineHeight={16} fontWeight="500" color="$textoSecundario">
+        Lo que se escucha
+      </Text>
+      <ScrollView maxHeight={ALTO_MAXIMO_TEXTO}>
+        <Text fontSize={13} lineHeight={19} color="$texto">
+          {texto}
+        </Text>
+      </ScrollView>
+    </YStack>
+  )
+}
+
+/** Qué pasa en cada momento del video. Elegir uno lleva el video ahí. */
+function LineaDeTiempo({ momentos, onElegir }: { momentos: MomentoDelVideo[]; onElegir: (segundo: number) => void }) {
+  return (
+    <YStack gap={4}>
+      <Text fontSize={12} lineHeight={16} fontWeight="500" color="$textoSecundario">
+        Lo que pasa en el video
+      </Text>
+      <ScrollView maxHeight={ALTO_MAXIMO_TEXTO}>
+        {momentos.map((momento, indice) => (
+          <XStack
+            key={indice}
+            role="button"
+            aria-label={`Ir a ${minutosYSegundos(momento.segundo)}: ${momento.texto}`}
+            gap={8}
+            px={6}
+            py={4}
+            rounded={6}
+            cursor="pointer"
+            hoverStyle={{ bg: '$fondo' }}
+            onPress={() => onElegir(momento.segundo)}
+          >
+            <Text width={40} fontSize={12} lineHeight={18} fontFamily="$mono" fontWeight="500" color="$textoSecundario">
+              {minutosYSegundos(momento.segundo)}
+            </Text>
+            <Text flex={1} fontSize={13} lineHeight={18} color="$texto">
+              {momento.texto}
+            </Text>
+          </XStack>
+        ))}
+      </ScrollView>
+    </YStack>
+  )
+}
+
+/** "1:05" a partir de los segundos desde el inicio del video. */
+function minutosYSegundos(segundos: number): string {
+  const enteros = Math.floor(segundos)
+  return `${Math.floor(enteros / 60)}:${String(enteros % 60).padStart(2, '0')}`
 }
 
 /** Lugar reservado del tamaño del medio, para que la grilla no salte mientras carga o cuando falla. */

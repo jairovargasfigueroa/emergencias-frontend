@@ -262,3 +262,14 @@ export function IconoSiguiente(props: PropsIcono) {
     </Icono>
   )
 }
+
+/** Una hoja con renglones y un destello: el resumen que arma la IA. Sin color propio, para no sugerir gravedad. */
+export function IconoResumenIa(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M13 3.5H6.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V11" />
+      <path d="M8 12.5h8M8 16h5" />
+      <path d="M18 2.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z" />
+    </Icono>
+  )
+}

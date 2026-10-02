@@ -4,6 +4,7 @@ import { Button, Text, XStack, YStack, type YStackProps } from 'tamagui'
 import { tiempoDeSegundos, tiempoTranscurrido } from '../../shared/formato/fechas'
 import type { EstadoAmbulancia } from '../flota/api'
 import { DialogoEnviarUnidad, type IncidenteParaEnviar } from '../incidentes/DialogoEnviarUnidad'
+import { useResumenesPublicados } from '../resumen-ia/avisos'
 import type { Traslado, TrasladoDelPanel } from '../traslados/api'
 import { AccionDelProblema, TiempoRestante } from '../traslados/AvisosDeTraslado'
 import { DialogoAsignar } from '../traslados/DialogoAsignar'
@@ -40,6 +41,7 @@ export function FranjaDeProblemas({
   const [aAsignar, setAAsignar] = useState<Traslado | null>(null)
   const [aDevolver, setADevolver] = useState<TrasladoDelPanel | null>(null)
   const [aEnviar, setAEnviar] = useState<IncidenteParaEnviar | null>(null)
+  const resumenes = useResumenesPublicados()
 
   const sinSenal = unidades.filter((unidad) => unidad.sinSenal)
   const sinCubrir = incidentesSinCubrir.length + trasladosSinCubrir.length
@@ -89,7 +91,7 @@ export function FranjaDeProblemas({
             {incidentesSinCubrir.map((incidente) => (
               <Problema
                 key={`incidente-${incidente.id}`}
-                texto={`Incidente #${incidente.id} · ${incidente.referencia ?? 'Sin referencia'} · hace ${tiempoTranscurrido(incidente.desde, ahora)}`}
+                texto={`Incidente #${incidente.id} · ${incidente.referencia ?? 'Sin referencia'} · hace ${tiempoTranscurrido(incidente.desde, ahora)}${resumenes.versiones.has(incidente.id) ? ' · resumen IA' : ''}`}
               >
                 <Link
                   to="/incidentes/$incidenteId"

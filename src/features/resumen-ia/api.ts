@@ -29,6 +29,7 @@ export type Peligro =
   | 'weapon_or_violence'
   | 'crowd'
   | 'height'
+  | 'entrapment'
   | 'other'
 
 /**

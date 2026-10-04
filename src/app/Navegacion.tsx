@@ -40,8 +40,8 @@ export function Navegacion() {
               bg={isActive ? '$primarioTinte' : 'transparent'}
               hoverStyle={{ bg: isActive ? '$primarioTinte' : '$fondo' }}
             >
-              <Icono size={18} color={isActive ? 'var(--primarioPresionado)' : 'var(--textoSecundario)'} />
-              <Text fontSize={14} fontWeight={isActive ? '600' : '500'} color={isActive ? '$primarioPresionado' : '$texto'}>
+              <Icono size={18} color={isActive ? 'var(--primarioTinteTexto)' : 'var(--textoSecundario)'} />
+              <Text fontSize={14} fontWeight={isActive ? '600' : '500'} color={isActive ? '$primarioTinteTexto' : '$texto'}>
                 {etiqueta}
               </Text>
             </XStack>

@@ -4,13 +4,21 @@ import { fechaHoraCorta, hora } from '../../shared/formato/fechas'
 import { Insignia, type TonoInsignia } from '../../shared/ui/Insignia'
 import type { AlertaDeIncidente } from '../incidentes/api'
 import { Dato, Nota, Tarjeta, Valor } from '../incidentes/PiezasDelDetalle'
-import type { Afirmacion, EvidenciaDelIncidente, NivelDeGravedad, ResumenDelIncidente, ResumenIa } from './api'
+import type {
+  Afirmacion,
+  EvidenciaDelIncidente,
+  NivelDeGravedad,
+  PuntoClave,
+  ResumenDelIncidente,
+  ResumenIa,
+} from './api'
 import {
   TEXTO_FUNDAMENTO,
   TEXTO_GRAVEDAD,
   TEXTO_MODALIDAD,
   TEXTO_PELIGRO,
   TEXTO_TIPO_DE_EVENTO,
+  TEXTO_TIPO_DE_PUNTO_CLAVE,
   textoCorroboracion,
   textoDe,
   textoPersonas,
@@ -38,17 +46,22 @@ type Props = {
  * Lo que la IA saca en limpio de las alertas y las evidencias. Es preliminar y así se presenta: cada afirmación dice
  * de dónde sale y cuántas alertas distintas la respaldan, y las contradicciones y limitaciones se muestran siempre,
  * también cuando no hay, porque saber que no se encontró ninguna es parte de leer bien el resumen.
+ *
+ * Arriba van los puntos clave, para entender la emergencia de un vistazo; el resumen completo y sus fuentes siguen
+ * debajo. Un resumen v1 no los trae y se ve como antes.
  */
 export function LoQueSeSabe({ datos, alertas }: Props) {
   const { resumen } = datos
   const fuentes = (afirmacion: Afirmacion) => nombrarFuentes(afirmacion, alertas, datos.evidencias)
   const personas = textoPersonas(resumen.people)
+  const puntosClave = resumen.keyPoints ?? []
 
   return (
     <Tarjeta>
       <YStack gap={20}>
         <YStack gap={12}>
           <Gravedad nivel={resumen.severity.level} razon={resumen.severity.basis[0]} />
+          {puntosClave.length > 0 ? <PuntosClave puntos={puntosClave} /> : null}
           <Paragraph fontSize={15} lineHeight={23} color="$texto">
             {resumen.summary}
           </Paragraph>
@@ -136,6 +149,40 @@ function Gravedad({ nivel, razon }: { nivel: NivelDeGravedad; razon: string | un
         {razon ?? 'No hay lo suficiente para estimarla.'}
       </Text>
     </XStack>
+  )
+}
+
+/** Una línea por punto, con lo que trata al lado. Lo crítico va en el color de lo que pide atención. */
+function PuntosClave({ puntos }: { puntos: PuntoClave[] }) {
+  return (
+    <YStack gap={6} px={16} py={14} rounded={10} bg="$fondo">
+      {puntos.map((punto, indice) => {
+        const critico = punto.kind === 'critical'
+        return (
+          <XStack key={indice} columnGap={12} rowGap={2} flexWrap="wrap">
+            <Text
+              width={72}
+              fontSize={12}
+              lineHeight={22}
+              fontWeight="500"
+              color={critico ? '$enAtencionTexto' : '$textoSecundario'}
+            >
+              {textoDe(TEXTO_TIPO_DE_PUNTO_CLAVE, punto.kind)}
+            </Text>
+            <Text
+              flex={1}
+              minW={200}
+              fontSize={15}
+              lineHeight={22}
+              fontWeight={critico ? '600' : '500'}
+              color={critico ? '$enAtencionTexto' : '$texto'}
+            >
+              {punto.text}
+            </Text>
+          </XStack>
+        )
+      })}
+    </YStack>
   )
 }
 

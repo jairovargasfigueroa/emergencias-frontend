@@ -1,4 +1,12 @@
-import type { EstadoEvidencia, Fundamento, Modalidad, NivelDeGravedad, Peligro, TipoDeEvento } from './api'
+import type {
+  EstadoEvidencia,
+  Fundamento,
+  Modalidad,
+  NivelDeGravedad,
+  Peligro,
+  TipoDeEvento,
+  TipoDePuntoClave,
+} from './api'
 
 // Textos en español de los vocabularios del servicio de análisis. Se cambian solo aquí.
 
@@ -28,6 +36,14 @@ export const TEXTO_PELIGRO: Record<Peligro, string> = {
   crowd: 'Aglomeración',
   height: 'Altura',
   other: 'Otro',
+}
+
+/** La etiqueta al lado de cada punto clave, para leerlos de un vistazo. */
+export const TEXTO_TIPO_DE_PUNTO_CLAVE: Record<TipoDePuntoClave, string> = {
+  what: 'Qué pasó',
+  people: 'Personas',
+  hazard: 'Peligro',
+  critical: 'Crítico',
 }
 
 export const TEXTO_GRAVEDAD: Record<NivelDeGravedad, string> = {

@@ -33,7 +33,7 @@ SGA (Sistema de Gestión de Ambulancias) coordina una central de ambulancias pri
 ## Capabilities and Constraints
 
 - Secciones: Flota, Personal, Incidentes (lista y detalle con resumen de IA y evidencias), Traslados (del día y problemas) y Centro de control. Entrada con correo y contraseña, sesión de 12 h, un solo rol.
-- Solo escritorio. Modo claro y oscuro automático. Solo en español.
+- Tiene que funcionar bien desde 1024 px de ancho: monitores de escritorio, laptops chicas y tablets en horizontal. Por debajo de 1024 px se puede usar, pero no se cuida. Modo claro y oscuro automático. Solo en español.
 - El resumen de IA orienta: no es triaje, no decide el despacho y puede estar apagado. El sistema no tiene gravedad ni prioridad.
 - No hay rutas reales: los tiempos se estiman en línea recta.
 

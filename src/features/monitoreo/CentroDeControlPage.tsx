@@ -18,8 +18,12 @@ import {
 import { operacionKeys, operacionQuery } from './queries'
 import { TablaDeUnidades } from './TablaDeUnidades'
 
-/** El margen que el layout del panel deja arriba y abajo de cada pantalla (`py={32}` en `rutas/protegida.tsx`). */
+/**
+ * El margen que el layout del panel deja arriba y abajo de cada pantalla (`py` en `rutas/protegida.tsx`): 32 px por
+ * lado, y 24 por debajo de 1280 px, donde el menú se pliega.
+ */
 const MARCO_VERTICAL = 64
+const MARCO_VERTICAL_COMPACTO = 48
 
 /**
  * Por debajo de este alto la consola ya no entra y la página vuelve a scrollear: es preferible a aplastar la tabla
@@ -113,7 +117,12 @@ export function CentroDeControlPage() {
   }
 
   return (
-    <YStack height={`calc(100vh - ${MARCO_VERTICAL}px)`} minH={ALTO_MINIMO} gap={16}>
+    <YStack
+      height={`calc(100vh - ${MARCO_VERTICAL}px)`}
+      $max-xl={{ height: `calc(100vh - ${MARCO_VERTICAL_COMPACTO}px)` }}
+      minH={ALTO_MINIMO}
+      gap={16}
+    >
       <Encabezado>
         <EstadoDeActualizacion
           actualizadoEn={operacion.dataUpdatedAt}

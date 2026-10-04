@@ -18,7 +18,7 @@ import { TEXTO_ORIGEN } from './textos'
 const COLUMNAS: ColumnaTabla[] = [
   { titulo: 'Unidad', ancho: 124 },
   { titulo: 'Estado', ancho: 172 },
-  { titulo: 'Trabajo' },
+  { titulo: 'Trabajo', anchoMinimo: 140 },
   { titulo: '', ancho: 64, alinearDerecha: true },
 ]
 

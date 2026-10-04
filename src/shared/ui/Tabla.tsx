@@ -16,13 +16,26 @@ type PropsTabla = {
    * de listado.
    */
   alto?: number
+  /** Ocupa el alto que le da el contenedor, con el encabezado quieto y las filas scrolleando adentro. */
+  llenar?: boolean
   children: ReactNode
 }
 
 /** Tabla de datos. Tamagui no trae una: se arma con filas y celdas de ancho fijo o flexible. */
-export function Tabla({ columnas, alto, children }: PropsTabla) {
+export function Tabla({ columnas, alto, llenar = false, children }: PropsTabla) {
+  const filasAdentro = alto !== undefined || llenar
   return (
-    <YStack role="table" height={alto} bg="$superficie" borderWidth={1} borderColor="$borde" rounded={12} overflow="hidden">
+    <YStack
+      role="table"
+      height={alto}
+      flex={llenar ? 1 : undefined}
+      minH={llenar ? 0 : undefined}
+      bg="$superficie"
+      borderWidth={1}
+      borderColor="$borde"
+      rounded={12}
+      overflow="hidden"
+    >
       <XStack role="row" items="center" height={44} px={12} bg="$fondo">
         {columnas.map((columna) => (
           <XStack
@@ -40,8 +53,9 @@ export function Tabla({ columnas, alto, children }: PropsTabla) {
           </XStack>
         ))}
       </XStack>
-      {alto ? (
-        <YStack flex={1} minH={0} overflow="scroll">
+      {/* `auto` y no `scroll`: en Windows `scroll` deja la barra siempre a la vista, haya o no qué desplazar. */}
+      {filasAdentro ? (
+        <YStack flex={1} minH={0} overflowY="auto">
           {children}
         </YStack>
       ) : (

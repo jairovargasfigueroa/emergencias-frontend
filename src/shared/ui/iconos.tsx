@@ -220,6 +220,15 @@ export function IconoAviso(props: PropsIcono) {
   )
 }
 
+/** Auricular de teléfono: llamar a la tripulación. */
+export function IconoTelefono(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M5 4h3.5l1.75 4.5-2.25 1.5a11 11 0 0 0 6 6l1.5-2.25L20 15.5V19a1.5 1.5 0 0 1-1.5 1.5A15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4z" />
+    </Icono>
+  )
+}
+
 export function IconoCheck(props: PropsIcono) {
   return (
     <Icono {...props}>

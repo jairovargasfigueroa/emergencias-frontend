@@ -8,6 +8,7 @@ import type {
   Afirmacion,
   EvidenciaDelIncidente,
   NivelDeGravedad,
+  PeligroConEstado,
   PuntoClave,
   ResumenDelIncidente,
   ResumenIa,
@@ -21,6 +22,8 @@ import {
   TEXTO_TIPO_DE_PUNTO_CLAVE,
   textoCorroboracion,
   textoDe,
+  textoPeligroResuelto,
+  textoPeligroSinConfirmar,
   textoPersonas,
 } from './textos'
 
@@ -34,6 +37,9 @@ const TONO_GRAVEDAD: Record<NivelDeGravedad, TonoInsignia> = {
   high: 'rojo',
   undetermined: 'gris',
 }
+
+/** Las fuentes que cita una afirmación o un peligro resuelto. */
+type Citas = Pick<Afirmacion, 'evidenceIds' | 'alertIds'>
 
 type Props = {
   /** Con `version` y `resumen` presentes: sin resumen no se llega acá. */
@@ -52,7 +58,7 @@ type Props = {
  */
 export function LoQueSeSabe({ datos, alertas }: Props) {
   const { resumen } = datos
-  const fuentes = (afirmacion: Afirmacion) => nombrarFuentes(afirmacion, alertas, datos.evidencias)
+  const fuentes = (citas: Citas) => nombrarFuentes(citas, alertas, datos.evidencias)
   const personas = textoPersonas(resumen.people)
   const puntosClave = resumen.keyPoints ?? []
 
@@ -77,11 +83,7 @@ export function LoQueSeSabe({ datos, alertas }: Props) {
           </Dato>
           <Dato etiqueta="Personas">{personas ? <Valor>{personas}</Valor> : <Valor tenue>Sin determinar</Valor>}</Dato>
           <Dato etiqueta="Peligros en el lugar">
-            {resumen.hazards.length === 0 ? (
-              <Valor tenue>Ninguno identificado</Valor>
-            ) : (
-              <Valor>{resumen.hazards.map((peligro) => textoDe(TEXTO_PELIGRO, peligro)).join(', ')}</Valor>
-            )}
+            <PeligrosEnElLugar resumen={resumen} fuentes={fuentes} />
           </Dato>
         </XStack>
 
@@ -149,6 +151,46 @@ function Gravedad({ nivel, razon }: { nivel: NivelDeGravedad; razon: string | un
         {razon ?? 'No hay lo suficiente para estimarla.'}
       </Text>
     </XStack>
+  )
+}
+
+/**
+ * Los activos, en una línea. Los que la última versión no volvió a nombrar siguen a la vista con la hora de su último
+ * reporte, y los que una fuente dio por terminados dicen cuál: un peligro no desaparece del resumen sin motivo.
+ */
+function PeligrosEnElLugar({ resumen, fuentes }: { resumen: ResumenIa; fuentes: (citas: Citas) => string[] }) {
+  const peligros = peligrosConEstado(resumen)
+  const sinConfirmar = peligros.filter((peligro) => peligro.status === 'unconfirmed')
+  const activos = peligros.filter((peligro) => peligro.status !== 'unconfirmed')
+  const resueltos = resumen.resolvedHazards ?? []
+
+  return (
+    <YStack gap={2}>
+      {activos.length > 0 ? (
+        <Valor>{activos.map((peligro) => textoDe(TEXTO_PELIGRO, peligro.type)).join(', ')}</Valor>
+      ) : sinConfirmar.length === 0 ? (
+        <Valor tenue>{resueltos.length > 0 ? 'Ninguno activo' : 'Ninguno identificado'}</Valor>
+      ) : null}
+      {sinConfirmar.map((peligro) => (
+        <Valor key={peligro.type}>
+          {textoPeligroSinConfirmar(
+            textoDe(TEXTO_PELIGRO, peligro.type),
+            peligro.lastReportedAt ? hora(peligro.lastReportedAt) : null,
+          )}
+        </Valor>
+      ))}
+      {resueltos.map((peligro) => (
+        <Nota key={peligro.type}>{textoPeligroResuelto(textoDe(TEXTO_PELIGRO, peligro.type), fuentes(peligro))}</Nota>
+      ))}
+    </YStack>
+  )
+}
+
+/** v2 trae el estado de cada peligro; un resumen v1 solo la lista, y se toman todos como activos y sin hora. */
+function peligrosConEstado(resumen: ResumenIa): PeligroConEstado[] {
+  return (
+    resumen.hazardStates ??
+    resumen.hazards.map((peligro) => ({ type: peligro, status: 'active' as const, lastReportedAt: null }))
   )
 }
 
@@ -228,21 +270,21 @@ function LineaAfirmacion({ afirmacion, fuentes }: { afirmacion: Afirmacion; fuen
 }
 
 /**
- * Las fuentes que cita una afirmación, dichas como las ve la central: "la foto de Ana Pérez (10:32)". La tabla de
- * alertas no muestra ids, así que nombrarlas por id no serviría para encontrarlas.
+ * Las fuentes que cita una afirmación o un peligro resuelto, dichas como las ve la central: "la foto de Ana Pérez
+ * (10:32)". La tabla de alertas no muestra ids, así que nombrarlas por id no serviría para encontrarlas.
  */
-function nombrarFuentes(afirmacion: Afirmacion, alertas: AlertaDeIncidente[], evidencias: EvidenciaDelIncidente[]) {
+function nombrarFuentes(citas: Citas, alertas: AlertaDeIncidente[], evidencias: EvidenciaDelIncidente[]) {
   const quien = (alertaId: number) => {
     const alerta = alertas.find((una) => una.id === alertaId)
     return alerta ? `${alerta.emisor.nombreCompleto} (${hora(alerta.fechaHora)})` : `la alerta #${alertaId}`
   }
-  const deEvidencias = afirmacion.evidenceIds.map((evidenciaId) => {
+  const deEvidencias = citas.evidenceIds.map((evidenciaId) => {
     const evidencia = evidencias.find((una) => una.evidenciaId === evidenciaId)
     return evidencia
       ? `${evidencia.modalidad === 'IMAGEN' ? 'la' : 'el'} ${textoDe(TEXTO_MODALIDAD, evidencia.modalidad).toLowerCase()} de ${quien(evidencia.alertaId)}`
       : `la evidencia #${evidenciaId}`
   })
-  const deAlertas = afirmacion.alertIds.map((alertaId) => `lo que contó ${quien(alertaId)}`)
+  const deAlertas = citas.alertIds.map((alertaId) => `lo que contó ${quien(alertaId)}`)
   return [...deEvidencias, ...deAlertas]
 }
 

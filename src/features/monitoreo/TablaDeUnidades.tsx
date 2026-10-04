@@ -1,21 +1,25 @@
 import { Fragment } from 'react'
-import { Button, Text, YStack } from 'tamagui'
+import { Text, XStack, YStack } from 'tamagui'
 import { InsigniaEstadoAtencion } from '../../shared/atencion/InsigniaEstadoAtencion'
 import { tiempoDeSegundos, tiempoTranscurrido } from '../../shared/formato/fechas'
+import { IconoAviso } from '../../shared/ui/iconos'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { TIPO_UNIDAD_CORTO, type EstadoAmbulancia as Estado } from '../flota/api'
 import { EstadoAmbulancia } from '../flota/EstadoAmbulancia'
+import { BotonLlamar } from './BotonLlamar'
 import { DetalleDeUnidad } from './DetalleDeUnidad'
 import { cumpleFiltro, type FiltroDeUnidades, type UnidadMonitoreada } from './posiciones'
 import { TEXTO_ORIGEN } from './textos'
 
+/**
+ * Cuatro columnas y no seis: el tipo va debajo de la placa y el tiempo en el paso junto al paso, que es donde se
+ * lee. Así la tabla entra al lado del mapa en un monitor de 1280 sin cortar el trabajo, que es la columna que importa.
+ */
 const COLUMNAS: ColumnaTabla[] = [
-  { titulo: 'Placa', ancho: 110 },
-  { titulo: 'Tipo', ancho: 90 },
-  { titulo: 'Estado', ancho: 180 },
+  { titulo: 'Unidad', ancho: 124 },
+  { titulo: 'Estado', ancho: 172 },
   { titulo: 'Trabajo' },
-  { titulo: 'Hace', ancho: 110 },
-  { titulo: '', ancho: 110, alinearDerecha: true },
+  { titulo: '', ancho: 64, alinearDerecha: true },
 ]
 
 /**
@@ -42,15 +46,14 @@ type Props = {
   seleccionada: number | null
   onSeleccionar: (ambulanciaId: number | null) => void
   ahora: number
-  /** Alto del panel. Las filas scrollean adentro para que la página no crezca. */
-  alto: number
 }
 
 /**
  * Toda la flota en servicio, esté o no en el mapa. Las que no circulan también aparecen: que una unidad no se vea
- * en el mapa tiene que tener una explicación a la vista, y no parecer que se perdió.
+ * en el mapa tiene que tener una explicación a la vista, y no parecer que se perdió. Ocupa el alto que le deja la
+ * pantalla y las filas scrollean adentro.
  */
-export function TablaDeUnidades({ unidades, filtro, seleccionada, onSeleccionar, ahora, alto }: Props) {
+export function TablaDeUnidades({ unidades, filtro, seleccionada, onSeleccionar, ahora }: Props) {
   const visibles = unidades
     .filter((unidad) => cumpleFiltro(unidad, filtro))
     .sort(
@@ -61,7 +64,7 @@ export function TablaDeUnidades({ unidades, filtro, seleccionada, onSeleccionar,
     )
 
   return (
-    <Tabla columnas={COLUMNAS} alto={alto}>
+    <Tabla columnas={COLUMNAS} llenar>
       {visibles.length === 0 ? (
         <TablaVacia>
           {filtro === null ? 'No hay unidades en la flota todavía.' : 'Ninguna unidad está en esa situación.'}
@@ -94,20 +97,31 @@ function Fila({ unidad, desplegada, onSeleccionar, ahora }: PropsFila) {
 
   return (
     <Fragment>
-      <YStack
-        role="button"
-        aria-expanded={desplegada}
-        // Tocar la fila abre el detalle acá mismo y le dice al mapa que centre esta unidad; tocarla de nuevo cierra.
-        onPress={() => onSeleccionar(desplegada ? null : ambulanciaId)}
-      >
+      {/* Tocar la fila abre el detalle acá mismo y le dice al mapa que centre esta unidad; tocarla de nuevo cierra. */}
+      <YStack onPress={() => onSeleccionar(desplegada ? null : ambulanciaId)}>
         <FilaTabla columnas={COLUMNAS} interactiva atenuada={desplegada}>
-          <Text fontSize={14} fontWeight="600" fontFamily="$mono" color="$texto">
-            {placa}
-          </Text>
-
-          <Text fontSize={13} color="$textoSecundario">
-            {TIPO_UNIDAD_CORTO[tipoUnidad]}
-          </Text>
+          {/* Para el teclado, el que despliega es la placa: un `<button>` de verdad. La fila entera no puede serlo
+              porque adentro va el enlace para llamar. Su clic sube hasta la fila, así que no necesita el suyo. */}
+          <YStack
+            render="button"
+            aria-expanded={desplegada}
+            aria-label={`${placa}, ${TIPO_UNIDAD_CORTO[tipoUnidad]}: ${desplegada ? 'ocultar' : 'ver'} el detalle`}
+            gap={2}
+            minW={0}
+            items="flex-start"
+            p={0}
+            bg="transparent"
+            borderWidth={0}
+            cursor="pointer"
+            focusVisibleStyle={{ outlineWidth: 2, outlineStyle: 'solid', outlineColor: '$texto', outlineOffset: 4 }}
+          >
+            <Text fontSize={14} lineHeight={20} fontFamily="$mono" color="$texto">
+              {placa}
+            </Text>
+            <Text fontSize={12} lineHeight={16} color="$textoSecundario">
+              {TIPO_UNIDAD_CORTO[tipoUnidad]}
+            </Text>
+          </YStack>
 
           <YStack gap={4} minW={0}>
             <EstadoAmbulancia estado={estado} />
@@ -117,36 +131,23 @@ function Fila({ unidad, desplegada, onSeleccionar, ahora }: PropsFila) {
           <YStack gap={4} minW={0}>
             {atencion ? (
               <>
-                <InsigniaEstadoAtencion estado={atencion.estado} />
-                <Text fontSize={12} color="$textoSecundario" numberOfLines={1}>
+                <XStack items="center" gap={8}>
+                  <InsigniaEstadoAtencion estado={atencion.estado} />
+                  <TiempoEnElHito desde={atencion.desde} ahora={ahora} />
+                </XStack>
+                <Text fontSize={12} lineHeight={16} color="$textoSecundario" numberOfLines={1}>
                   {TEXTO_ORIGEN[atencion.origen]} #{atencion.incidenteId ?? atencion.trasladoId}
                   {atencion.etiqueta ? ` · ${atencion.etiqueta}` : ''}
                 </Text>
               </>
             ) : (
-              <Text fontSize={13} color="$textoTenue">
+              <Text fontSize={13} lineHeight={18} color="$textoSecundario">
                 {textoSinTrabajo(estado)}
               </Text>
             )}
           </YStack>
 
-          <TiempoEnElHito unidad={unidad} ahora={ahora} />
-
-          {aLlamar ? (
-            <a
-              href={`tel:${aLlamar.telefono}`}
-              style={{ textDecoration: 'none' }}
-              title={`Llamar a ${aLlamar.nombreCompleto}`}
-              // La fila entera despliega el detalle: sin esto, llamar también la abriría.
-              onClick={(evento) => evento.stopPropagation()}
-            >
-              <Button size="$3" variant="outlined">
-                <Button.Text fontSize={12} fontWeight="600" color="$texto">
-                  Llamar
-                </Button.Text>
-              </Button>
-            </a>
-          ) : null}
+          {aLlamar ? <BotonLlamar tripulante={aLlamar} /> : null}
         </FilaTabla>
       </YStack>
 
@@ -173,15 +174,18 @@ function textoSinTrabajo(estado: Estado): string {
 function AvisoDeSenal({ unidad }: { unidad: UnidadMonitoreada }) {
   if (unidad.sinSenal) {
     return (
-      <Text fontSize={12} color="$primarioPresionado" numberOfLines={1}>
-        ⚠ Sin señal
-        {unidad.segundosDesdeReporte === null ? '' : ` · hace ${tiempoDeSegundos(unidad.segundosDesdeReporte)}`}
-      </Text>
+      <XStack items="center" gap={4} minW={0}>
+        <IconoAviso size={13} color="var(--primarioTinteTexto)" />
+        <Text fontSize={12} lineHeight={16} color="$primarioTinteTexto" numberOfLines={1}>
+          Sin señal
+          {unidad.segundosDesdeReporte === null ? '' : ` · hace ${tiempoDeSegundos(unidad.segundosDesdeReporte)}`}
+        </Text>
+      </XStack>
     )
   }
   if (unidad.posicion === null && (unidad.unidad.estado === 'DISPONIBLE' || unidad.unidad.estado === 'EN_ATENCION')) {
     return (
-      <Text fontSize={12} color="$textoTenue" numberOfLines={1}>
+      <Text fontSize={12} lineHeight={16} color="$textoSecundario" numberOfLines={1}>
         Sin ubicación
       </Text>
     )
@@ -190,25 +194,22 @@ function AvisoDeSenal({ unidad }: { unidad: UnidadMonitoreada }) {
 }
 
 /**
- * Cuánto lleva la unidad en el hito en el que está. Es el dato más valioso de la pantalla: dice si algo se
- * atascó sin tener que abrir nada. Envejece solo con el tic del reloj de la página.
+ * Cuánto lleva la unidad en el hito en el que está. Es el dato más valioso de la tabla: dice si algo se atascó sin
+ * tener que abrir nada. Va al lado del hito porque lo mide, y envejece solo con el tic del reloj de la página.
  */
-function TiempoEnElHito({ unidad, ahora }: { unidad: UnidadMonitoreada; ahora: number }) {
-  const atencion = unidad.unidad.atencion
-  if (!atencion) {
-    return (
-      <Text fontSize={13} color="$textoTenue">
-        —
-      </Text>
-    )
-  }
-
-  const minutos = Math.max(0, Math.floor((ahora - new Date(atencion.desde).getTime()) / 60_000))
+function TiempoEnElHito({ desde, ahora }: { desde: string; ahora: number }) {
+  const minutos = Math.max(0, Math.floor((ahora - new Date(desde).getTime()) / 60_000))
   const seEstira = minutos >= MINUTOS_PARA_MIRAR
 
   return (
-    <Text fontSize={13} fontWeight={seEstira ? '600' : '400'} color={seEstira ? '$enAtencionTexto' : '$texto'}>
-      {tiempoTranscurrido(atencion.desde, ahora)}
+    <Text
+      fontSize={13}
+      lineHeight={18}
+      fontFamily="$mono"
+      color={seEstira ? '$enAtencionTexto' : '$textoSecundario'}
+      numberOfLines={1}
+    >
+      {tiempoTranscurrido(desde, ahora)}
     </Text>
   )
 }

@@ -2,16 +2,17 @@ import { Link } from '@tanstack/react-router'
 import { useState, type ReactNode } from 'react'
 import { Button, Text, XStack, YStack, type YStackProps } from 'tamagui'
 import { tiempoDeSegundos, tiempoTranscurrido } from '../../shared/formato/fechas'
-import type { EstadoAmbulancia } from '../flota/api'
+import { IconoAviso, IconoCheck } from '../../shared/ui/iconos'
 import { DialogoEnviarUnidad, type IncidenteParaEnviar } from '../incidentes/DialogoEnviarUnidad'
 import { useResumenesPublicados } from '../resumen-ia/avisos'
-import type { Traslado, TrasladoDelPanel } from '../traslados/api'
-import { AccionDelProblema, TiempoRestante } from '../traslados/AvisosDeTraslado'
+import { minutosParaLaUltimaSalida, type Traslado, type TrasladoDelPanel } from '../traslados/api'
+import { AccionDelProblema, MINUTOS_PARA_APURARSE } from '../traslados/AvisosDeTraslado'
 import { DialogoAsignar } from '../traslados/DialogoAsignar'
 import { DialogoDevolver } from '../traslados/DialogoDevolver'
-import { avisoDelProblema } from '../traslados/textos'
+import { avisoDelProblema, textoTiempoRestante } from '../traslados/textos'
 import type { IncidenteSinCubrir } from './api'
-import type { FiltroDeUnidades, UnidadMonitoreada } from './posiciones'
+import { BotonLlamar } from './BotonLlamar'
+import { cumpleFiltro, type FiltroDeUnidades, type UnidadMonitoreada } from './posiciones'
 
 type Props = {
   unidades: UnidadMonitoreada[]
@@ -24,10 +25,32 @@ type Props = {
   ahora: number
 }
 
+type Contador = {
+  filtro: FiltroDeUnidades
+  singular: string
+  plural: string
+  color: YStackProps['backgroundColor']
+}
+
 /**
- * Lo primero que se mira al entrar: qué está sin resolver y cómo está repartida la flota. Los problemas y los
- * contadores van en la misma caja porque se leen juntos —"hay dos sin cubrir y tres unidades libres"— y porque
- * cuando no hay nada pendiente la caja se encoge a una línea y el mapa se queda con ese alto.
+ * Cómo está repartida la flota. "Disponible" cuenta solo las que se pueden enviar: una disponible que perdió la
+ * señal va en "Sin señal", porque no se sabe dónde está.
+ */
+const CONTADORES: Contador[] = [
+  { filtro: 'DISPONIBLE', singular: 'Disponible', plural: 'Disponibles', color: '$disponible' },
+  { filtro: 'EN_ATENCION', singular: 'En atención', plural: 'En atención', color: '$enAtencion' },
+  { filtro: 'FUERA_DE_SERVICIO', singular: 'Fuera de servicio', plural: 'Fuera de servicio', color: '$fueraServicio' },
+  { filtro: 'SIN_TURNO', singular: 'Sin turno', plural: 'Sin turno', color: '$bordeFuerte' },
+  { filtro: 'SIN_SENAL', singular: 'Sin señal', plural: 'Sin señal', color: '$primario' },
+]
+
+/** Cuántas filas de problemas se ven sin scrollear. Más que esto empujaría la tabla y el mapa fuera de la pantalla. */
+const ALTO_MAXIMO_PROBLEMAS = 4 * 57
+
+/**
+ * Lo primero que se mira: qué está sin resolver y cómo está repartida la flota. Con algo por resolver la franja
+ * entera cambia de aspecto, para que se note de reojo y no haya que leerla. Cada problema empieza por qué es y
+ * cuánto lleva, que es lo que decide por cuál empezar.
  */
 export function FranjaDeProblemas({
   unidades,
@@ -43,55 +66,66 @@ export function FranjaDeProblemas({
   const [aEnviar, setAEnviar] = useState<IncidenteParaEnviar | null>(null)
   const resumenes = useResumenesPublicados()
 
-  const sinSenal = unidades.filter((unidad) => unidad.sinSenal)
   const sinCubrir = incidentesSinCubrir.length + trasladosSinCubrir.length
-  const hayProblemas = sinCubrir > 0 || sinSenal.length > 0
-  const cuantas = (estado: EstadoAmbulancia) => unidades.filter((unidad) => unidad.unidad.estado === estado).length
+  const enAlarma = sinCubrir > 0
+  const cuantas = (filtroDelContador: FiltroDeUnidades) =>
+    unidades.filter((unidad) => cumpleFiltro(unidad, filtroDelContador)).length
+
+  // Del que más espera al que menos. Los traslados ya llegan en el orden de su bandeja, que es el de urgencia.
+  const incidentes = [...incidentesSinCubrir].sort(
+    (uno, otro) => new Date(uno.desde).getTime() - new Date(otro.desde).getTime(),
+  )
+  const sinSenal = unidades
+    .filter((unidad) => unidad.sinSenal)
+    .sort((una, otra) => segundosSinReportar(otra) - segundosSinReportar(una))
+  const hayFilas = sinCubrir > 0 || sinSenal.length > 0
 
   return (
     <>
-      <YStack rounded={12} bg="$superficie" borderWidth={1} borderColor="$borde" overflow="hidden">
-        <XStack items="center" justify="space-between" gap={16} px={16} py={12} flexWrap="wrap">
-          <Titular sinCubrir={sinCubrir} sinSenal={sinSenal.length} />
+      <YStack
+        shrink={0}
+        rounded={12}
+        borderWidth={1}
+        borderColor={enAlarma ? '$primario' : '$borde'}
+        bg="$superficie"
+        overflow="hidden"
+      >
+        <XStack
+          items="center"
+          justify="space-between"
+          gap={16}
+          px={16}
+          py={12}
+          flexWrap="wrap"
+          bg={enAlarma ? '$primarioTinte' : '$superficie'}
+        >
+          <Titular sinCubrir={sinCubrir} sinSenal={sinSenal.length} disponibles={cuantas('DISPONIBLE')} />
 
           <XStack items="center" gap={8} flexWrap="wrap">
-            <Contador
-              etiqueta="Disponibles"
-              cantidad={cuantas('DISPONIBLE')}
-              color="$disponible"
-              activo={filtro === 'DISPONIBLE'}
-              onPress={() => onFiltrar(filtro === 'DISPONIBLE' ? null : 'DISPONIBLE')}
-            />
-            <Contador
-              etiqueta="En atención"
-              cantidad={cuantas('EN_ATENCION')}
-              color="$enAtencion"
-              activo={filtro === 'EN_ATENCION'}
-              onPress={() => onFiltrar(filtro === 'EN_ATENCION' ? null : 'EN_ATENCION')}
-            />
-            <Contador
-              etiqueta="Sin turno"
-              cantidad={cuantas('SIN_TURNO')}
-              color="$bordeFuerte"
-              activo={filtro === 'SIN_TURNO'}
-              onPress={() => onFiltrar(filtro === 'SIN_TURNO' ? null : 'SIN_TURNO')}
-            />
-            <Contador
-              etiqueta="Sin señal"
-              cantidad={sinSenal.length}
-              color="$primario"
-              activo={filtro === 'SIN_SENAL'}
-              onPress={() => onFiltrar(filtro === 'SIN_SENAL' ? null : 'SIN_SENAL')}
-            />
+            {CONTADORES.map((contador) => {
+              const cantidad = cuantas(contador.filtro)
+              return (
+                <BotonContador
+                  key={contador.filtro}
+                  etiqueta={cantidad === 1 ? contador.singular : contador.plural}
+                  cantidad={cantidad}
+                  color={contador.color}
+                  activo={filtro === contador.filtro}
+                  onPress={() => onFiltrar(filtro === contador.filtro ? null : contador.filtro)}
+                />
+              )
+            })}
           </XStack>
         </XStack>
 
-        {hayProblemas ? (
-          <YStack>
-            {incidentesSinCubrir.map((incidente) => (
+        {hayFilas ? (
+          <YStack maxH={ALTO_MAXIMO_PROBLEMAS} overflowY="auto">
+            {incidentes.map((incidente) => (
               <Problema
                 key={`incidente-${incidente.id}`}
-                texto={`Incidente #${incidente.id} · ${incidente.referencia ?? 'Sin referencia'} · hace ${tiempoTranscurrido(incidente.desde, ahora)}${resumenes.versiones.has(incidente.id) ? ' · resumen IA' : ''}`}
+                tipo="Incidente"
+                tiempo={`Hace ${tiempoTranscurrido(incidente.desde, ahora)}`}
+                descripcion={`#${incidente.id} · ${incidente.referencia ?? 'Sin referencia'}${resumenes.versiones.has(incidente.id) ? ' · resumen IA' : ''}`}
               >
                 <Link
                   to="/incidentes/$incidenteId"
@@ -118,27 +152,27 @@ export function FranjaDeProblemas({
             ))}
 
             {trasladosSinCubrir.map((fila) => (
-              <Problema key={`traslado-${fila.traslado.id}`} texto={<TextoDelTraslado fila={fila} ahora={ahora} />}>
-                <Link
-                  to="/traslados/$trasladoId"
-                  params={{ trasladoId: fila.traslado.id }}
-                  style={{ textDecoration: 'none' }}
-                >
-                  <Button size="$3" variant="outlined">
-                    <Button.Text fontSize={12} fontWeight="600" color="$texto">
-                      Ver
-                    </Button.Text>
-                  </Button>
-                </Link>
-                <AccionDelProblema fila={fila} onAsignar={setAAsignar} onDevolver={setADevolver} />
-              </Problema>
+              <ProblemaDeTraslado
+                key={`traslado-${fila.traslado.id}`}
+                fila={fila}
+                ahora={ahora}
+                onAsignar={setAAsignar}
+                onDevolver={setADevolver}
+              />
             ))}
 
             {sinSenal.map((unidad) => (
               <Problema
                 key={`senal-${unidad.unidad.ambulanciaId}`}
-                texto={`${unidad.unidad.placa} · Sin señal${unidad.segundosDesdeReporte === null ? '' : ` desde hace ${tiempoDeSegundos(unidad.segundosDesdeReporte)}`} · ${unidad.unidad.atencion ? 'atendiendo' : 'libre'}`}
+                tipo="Sin señal"
+                tiempo={
+                  unidad.segundosDesdeReporte === null ? '—' : `Hace ${tiempoDeSegundos(unidad.segundosDesdeReporte)}`
+                }
+                descripcion={`${unidad.unidad.placa} · ${unidad.unidad.estado === 'EN_ATENCION' ? 'En atención' : 'Disponible'}`}
               >
+                {unidad.unidad.tripulacion[0] ? (
+                  <BotonLlamar tripulante={unidad.unidad.tripulacion[0]} conNumero />
+                ) : null}
                 <Button size="$3" variant="outlined" onPress={() => onUbicar(unidad.unidad.ambulanciaId)}>
                   <Button.Text fontSize={12} fontWeight="600" color="$texto">
                     Ver en el mapa
@@ -157,33 +191,61 @@ export function FranjaDeProblemas({
   )
 }
 
+/** Una unidad que nunca dijo cuándo reportó va primero: de esa no se sabe nada. */
+function segundosSinReportar(unidad: UnidadMonitoreada): number {
+  return unidad.segundosDesdeReporte ?? Number.MAX_SAFE_INTEGER
+}
+
+type PropsTitular = { sinCubrir: number; sinSenal: number; disponibles: number }
+
 /**
- * Lo peor que está pasando, en una línea. Sin nada sin cubrir y con todas las unidades reportando, se queda en
- * el visto bueno y la caja entera ocupa solo esta franja.
+ * Lo peor que está pasando, en una línea. Se anuncia a los lectores de pantalla cuando cambia: un incidente nuevo
+ * sin cubrir no puede depender de que alguien esté mirando.
+ *
+ * "Por resolver" y no "sin cubrir": además de lo que no tiene unidad, cuenta los traslados cuya unidad no llega y
+ * los no cubiertos que esperan que alguien le avise a la familia.
  */
-/**
- * "Por resolver" y no "sin cubrir": además de lo que no tiene unidad, cuenta los traslados cuya unidad no llega y los
- * no cubiertos que esperan que alguien le avise a la familia.
- */
-function Titular({ sinCubrir, sinSenal }: { sinCubrir: number; sinSenal: number }) {
+function Titular({ sinCubrir, sinSenal, disponibles }: PropsTitular) {
+  let contenido: ReactNode
   if (sinCubrir > 0) {
-    return (
-      <Text fontSize={15} fontWeight="600" color="$primarioPresionado">
-        ⚠ {sinCubrir} por resolver
-      </Text>
+    contenido = (
+      <>
+        <IconoAviso size={20} color="var(--primarioTinteTexto)" />
+        <Text fontSize={18} lineHeight={24} fontWeight="600" color="$primarioTinteTexto">
+          {sinCubrir} por resolver
+        </Text>
+      </>
+    )
+  } else if (sinSenal > 0) {
+    contenido = (
+      <>
+        <IconoAviso size={20} color="var(--primarioTinteTexto)" />
+        <Text fontSize={18} lineHeight={24} fontWeight="600" color="$primarioTinteTexto">
+          {sinSenal === 1 ? '1 unidad sin señal' : `${sinSenal} unidades sin señal`}
+        </Text>
+      </>
+    )
+  } else {
+    // Que no haya nada pendiente no es lo mismo que estar cubiertos: sin unidades para enviar, se dice.
+    contenido = (
+      <>
+        <IconoCheck size={20} color="var(--disponibleTexto)" />
+        <Text fontSize={18} lineHeight={24} fontWeight="600" color="$disponibleTexto">
+          {disponibles > 0 ? 'Todo cubierto' : 'Nada por resolver'}
+        </Text>
+        {disponibles > 0 ? null : (
+          <Text fontSize={14} lineHeight={20} color="$textoSecundario">
+            · ninguna unidad disponible
+          </Text>
+        )}
+      </>
     )
   }
-  if (sinSenal > 0) {
-    return (
-      <Text fontSize={15} fontWeight="600" color="$primarioPresionado">
-        ⚠ {sinSenal} sin señal
-      </Text>
-    )
-  }
+
   return (
-    <Text fontSize={15} fontWeight="600" color="$disponibleTexto">
-      ✓ Todo cubierto
-    </Text>
+    <XStack role="status" aria-live="polite" items="center" gap={8}>
+      {contenido}
+    </XStack>
   )
 }
 
@@ -195,60 +257,106 @@ type PropsContador = {
   onPress: () => void
 }
 
-/** Cada contador es además el filtro de la tabla: se toca el número que llamó la atención y abajo quedan esas. */
-function Contador({ etiqueta, cantidad, color, activo, onPress }: PropsContador) {
+/**
+ * Cada contador es además el filtro de la tabla: se toca el número que llamó la atención y abajo quedan esas. Es un
+ * `<button>` de verdad para que se alcance con el teclado. El activo va invertido: tiene que notarse de lejos que
+ * la tabla está filtrada.
+ */
+function BotonContador({ etiqueta, cantidad, color, activo, onPress }: PropsContador) {
   return (
     <XStack
-      role="button"
+      render="button"
       aria-pressed={activo}
       items="center"
       gap={8}
+      height={36}
       px={12}
-      py={8}
-      rounded={10}
+      rounded={8}
       cursor="pointer"
       borderWidth={1}
-      bg={activo ? '$fondo' : 'transparent'}
-      borderColor={activo ? '$bordeFuerte' : '$borde'}
-      hoverStyle={{ bg: '$fondo' }}
+      bg={activo ? '$texto' : '$superficie'}
+      borderColor={activo ? '$texto' : '$borde'}
+      hoverStyle={{ borderColor: activo ? '$texto' : '$bordeFuerte' }}
+      focusVisibleStyle={{ outlineWidth: 2, outlineStyle: 'solid', outlineColor: '$texto', outlineOffset: 2 }}
       onPress={onPress}
     >
       <YStack width={8} height={8} rounded={999} bg={color} />
-      <Text fontSize={16} lineHeight={20} fontWeight="600" color="$texto">
+      <Text fontSize={15} lineHeight={20} fontWeight="600" color={activo ? '$superficie' : '$texto'}>
         {cantidad}
       </Text>
-      <Text fontSize={12} lineHeight={16} color="$textoSecundario">
+      <Text fontSize={12} lineHeight={16} color={activo ? '$superficie' : '$textoSecundario'}>
         {etiqueta}
       </Text>
     </XStack>
   )
 }
 
+type PropsTraslado = {
+  fila: TrasladoDelPanel
+  ahora: number
+  onAsignar: (traslado: Traslado) => void
+  onDevolver: (fila: TrasladoDelPanel) => void
+}
+
 /**
- * Qué le pasa al traslado, con las mismas palabras que la bandeja de Traslados: cuánto le queda si todavía se busca
- * unidad, o lo que hay que hacer.
+ * Un traslado no espera: tiene una hora límite. Por eso su tiempo es lo que queda para la última salida posible, y
+ * se pinta en rojo con el mismo margen que usa la bandeja de Traslados.
  */
-function TextoDelTraslado({ fila, ahora }: { fila: TrasladoDelPanel; ahora: number }) {
+function ProblemaDeTraslado({ fila, ahora, onAsignar, onDevolver }: PropsTraslado) {
   const { traslado } = fila
+  const buscaUnidad = fila.problema === 'SIN_UNIDAD'
+  const minutos = minutosParaLaUltimaSalida(traslado, ahora)
+
   return (
-    <>
-      Traslado #{traslado.id} · {traslado.pasajero} ·{' '}
-      {fila.problema === 'SIN_UNIDAD' ? (
-        <>
-          Sin unidad · <TiempoRestante traslado={traslado} ahora={ahora} />
-        </>
-      ) : (
-        avisoDelProblema(fila)
-      )}
-    </>
+    <Problema
+      tipo="Traslado"
+      tiempo={buscaUnidad ? textoTiempoRestante(minutos) : '—'}
+      tiempoUrgente={buscaUnidad && minutos <= MINUTOS_PARA_APURARSE}
+      descripcion={`#${traslado.id} · ${traslado.pasajero} · ${buscaUnidad ? 'Sin unidad' : avisoDelProblema(fila)}`}
+    >
+      <Link to="/traslados/$trasladoId" params={{ trasladoId: traslado.id }} style={{ textDecoration: 'none' }}>
+        <Button size="$3" variant="outlined">
+          <Button.Text fontSize={12} fontWeight="600" color="$texto">
+            Ver
+          </Button.Text>
+        </Button>
+      </Link>
+      <AccionDelProblema fila={fila} onAsignar={onAsignar} onDevolver={onDevolver} />
+    </Problema>
   )
 }
 
-function Problema({ texto, children }: { texto: ReactNode; children: ReactNode }) {
+type PropsProblema = {
+  tipo: string
+  tiempo: string
+  tiempoUrgente?: boolean
+  descripcion: string
+  children: ReactNode
+}
+
+/**
+ * Qué es, cuánto lleva y de qué se trata, siempre en ese orden y en columnas fijas: así se recorre la lista con la
+ * vista sin leerla. La descripción es lo único que se corta si no entra.
+ */
+function Problema({ tipo, tiempo, tiempoUrgente = false, descripcion, children }: PropsProblema) {
   return (
-    <XStack items="center" justify="space-between" gap={16} px={16} py={10} borderTopWidth={1} borderColor="$borde">
-      <Text fontSize={13} color="$texto" numberOfLines={1}>
-        {texto}
+    <XStack items="center" gap={12} px={16} py={10} borderTopWidth={1} borderColor="$borde">
+      <Text width={76} shrink={0} fontSize={12} lineHeight={16} fontWeight="500" color="$textoSecundario">
+        {tipo}
+      </Text>
+      <Text
+        width={152}
+        shrink={0}
+        fontSize={13}
+        lineHeight={18}
+        fontFamily="$mono"
+        color={tiempoUrgente ? '$primarioTinteTexto' : '$texto'}
+        numberOfLines={1}
+      >
+        {tiempo}
+      </Text>
+      <Text flex={1} minW={0} fontSize={13} lineHeight={18} color="$texto" numberOfLines={1}>
+        {descripcion}
       </Text>
       <XStack items="center" gap={8} shrink={0}>
         {children}

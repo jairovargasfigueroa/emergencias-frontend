@@ -29,6 +29,7 @@ export type Peligro =
   | 'weapon_or_violence'
   | 'crowd'
   | 'height'
+  | 'entrapment'
   | 'other'
 
 /**
@@ -60,13 +61,50 @@ export type Gravedad = {
   basis: string[]
 }
 
-/** El objeto `summary` del servicio de análisis. */
+/** De qué habla un punto clave. */
+export type TipoDePuntoClave = 'what' | 'people' | 'hazard' | 'critical'
+
+/** Una frase corta, con el dato primero, para leer de un vistazo o en voz alta. */
+export type PuntoClave = {
+  kind: TipoDePuntoClave
+  text: string
+}
+
+/**
+ * `unconfirmed` es un peligro que mencionó alguna evidencia y que la versión nueva no nombró ni dio por terminado:
+ * el servicio lo conserva en vez de dejarlo caer sin motivo.
+ */
+export type EstadoDePeligro = 'active' | 'unconfirmed'
+
+export type PeligroConEstado = {
+  type: Peligro
+  status: EstadoDePeligro
+  /** La hora de la última evidencia que lo mencionó; null si no se sabe o si solo sale de una alerta. */
+  lastReportedAt: string | null
+}
+
+/** Un peligro que una fuente dio por terminado, con las fuentes que lo dicen. */
+export type PeligroResuelto = {
+  type: Peligro
+  evidenceIds: number[]
+  alertIds: number[]
+}
+
+/**
+ * El objeto `summary` del servicio de análisis. Los campos opcionales llegan desde `incident-summary.v2`: los
+ * resúmenes v1 ya guardados no los traen, y el panel los muestra con lo que hay.
+ */
 export type ResumenIa = {
   summary: string
+  /** Hasta cuatro, ya ordenados: qué pasó, personas, peligros y lo crítico. */
+  keyPoints?: PuntoClave[]
   eventType: TipoDeEvento
   /** Null si no se puede decir cuántas personas hay. */
   people: { min: number; max: number } | null
+  /** Los peligros que no terminaron, activos primero. En v2, su estado viene en `hazardStates`. */
   hazards: Peligro[]
+  hazardStates?: PeligroConEstado[]
+  resolvedHazards?: PeligroResuelto[]
   findings: Afirmacion[]
   risks: Afirmacion[]
   severity: Gravedad

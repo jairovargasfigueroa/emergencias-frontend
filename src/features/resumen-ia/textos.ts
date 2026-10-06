@@ -1,4 +1,12 @@
-import type { EstadoEvidencia, Fundamento, Modalidad, NivelDeGravedad, Peligro, TipoDeEvento } from './api'
+import type {
+  EstadoEvidencia,
+  Fundamento,
+  Modalidad,
+  NivelDeGravedad,
+  Peligro,
+  TipoDeEvento,
+  TipoDePuntoClave,
+} from './api'
 
 // Textos en español de los vocabularios del servicio de análisis. Se cambian solo aquí.
 
@@ -27,7 +35,16 @@ export const TEXTO_PELIGRO: Record<Peligro, string> = {
   weapon_or_violence: 'Armas o violencia',
   crowd: 'Aglomeración',
   height: 'Altura',
+  entrapment: 'Persona atrapada',
   other: 'Otro',
+}
+
+/** La etiqueta al lado de cada punto clave, para leerlos de un vistazo. */
+export const TEXTO_TIPO_DE_PUNTO_CLAVE: Record<TipoDePuntoClave, string> = {
+  what: 'Qué pasó',
+  people: 'Personas',
+  hazard: 'Peligro',
+  critical: 'Crítico',
 }
 
 export const TEXTO_GRAVEDAD: Record<NivelDeGravedad, string> = {
@@ -75,6 +92,17 @@ export function textoPersonas(personas: { min: number; max: number } | null): st
     return min === 1 ? '1 persona' : `${min} personas`
   }
   return `${min} a ${max} personas`
+}
+
+/** "Humo · último reporte 10:20"; "Humo · sin novedades" si no se sabe cuándo se lo mencionó por última vez. */
+export function textoPeligroSinConfirmar(peligro: string, ultimoReporte: string | null): string {
+  return `${peligro} · ${ultimoReporte ? `último reporte ${ultimoReporte}` : 'sin novedades'}`
+}
+
+/** "Resuelto: fuego · según lo que contó Ana Pérez (10:40)". */
+export function textoPeligroResuelto(peligro: string, fuentes: string[]): string {
+  const resuelto = `Resuelto: ${peligro.toLowerCase()}`
+  return fuentes.length > 0 ? `${resuelto} · según ${fuentes.join(', ')}` : resuelto
 }
 
 /** "corroborado por 1 alerta", "corroborado por 3 alertas". */

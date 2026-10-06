@@ -4,15 +4,26 @@ import { fechaHoraCorta, hora } from '../../shared/formato/fechas'
 import { Insignia, type TonoInsignia } from '../../shared/ui/Insignia'
 import type { AlertaDeIncidente } from '../incidentes/api'
 import { Dato, Nota, Tarjeta, Valor } from '../incidentes/PiezasDelDetalle'
-import type { Afirmacion, EvidenciaDelIncidente, NivelDeGravedad, ResumenDelIncidente, ResumenIa } from './api'
+import type {
+  Afirmacion,
+  EvidenciaDelIncidente,
+  NivelDeGravedad,
+  PeligroConEstado,
+  PuntoClave,
+  ResumenDelIncidente,
+  ResumenIa,
+} from './api'
 import {
   TEXTO_FUNDAMENTO,
   TEXTO_GRAVEDAD,
   TEXTO_MODALIDAD,
   TEXTO_PELIGRO,
   TEXTO_TIPO_DE_EVENTO,
+  TEXTO_TIPO_DE_PUNTO_CLAVE,
   textoCorroboracion,
   textoDe,
+  textoPeligroResuelto,
+  textoPeligroSinConfirmar,
   textoPersonas,
 } from './textos'
 
@@ -27,6 +38,9 @@ const TONO_GRAVEDAD: Record<NivelDeGravedad, TonoInsignia> = {
   undetermined: 'gris',
 }
 
+/** Las fuentes que cita una afirmación o un peligro resuelto. */
+type Citas = Pick<Afirmacion, 'evidenceIds' | 'alertIds'>
+
 type Props = {
   /** Con `version` y `resumen` presentes: sin resumen no se llega acá. */
   datos: ResumenDelIncidente & { resumen: ResumenIa; version: number }
@@ -38,17 +52,22 @@ type Props = {
  * Lo que la IA saca en limpio de las alertas y las evidencias. Es preliminar y así se presenta: cada afirmación dice
  * de dónde sale y cuántas alertas distintas la respaldan, y las contradicciones y limitaciones se muestran siempre,
  * también cuando no hay, porque saber que no se encontró ninguna es parte de leer bien el resumen.
+ *
+ * Arriba van los puntos clave, para entender la emergencia de un vistazo; el resumen completo y sus fuentes siguen
+ * debajo. Un resumen v1 no los trae y se ve como antes.
  */
 export function LoQueSeSabe({ datos, alertas }: Props) {
   const { resumen } = datos
-  const fuentes = (afirmacion: Afirmacion) => nombrarFuentes(afirmacion, alertas, datos.evidencias)
+  const fuentes = (citas: Citas) => nombrarFuentes(citas, alertas, datos.evidencias)
   const personas = textoPersonas(resumen.people)
+  const puntosClave = resumen.keyPoints ?? []
 
   return (
     <Tarjeta>
       <YStack gap={20}>
         <YStack gap={12}>
           <Gravedad nivel={resumen.severity.level} razon={resumen.severity.basis[0]} />
+          {puntosClave.length > 0 ? <PuntosClave puntos={puntosClave} /> : null}
           <Paragraph fontSize={15} lineHeight={23} color="$texto">
             {resumen.summary}
           </Paragraph>
@@ -64,11 +83,7 @@ export function LoQueSeSabe({ datos, alertas }: Props) {
           </Dato>
           <Dato etiqueta="Personas">{personas ? <Valor>{personas}</Valor> : <Valor tenue>Sin determinar</Valor>}</Dato>
           <Dato etiqueta="Peligros en el lugar">
-            {resumen.hazards.length === 0 ? (
-              <Valor tenue>Ninguno identificado</Valor>
-            ) : (
-              <Valor>{resumen.hazards.map((peligro) => textoDe(TEXTO_PELIGRO, peligro)).join(', ')}</Valor>
-            )}
+            <PeligrosEnElLugar resumen={resumen} fuentes={fuentes} />
           </Dato>
         </XStack>
 
@@ -139,6 +154,80 @@ function Gravedad({ nivel, razon }: { nivel: NivelDeGravedad; razon: string | un
   )
 }
 
+/**
+ * Los activos, en una línea. Los que la última versión no volvió a nombrar siguen a la vista con la hora de su último
+ * reporte, y los que una fuente dio por terminados dicen cuál: un peligro no desaparece del resumen sin motivo.
+ */
+function PeligrosEnElLugar({ resumen, fuentes }: { resumen: ResumenIa; fuentes: (citas: Citas) => string[] }) {
+  const peligros = peligrosConEstado(resumen)
+  const sinConfirmar = peligros.filter((peligro) => peligro.status === 'unconfirmed')
+  const activos = peligros.filter((peligro) => peligro.status !== 'unconfirmed')
+  const resueltos = resumen.resolvedHazards ?? []
+
+  return (
+    <YStack gap={2}>
+      {activos.length > 0 ? (
+        <Valor>{activos.map((peligro) => textoDe(TEXTO_PELIGRO, peligro.type)).join(', ')}</Valor>
+      ) : sinConfirmar.length === 0 ? (
+        <Valor tenue>{resueltos.length > 0 ? 'Ninguno activo' : 'Ninguno identificado'}</Valor>
+      ) : null}
+      {sinConfirmar.map((peligro) => (
+        <Valor key={peligro.type}>
+          {textoPeligroSinConfirmar(
+            textoDe(TEXTO_PELIGRO, peligro.type),
+            peligro.lastReportedAt ? hora(peligro.lastReportedAt) : null,
+          )}
+        </Valor>
+      ))}
+      {resueltos.map((peligro) => (
+        <Nota key={peligro.type}>{textoPeligroResuelto(textoDe(TEXTO_PELIGRO, peligro.type), fuentes(peligro))}</Nota>
+      ))}
+    </YStack>
+  )
+}
+
+/** v2 trae el estado de cada peligro; un resumen v1 solo la lista, y se toman todos como activos y sin hora. */
+function peligrosConEstado(resumen: ResumenIa): PeligroConEstado[] {
+  return (
+    resumen.hazardStates ??
+    resumen.hazards.map((peligro) => ({ type: peligro, status: 'active' as const, lastReportedAt: null }))
+  )
+}
+
+/** Una línea por punto, con lo que trata al lado. Lo crítico va en el color de lo que pide atención. */
+function PuntosClave({ puntos }: { puntos: PuntoClave[] }) {
+  return (
+    <YStack gap={6} px={16} py={14} rounded={10} bg="$fondo">
+      {puntos.map((punto, indice) => {
+        const critico = punto.kind === 'critical'
+        return (
+          <XStack key={indice} columnGap={12} rowGap={2} flexWrap="wrap">
+            <Text
+              width={72}
+              fontSize={12}
+              lineHeight={22}
+              fontWeight="500"
+              color={critico ? '$enAtencionTexto' : '$textoSecundario'}
+            >
+              {textoDe(TEXTO_TIPO_DE_PUNTO_CLAVE, punto.kind)}
+            </Text>
+            <Text
+              flex={1}
+              minW={200}
+              fontSize={15}
+              lineHeight={22}
+              fontWeight={critico ? '600' : '500'}
+              color={critico ? '$enAtencionTexto' : '$texto'}
+            >
+              {punto.text}
+            </Text>
+          </XStack>
+        )
+      })}
+    </YStack>
+  )
+}
+
 function Bloque({ titulo, resaltado = false, children }: { titulo: string; resaltado?: boolean; children: ReactNode }) {
   return (
     <YStack
@@ -181,21 +270,21 @@ function LineaAfirmacion({ afirmacion, fuentes }: { afirmacion: Afirmacion; fuen
 }
 
 /**
- * Las fuentes que cita una afirmación, dichas como las ve la central: "la foto de Ana Pérez (10:32)". La tabla de
- * alertas no muestra ids, así que nombrarlas por id no serviría para encontrarlas.
+ * Las fuentes que cita una afirmación o un peligro resuelto, dichas como las ve la central: "la foto de Ana Pérez
+ * (10:32)". La tabla de alertas no muestra ids, así que nombrarlas por id no serviría para encontrarlas.
  */
-function nombrarFuentes(afirmacion: Afirmacion, alertas: AlertaDeIncidente[], evidencias: EvidenciaDelIncidente[]) {
+function nombrarFuentes(citas: Citas, alertas: AlertaDeIncidente[], evidencias: EvidenciaDelIncidente[]) {
   const quien = (alertaId: number) => {
     const alerta = alertas.find((una) => una.id === alertaId)
     return alerta ? `${alerta.emisor.nombreCompleto} (${hora(alerta.fechaHora)})` : `la alerta #${alertaId}`
   }
-  const deEvidencias = afirmacion.evidenceIds.map((evidenciaId) => {
+  const deEvidencias = citas.evidenceIds.map((evidenciaId) => {
     const evidencia = evidencias.find((una) => una.evidenciaId === evidenciaId)
     return evidencia
       ? `${evidencia.modalidad === 'IMAGEN' ? 'la' : 'el'} ${textoDe(TEXTO_MODALIDAD, evidencia.modalidad).toLowerCase()} de ${quien(evidencia.alertaId)}`
       : `la evidencia #${evidenciaId}`
   })
-  const deAlertas = afirmacion.alertIds.map((alertaId) => `lo que contó ${quien(alertaId)}`)
+  const deAlertas = citas.alertIds.map((alertaId) => `lo que contó ${quien(alertaId)}`)
   return [...deEvidencias, ...deAlertas]
 }
 

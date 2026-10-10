@@ -1,14 +1,19 @@
 import { Text, XStack, YStack } from 'tamagui'
 
-export function MarcaSga() {
+type Props = {
+  /** En el menú lateral: por debajo de 1280 px, donde el menú se pliega, queda solo el logo. */
+  plegable?: boolean
+}
+
+export function MarcaSga({ plegable = false }: Props) {
   return (
-    <XStack items="center" gap={12} px={8} py={4}>
+    <XStack items="center" gap={12} px={8} py={4} $max-xl={plegable ? { justify: 'center', px: 0 } : undefined}>
       <XStack width={34} height={34} rounded={9} bg="$primario" items="center" justify="center">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
           <path d="M12 5v14M5 12h14" />
         </svg>
       </XStack>
-      <YStack>
+      <YStack $max-xl={plegable ? { display: 'none' } : undefined}>
         <Text color="$texto" fontSize={15} lineHeight={20} fontWeight="600">
           SGA
         </Text>

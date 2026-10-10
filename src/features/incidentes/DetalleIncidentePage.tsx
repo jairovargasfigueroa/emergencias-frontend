@@ -46,7 +46,8 @@ const COLUMNAS_ALERTAS: ColumnaTabla[] = [
   { titulo: 'Hora', ancho: 130 },
   { titulo: 'Quién avisó', ancho: 210 },
   { titulo: 'Qué pasó' },
-  { titulo: 'Afectados', ancho: 100 },
+  // Debajo de 1280 px se esconde: arriba está la del incidente, que es el máximo de lo que reportó cada alerta.
+  { titulo: 'Afectados', ancho: 100, ocultarEnPantallaChica: true },
   { titulo: 'Ubicación', ancho: 180 },
   { titulo: 'Estado', ancho: 110 },
 ]

@@ -101,7 +101,8 @@ export function FranjaDeProblemas({
         >
           <Titular sinCubrir={sinCubrir} sinSenal={sinSenal.length} disponibles={cuantas('DISPONIBLE')} />
 
-          <XStack items="center" gap={8} flexWrap="wrap">
+          {/* Puede achicarse para que los contadores bajen de línea en vez de salirse por el borde. */}
+          <XStack items="center" gap={8} flexWrap="wrap" shrink={1} minW={0}>
             {CONTADORES.map((contador) => {
               const cantidad = cuantas(contador.filtro)
               return (
@@ -339,8 +340,18 @@ type PropsProblema = {
  * vista sin leerla. La descripción es lo único que se corta si no entra.
  */
 function Problema({ tipo, tiempo, tiempoUrgente = false, descripcion, children }: PropsProblema) {
+  // Por debajo de 1024 px, si las acciones no entran, bajan a una segunda línea en vez de cortarse en el borde.
   return (
-    <XStack items="center" gap={12} px={16} py={10} borderTopWidth={1} borderColor="$borde">
+    <XStack
+      items="center"
+      gap={12}
+      rowGap={8}
+      px={16}
+      py={10}
+      borderTopWidth={1}
+      borderColor="$borde"
+      $max-lg={{ flexWrap: 'wrap' }}
+    >
       <Text width={76} shrink={0} fontSize={12} lineHeight={16} fontWeight="500" color="$textoSecundario">
         {tipo}
       </Text>
@@ -358,7 +369,7 @@ function Problema({ tipo, tiempo, tiempoUrgente = false, descripcion, children }
       <Text flex={1} minW={0} fontSize={13} lineHeight={18} color="$texto" numberOfLines={1}>
         {descripcion}
       </Text>
-      <XStack items="center" gap={8} shrink={0}>
+      <XStack items="center" gap={8} shrink={0} $max-lg={{ ml: 'auto' }}>
         {children}
       </XStack>
     </XStack>

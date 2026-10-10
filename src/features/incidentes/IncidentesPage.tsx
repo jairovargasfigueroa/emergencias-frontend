@@ -23,11 +23,13 @@ const rutaApi = getRouteApi('/protegida/incidentes')
 const COLUMNAS: ColumnaTabla[] = [
   { titulo: '#', ancho: 72 },
   { titulo: 'Estado', ancho: 200 },
-  { titulo: 'Creación', ancho: 150 },
+  // Debajo de 1280 px se esconde: "Transcurrido o cierre" ya dice cuánto lleva, y la hora exacta está en el detalle.
+  { titulo: 'Creación', ancho: 150, ocultarEnPantallaChica: true },
   { titulo: 'Transcurrido o cierre', ancho: 170 },
   { titulo: 'Afectados', ancho: 120 },
   { titulo: 'Alertas', ancho: 120 },
-  { titulo: 'Unidades' },
+  // Con 88 px entra una placa; el resto se corta con "…". Más ancho, la tabla scrollearía de costado a 1280 px.
+  { titulo: 'Unidades', anchoMinimo: 88 },
 ]
 
 const SIN_INCIDENTES: Record<FiltroEstadoIncidente, string> = {

@@ -18,14 +18,26 @@ import {
 import { operacionKeys, operacionQuery } from './queries'
 import { TablaDeUnidades } from './TablaDeUnidades'
 
-/** El margen que el layout del panel deja arriba y abajo de cada pantalla (`py={32}` en `rutas/protegida.tsx`). */
+/**
+ * El margen que el layout del panel deja arriba y abajo de cada pantalla (`py` en `rutas/protegida.tsx`): 32 px por
+ * lado, y 24 por debajo de 1280 px, donde el menú se pliega.
+ */
 const MARCO_VERTICAL = 64
+const MARCO_VERTICAL_COMPACTO = 48
 
 /**
  * Por debajo de este alto la consola ya no entra y la página vuelve a scrollear: es preferible a aplastar la tabla
  * y el mapa hasta que no se lean.
  */
 const ALTO_MINIMO = 600
+
+/**
+ * Por debajo de 1024 px la consola ya no entra en la ventana: la pantalla se apila (la tabla arriba, el mapa y la
+ * bitácora debajo) y la página scrollea. Cada bloque tiene su alto propio y scrollea adentro, como en la consola.
+ */
+const ALTO_APILADO_TABLA = 420
+const ALTO_APILADO_MAPA = 360
+const ALTO_APILADO_BITACORA = 280
 
 /** Cada cuánto se recalcula el "hace tanto". Un segundo, que es la unidad más chica que se muestra. */
 const TIC_RELOJ_MS = 1000
@@ -113,7 +125,13 @@ export function CentroDeControlPage() {
   }
 
   return (
-    <YStack height={`calc(100vh - ${MARCO_VERTICAL}px)`} minH={ALTO_MINIMO} gap={16}>
+    <YStack
+      height={`calc(100vh - ${MARCO_VERTICAL}px)`}
+      $max-xl={{ height: `calc(100vh - ${MARCO_VERTICAL_COMPACTO}px)` }}
+      $max-lg={{ height: 'auto' }}
+      minH={ALTO_MINIMO}
+      gap={16}
+    >
       <Encabezado>
         <EstadoDeActualizacion
           actualizadoEn={operacion.dataUpdatedAt}
@@ -139,8 +157,19 @@ export function CentroDeControlPage() {
         </Aviso>
       ) : null}
 
-      <XStack flex={1} minH={0} gap={16}>
-        <YStack flex={1} minW={0} gap={8}>
+      {/* Lado a lado desde 1024 px. Debajo, el mapa tenía 320 px fijos y la tabla se encogía hasta desaparecer. */}
+      <XStack
+        flex={1}
+        minH={0}
+        gap={16}
+        $max-lg={{ flexDirection: 'column', flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}
+      >
+        <YStack
+          flex={1}
+          minW={0}
+          gap={8}
+          $max-lg={{ height: ALTO_APILADO_TABLA, flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }}
+        >
           {filtro ? (
             <XStack items="center" justify="space-between" gap={12} shrink={0}>
               <Text fontSize={13} lineHeight={18} color="$textoSecundario">
@@ -162,8 +191,8 @@ export function CentroDeControlPage() {
           />
         </YStack>
 
-        <YStack width="38%" minW={320} shrink={0} gap={16}>
-          <YStack flex={3} minH={220}>
+        <YStack width="38%" minW={320} shrink={0} gap={16} $max-lg={{ width: '100%', minW: 0 }}>
+          <YStack flex={3} minH={220} $max-lg={{ height: ALTO_APILADO_MAPA, flexGrow: 0, flexBasis: 'auto' }}>
             <MapaDeFlota
               unidades={unidades}
               incidentes={incidentes.lista}
@@ -179,7 +208,12 @@ export function CentroDeControlPage() {
             />
           </YStack>
           {/* Sin eventos la bitácora es una línea: no tiene sentido que le quite alto al mapa. */}
-          <YStack flex={bitacoraCrece ? 2 : undefined} minH={bitacoraCrece ? 160 : undefined} shrink={0}>
+          <YStack
+            flex={bitacoraCrece ? 2 : undefined}
+            minH={bitacoraCrece ? 160 : undefined}
+            shrink={0}
+            $max-lg={bitacoraCrece ? { height: ALTO_APILADO_BITACORA, flexGrow: 0, flexBasis: 'auto' } : undefined}
+          >
             <ActividadReciente
               eventos={operacion.data.eventos}
               abierta={bitacoraAbierta}

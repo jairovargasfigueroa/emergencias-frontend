@@ -1,0 +1,780 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-04T01:38:01+00:00",
+  "title": "Design System: SGA · Panel de administración",
+  "extensions": {
+    "colorMeta": {
+      "primario": {
+        "role": "primary",
+        "displayName": "Rojo de alerta",
+        "canonical": "#D92D20",
+        "oklch": "oklch(57.6% 0.209 29.5)",
+        "tonalRamp": [
+          "#2B0000",
+          "#570000",
+          "#860301",
+          "#B7271C",
+          "#E74C3C",
+          "#FF7E6C",
+          "#FFAA97",
+          "#FFCDBB"
+        ]
+      },
+      "primarioPresionado": {
+        "role": "primary",
+        "displayName": "Rojo de alerta presionado",
+        "canonical": "#B42318",
+        "oklch": "oklch(50.0% 0.182 29.5)",
+        "tonalRamp": [
+          "#2B0000",
+          "#570000",
+          "#860301",
+          "#B7271C",
+          "#E25242",
+          "#FF7E6C",
+          "#FFAA97",
+          "#FFCDBB"
+        ]
+      },
+      "primarioTinte": {
+        "role": "primary",
+        "displayName": "Tinte de alerta",
+        "canonical": "#FDECEA",
+        "oklch": "oklch(95.6% 0.019 25.6)",
+        "tonalRamp": [
+          "#120807",
+          "#2F2322",
+          "#4F4140",
+          "#716261",
+          "#948583",
+          "#BAAAA8",
+          "#DDCDCB",
+          "#FBEAE8"
+        ]
+      },
+      "primarioTinteTexto": {
+        "role": "primary",
+        "displayName": "Texto de alerta",
+        "canonical": "#B42318",
+        "oklch": "oklch(50.0% 0.182 29.5)",
+        "tonalRamp": [
+          "#2B0000",
+          "#570000",
+          "#860301",
+          "#B7271C",
+          "#E25242",
+          "#FF7E6C",
+          "#FFAA97",
+          "#FFCDBB"
+        ]
+      },
+      "primarioTexto": {
+        "role": "primary",
+        "displayName": "Texto sobre rojo",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#AEAEAE",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "fondo": {
+        "role": "neutral",
+        "displayName": "Fondo",
+        "canonical": "#F7F7F8",
+        "oklch": "oklch(97.6% 0.001 286.4)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262627",
+          "#454546",
+          "#666667",
+          "#89898A",
+          "#AEAEAF",
+          "#D1D1D2",
+          "#EEEEEF"
+        ]
+      },
+      "superficie": {
+        "role": "neutral",
+        "displayName": "Superficie",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#AEAEAE",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "borde": {
+        "role": "neutral",
+        "displayName": "Borde",
+        "canonical": "#E7E7EA",
+        "oklch": "oklch(92.9% 0.004 286.3)",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#262628",
+          "#454547",
+          "#666668",
+          "#89898B",
+          "#ADADB0",
+          "#D0D0D3",
+          "#EEEEF1"
+        ]
+      },
+      "bordeFuerte": {
+        "role": "neutral",
+        "displayName": "Borde fuerte",
+        "canonical": "#D4D4D8",
+        "oklch": "oklch(87.1% 0.005 286.3)",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#262629",
+          "#454548",
+          "#666669",
+          "#89898C",
+          "#ADADB1",
+          "#D0D0D4",
+          "#EEEEF2"
+        ]
+      },
+      "texto": {
+        "role": "neutral",
+        "displayName": "Texto",
+        "canonical": "#18181B",
+        "oklch": "oklch(21.0% 0.006 285.9)",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#262629",
+          "#454548",
+          "#666669",
+          "#89898D",
+          "#ADADB1",
+          "#D0D0D5",
+          "#EEEEF2"
+        ]
+      },
+      "textoSecundario": {
+        "role": "neutral",
+        "displayName": "Texto secundario",
+        "canonical": "#71717A",
+        "oklch": "oklch(55.2% 0.014 285.9)",
+        "tonalRamp": [
+          "#0B0A11",
+          "#26262D",
+          "#44444C",
+          "#65656E",
+          "#888891",
+          "#ADADB7",
+          "#D0D0DA",
+          "#EDEDF8"
+        ]
+      },
+      "textoTenue": {
+        "role": "neutral",
+        "displayName": "Texto tenue",
+        "canonical": "#A1A1AA",
+        "oklch": "oklch(71.2% 0.013 286.1)",
+        "tonalRamp": [
+          "#0B0A10",
+          "#26262D",
+          "#44444C",
+          "#65656D",
+          "#888891",
+          "#ADADB6",
+          "#D0D0D9",
+          "#EDEDF7"
+        ]
+      },
+      "disponible": {
+        "role": "secondary",
+        "displayName": "Verde disponible",
+        "canonical": "#16A34A",
+        "oklch": "oklch(62.7% 0.170 149.2)",
+        "tonalRamp": [
+          "#001500",
+          "#003500",
+          "#005900",
+          "#007F26",
+          "#18A44B",
+          "#4FCB6F",
+          "#86EC9B",
+          "#AEFFBF"
+        ]
+      },
+      "disponibleTinte": {
+        "role": "secondary",
+        "displayName": "Tinte disponible",
+        "canonical": "#E8F5EC",
+        "oklch": "oklch(95.8% 0.018 155.8)",
+        "tonalRamp": [
+          "#050D08",
+          "#1F2923",
+          "#3E4841",
+          "#5E6962",
+          "#818D85",
+          "#A5B2A9",
+          "#C8D5CC",
+          "#E5F2E9"
+        ]
+      },
+      "disponibleTexto": {
+        "role": "secondary",
+        "displayName": "Texto disponible",
+        "canonical": "#166534",
+        "oklch": "oklch(44.8% 0.108 151.3)",
+        "tonalRamp": [
+          "#001500",
+          "#003404",
+          "#005424",
+          "#2D7745",
+          "#539C67",
+          "#78C28B",
+          "#9BE6AD",
+          "#B8FFCA"
+        ]
+      },
+      "disponibleFuerte": {
+        "role": "secondary",
+        "displayName": "Verde de pin",
+        "canonical": "#15803D",
+        "oklch": "oklch(52.7% 0.137 150.1)",
+        "tonalRamp": [
+          "#001500",
+          "#003600",
+          "#005715",
+          "#097B38",
+          "#3FA05B",
+          "#67C67F",
+          "#8BEAA1",
+          "#ADFFC0"
+        ]
+      },
+      "enAtencion": {
+        "role": "secondary",
+        "displayName": "Ámbar en atención",
+        "canonical": "#D97706",
+        "oklch": "oklch(66.6% 0.157 58.3)",
+        "tonalRamp": [
+          "#270000",
+          "#510100",
+          "#7D2100",
+          "#A54700",
+          "#CD6C00",
+          "#F69136",
+          "#FFB767",
+          "#FFD994"
+        ]
+      },
+      "enAtencionTinte": {
+        "role": "secondary",
+        "displayName": "Tinte en atención",
+        "canonical": "#FDF1E3",
+        "oklch": "oklch(96.4% 0.023 71.8)",
+        "tonalRamp": [
+          "#110903",
+          "#2D251A",
+          "#4D4338",
+          "#6E6458",
+          "#92877B",
+          "#B7AC9F",
+          "#DBCFC1",
+          "#F8ECDE"
+        ]
+      },
+      "enAtencionTexto": {
+        "role": "secondary",
+        "displayName": "Texto en atención",
+        "canonical": "#B45309",
+        "oklch": "oklch(55.5% 0.146 49.0)",
+        "tonalRamp": [
+          "#290000",
+          "#540000",
+          "#7E1F00",
+          "#A54500",
+          "#CD6A2C",
+          "#F78F54",
+          "#FFB377",
+          "#FFD49F"
+        ]
+      },
+      "enAtencionFuerte": {
+        "role": "secondary",
+        "displayName": "Ámbar de pin",
+        "canonical": "#B45309",
+        "oklch": "oklch(55.5% 0.146 49.0)",
+        "tonalRamp": [
+          "#290000",
+          "#540000",
+          "#7E1F00",
+          "#A54500",
+          "#CD6A2C",
+          "#F78F54",
+          "#FFB377",
+          "#FFD49F"
+        ]
+      },
+      "fueraServicio": {
+        "role": "secondary",
+        "displayName": "Gris fuera de servicio",
+        "canonical": "#6B7280",
+        "oklch": "oklch(55.1% 0.023 264.4)",
+        "tonalRamp": [
+          "#070B15",
+          "#212632",
+          "#3F4552",
+          "#5F6674",
+          "#828998",
+          "#A7AEBD",
+          "#C9D1E1",
+          "#E7EFFF"
+        ]
+      },
+      "fueraServicioTinte": {
+        "role": "secondary",
+        "displayName": "Tinte fuera de servicio",
+        "canonical": "#F0F0F2",
+        "oklch": "oklch(95.6% 0.003 286.3)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262628",
+          "#454546",
+          "#666667",
+          "#89898B",
+          "#AEAEAF",
+          "#D1D1D3",
+          "#EEEEF0"
+        ]
+      },
+      "fueraServicioTexto": {
+        "role": "secondary",
+        "displayName": "Texto fuera de servicio",
+        "canonical": "#52525B",
+        "oklch": "oklch(44.2% 0.015 285.8)",
+        "tonalRamp": [
+          "#0A0A11",
+          "#26262D",
+          "#44444D",
+          "#65656E",
+          "#888892",
+          "#ADADB7",
+          "#D0D0DA",
+          "#EDEDF8"
+        ]
+      },
+      "primarioTinteOscuro": {
+        "role": "primary",
+        "displayName": "Tinte de alerta (oscuro)",
+        "canonical": "#3A1614",
+        "oklch": "oklch(25.5% 0.058 25.2)",
+        "tonalRamp": [
+          "#1E0101",
+          "#3E1A18",
+          "#603835",
+          "#845955",
+          "#AA7C77",
+          "#D0A09C",
+          "#F5C3BE",
+          "#FFE0DB"
+        ]
+      },
+      "primarioTinteTextoOscuro": {
+        "role": "primary",
+        "displayName": "Texto de alerta (oscuro)",
+        "canonical": "#F97066",
+        "oklch": "oklch(70.9% 0.170 26.5)",
+        "tonalRamp": [
+          "#2B0000",
+          "#570000",
+          "#86010D",
+          "#B32E2C",
+          "#DD574F",
+          "#FF7D72",
+          "#FFA99D",
+          "#FFCCC0"
+        ]
+      },
+      "fondoOscuro": {
+        "role": "neutral",
+        "displayName": "Fondo (oscuro)",
+        "canonical": "#111114",
+        "oklch": "oklch(17.9% 0.006 285.8)",
+        "tonalRamp": [
+          "#0B0B0E",
+          "#262629",
+          "#454548",
+          "#666669",
+          "#89898D",
+          "#ADADB2",
+          "#D0D0D5",
+          "#EEEEF2"
+        ]
+      },
+      "superficieOscuro": {
+        "role": "neutral",
+        "displayName": "Superficie (oscuro)",
+        "canonical": "#1A1A1F",
+        "oklch": "oklch(22.0% 0.010 285.6)",
+        "tonalRamp": [
+          "#0B0B0F",
+          "#26262B",
+          "#44444A",
+          "#65656C",
+          "#88888F",
+          "#ADADB4",
+          "#D0D0D7",
+          "#EEEEF5"
+        ]
+      },
+      "bordeOscuro": {
+        "role": "neutral",
+        "displayName": "Borde (oscuro)",
+        "canonical": "#2A2A31",
+        "oklch": "oklch(28.8% 0.013 285.6)",
+        "tonalRamp": [
+          "#0B0A10",
+          "#26262D",
+          "#44444C",
+          "#65656D",
+          "#888891",
+          "#ADADB6",
+          "#D0D0D9",
+          "#EDEDF7"
+        ]
+      },
+      "bordeFuerteOscuro": {
+        "role": "neutral",
+        "displayName": "Borde fuerte (oscuro)",
+        "canonical": "#3F3F46",
+        "oklch": "oklch(37.0% 0.012 285.8)",
+        "tonalRamp": [
+          "#0B0A10",
+          "#26262C",
+          "#44444B",
+          "#65656D",
+          "#888890",
+          "#ADADB5",
+          "#D0D0D9",
+          "#EDEDF6"
+        ]
+      },
+      "textoOscuro": {
+        "role": "neutral",
+        "displayName": "Texto (oscuro)",
+        "canonical": "#F4F4F5",
+        "oklch": "oklch(96.7% 0.001 286.4)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#262627",
+          "#454546",
+          "#666667",
+          "#89898A",
+          "#AEAEAF",
+          "#D1D1D2",
+          "#EEEEEF"
+        ]
+      },
+      "textoSecundarioOscuro": {
+        "role": "neutral",
+        "displayName": "Texto secundario (oscuro)",
+        "canonical": "#A1A1AA",
+        "oklch": "oklch(71.2% 0.013 286.1)",
+        "tonalRamp": [
+          "#0B0A10",
+          "#26262D",
+          "#44444C",
+          "#65656D",
+          "#888891",
+          "#ADADB6",
+          "#D0D0D9",
+          "#EDEDF7"
+        ]
+      },
+      "textoTenueOscuro": {
+        "role": "neutral",
+        "displayName": "Texto tenue (oscuro)",
+        "canonical": "#71717A",
+        "oklch": "oklch(55.2% 0.014 285.9)",
+        "tonalRamp": [
+          "#0B0A11",
+          "#26262D",
+          "#44444C",
+          "#65656E",
+          "#888891",
+          "#ADADB7",
+          "#D0D0DA",
+          "#EDEDF8"
+        ]
+      },
+      "disponibleTinteOscuro": {
+        "role": "secondary",
+        "displayName": "Tinte disponible (oscuro)",
+        "canonical": "#0F2E1C",
+        "oklch": "oklch(27.2% 0.050 155.4)",
+        "tonalRamp": [
+          "#001103",
+          "#0F2E1C",
+          "#2E4D39",
+          "#4F6F5A",
+          "#71937C",
+          "#95B8A1",
+          "#B8DBC3",
+          "#D5F9E0"
+        ]
+      },
+      "disponibleTextoOscuro": {
+        "role": "secondary",
+        "displayName": "Texto disponible (oscuro)",
+        "canonical": "#4ADE80",
+        "oklch": "oklch(80.0% 0.182 151.7)",
+        "tonalRamp": [
+          "#001500",
+          "#003600",
+          "#005A0C",
+          "#008127",
+          "#00A64C",
+          "#44CB75",
+          "#7FEDA0",
+          "#AAFFC3"
+        ]
+      },
+      "enAtencionTinteOscuro": {
+        "role": "secondary",
+        "displayName": "Tinte en atención (oscuro)",
+        "canonical": "#3A2508",
+        "oklch": "oklch(28.4% 0.052 71.2)",
+        "tonalRamp": [
+          "#180600",
+          "#362105",
+          "#574024",
+          "#796145",
+          "#9E8466",
+          "#C3A98A",
+          "#E7CCAC",
+          "#FFE9C9"
+        ]
+      },
+      "enAtencionTextoOscuro": {
+        "role": "secondary",
+        "displayName": "Texto en atención (oscuro)",
+        "canonical": "#FBBF24",
+        "oklch": "oklch(83.7% 0.164 84.4)",
+        "tonalRamp": [
+          "#1F0100",
+          "#431900",
+          "#6B3700",
+          "#915900",
+          "#B77D00",
+          "#DEA300",
+          "#FEC84E",
+          "#FFE783"
+        ]
+      },
+      "fueraServicioTinteOscuro": {
+        "role": "secondary",
+        "displayName": "Tinte fuera de servicio (oscuro)",
+        "canonical": "#27272A",
+        "oklch": "oklch(27.4% 0.005 286.0)",
+        "tonalRamp": [
+          "#0B0B0D",
+          "#262629",
+          "#454548",
+          "#666669",
+          "#89898C",
+          "#ADADB1",
+          "#D0D0D4",
+          "#EEEEF2"
+        ]
+      },
+      "fueraServicioTextoOscuro": {
+        "role": "secondary",
+        "displayName": "Texto fuera de servicio (oscuro)",
+        "canonical": "#A1A1AA",
+        "oklch": "oklch(71.2% 0.013 286.1)",
+        "tonalRamp": [
+          "#0B0A10",
+          "#26262D",
+          "#44444C",
+          "#65656D",
+          "#888891",
+          "#ADADB6",
+          "#D0D0D9",
+          "#EDEDF7"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "titulo-pagina": {
+        "displayName": "Título de página",
+        "purpose": "El nombre de cada sección."
+      },
+      "titulo-consola": {
+        "displayName": "Título de consola",
+        "purpose": "El del Centro de control: más chico para que la franja pese más."
+      },
+      "titulo-aviso": {
+        "displayName": "Título de aviso",
+        "purpose": "Titular de la franja y títulos de diálogos."
+      },
+      "cuerpo": {
+        "displayName": "Cuerpo",
+        "purpose": "Textos de diálogos y descripciones."
+      },
+      "dato": {
+        "displayName": "Dato",
+        "purpose": "Contenido de filas, bitácora y problemas."
+      },
+      "etiqueta": {
+        "displayName": "Etiqueta",
+        "purpose": "Encabezados de columna, tipos, insignias."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Placas, horas, teléfonos y tiempos."
+      }
+    },
+    "shadows": [
+      {
+        "name": "menu",
+        "value": "0 4px 16px rgba(15, 23, 42, 0.18)",
+        "purpose": "Menús de acciones que flotan sobre la tabla."
+      }
+    ],
+    "motion": [
+      {
+        "name": "quick",
+        "value": "transición \"quick\" de Tamagui",
+        "purpose": "Entrada y salida de diálogos y velo. Nada más se anima."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "max-xl",
+        "value": "< 1280px",
+        "purpose": "Menú plegado a íconos, márgenes de 24 px, columnas prescindibles escondidas."
+      },
+      {
+        "name": "max-xxl",
+        "value": "< 1536px",
+        "purpose": "Márgenes de página de 32 px."
+      },
+      {
+        "name": "mínimo cuidado",
+        "value": "1024px",
+        "purpose": "Desde acá todo tiene que entrar sin cortes."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "boton-primario",
+      "description": "La acción principal de una pantalla o diálogo. Uno solo.",
+      "html": "<button class=\"ds-btn-primario\">Registrar ambulancia</button>",
+      "css": ".ds-btn-primario { height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid #D92D20; background: #D92D20; color: #FFFFFF; font: 600 13px/18px \"IBM Plex Sans\", system-ui, sans-serif; cursor: pointer; } .ds-btn-primario:hover, .ds-btn-primario:active { background: #B42318; border-color: #B42318; } .ds-btn-primario:focus-visible { outline: 2px solid #D92D20; outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón de contorno",
+      "kind": "button",
+      "refersTo": "boton-contorno",
+      "description": "Las acciones de cada fila: Ver, Enviar unidad, Asignar.",
+      "html": "<button class=\"ds-btn-contorno\">Enviar unidad</button>",
+      "css": ".ds-btn-contorno { height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #D4D4D8; background: #FFFFFF; color: #18181B; font: 600 12px/16px \"IBM Plex Sans\", system-ui, sans-serif; cursor: pointer; } .ds-btn-contorno:hover { background: #F7F7F8; } .ds-btn-contorno:focus-visible { outline: 2px solid #18181B; outline-offset: 2px; }"
+    },
+    {
+      "name": "Insignia de estado",
+      "kind": "chip",
+      "refersTo": "insignia-disponible",
+      "description": "Estado de una unidad: verde disponible, ámbar en atención, gris fuera de servicio.",
+      "html": "<span class=\"ds-insignia\"><span class=\"ds-insignia-punto\"></span>Disponible</span>",
+      "css": ".ds-insignia { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; background: #E8F5EC; color: #166534; font: 500 12px/16px \"IBM Plex Sans\", system-ui, sans-serif; } .ds-insignia-punto { width: 6px; height: 6px; border-radius: 999px; background: #16A34A; }"
+    },
+    {
+      "name": "Contador que filtra",
+      "kind": "chip",
+      "refersTo": "contador",
+      "description": "Cuántas unidades hay en cada situación; tocarlo filtra la tabla. El activo va invertido.",
+      "html": "<button class=\"ds-contador\" aria-pressed=\"false\"><span class=\"ds-contador-punto\"></span><b>2</b><span>Disponibles</span></button> <button class=\"ds-contador\" aria-pressed=\"true\"><span class=\"ds-contador-punto\"></span><b>1</b><span>Sin señal</span></button>",
+      "css": ".ds-contador { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #E7E7EA; background: #FFFFFF; color: #18181B; font: 400 12px/16px \"IBM Plex Sans\", system-ui, sans-serif; cursor: pointer; } .ds-contador b { font: 600 15px/20px \"IBM Plex Sans\", system-ui, sans-serif; } .ds-contador span:last-child { color: #71717A; } .ds-contador-punto { width: 8px; height: 8px; border-radius: 999px; background: #16A34A; } .ds-contador:hover { border-color: #D4D4D8; } .ds-contador[aria-pressed=\"true\"] { background: #18181B; border-color: #18181B; color: #FFFFFF; } .ds-contador[aria-pressed=\"true\"] span:last-child { color: #FFFFFF; } .ds-contador[aria-pressed=\"true\"] .ds-contador-punto { background: #D92D20; } .ds-contador:focus-visible { outline: 2px solid #18181B; outline-offset: 2px; }"
+    },
+    {
+      "name": "Navegación lateral",
+      "kind": "nav",
+      "refersTo": "navegacion-activa",
+      "description": "Ítems del menú lateral; el activo con tinte y texto de alerta.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-activo\" href=\"#\">Centro de control</a><a class=\"ds-nav-item\" href=\"#\">Flota</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 216px; } .ds-nav-item { display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 8px; color: #18181B; font: 500 14px/20px \"IBM Plex Sans\", system-ui, sans-serif; text-decoration: none; } .ds-nav-item:hover { background: #F7F7F8; } .ds-nav-activo, .ds-nav-activo:hover { background: #FDECEA; color: #B42318; font-weight: 600; }"
+    },
+    {
+      "name": "Franja de problemas en alarma",
+      "kind": "custom",
+      "refersTo": "franja-en-alarma",
+      "description": "Lo que está sin resolver: titular, y una fila por problema con tipo, tiempo y descripción.",
+      "html": "<section class=\"ds-franja\"><header class=\"ds-franja-titular\">2 por resolver</header><div class=\"ds-franja-fila\"><span class=\"ds-tipo\">Incidente</span><span class=\"ds-tiempo\">Hace 12 min</span><span class=\"ds-desc\">#41 · Av. Busch y tercer anillo</span><button class=\"ds-btn-contorno\">Enviar unidad</button></div></section>",
+      "css": ".ds-franja { border: 1px solid #D92D20; border-radius: 12px; overflow: hidden; background: #FFFFFF; font-family: \"IBM Plex Sans\", system-ui, sans-serif; } .ds-franja-titular { padding: 12px 16px; background: #FDECEA; color: #B42318; font: 600 18px/24px \"IBM Plex Sans\", system-ui, sans-serif; } .ds-franja-fila { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: 1px solid #E7E7EA; } .ds-tipo { width: 76px; color: #71717A; font: 500 12px/16px \"IBM Plex Sans\", system-ui, sans-serif; } .ds-tiempo { width: 152px; color: #18181B; font: 500 13px/18px \"IBM Plex Mono\", ui-monospace, monospace; } .ds-desc { flex: 1; min-width: 0; color: #18181B; font: 400 13px/18px \"IBM Plex Sans\", system-ui, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-btn-contorno { height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid #D4D4D8; background: #FFFFFF; color: #18181B; font: 600 12px/16px \"IBM Plex Sans\", system-ui, sans-serif; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Silencio hasta que importa",
+    "overview": "El panel se mira durante todo un turno, a veces de madrugada, y casi siempre no pasa nada. Por eso está callado: fondos neutros, bordes finos, nada que decore. La interfaz no compite con el trabajo. Cuando algo pide una decisión (un incidente sin unidad, una unidad que perdió la señal), es lo único que levanta la voz: aparece el rojo, crece el texto y cambia el aspecto del bloque entero. Se tiene que notar de reojo, sin leer.\n\nLa densidad es de herramienta de trabajo: tablas con muchas filas, datos en columnas fijas, textos de 12 a 14 px. La personalidad está en la precisión: el tiempo que lleva cada cosa siempre a la vista, las placas y las horas en monoespaciada, palabras del oficio y no de sistema. Es un sistema para emergencias: nada de animaciones de adorno, gradientes ni efectos.",
+    "keyCharacteristics": [
+      "Neutros fríos de la escala zinc; un solo color de acento, el rojo de alerta, reservado para lo que pide una decisión.",
+      "Tres colores de estado de la flota (verde, ámbar, gris) que nunca se usan para otra cosa.",
+      "Plano en reposo: superficies con borde de 1 px, sin sombras. Solo lo que flota encima (diálogos, menús) tiene sombra.",
+      "IBM Plex Sans para todo, IBM Plex Mono para datos que se comparan: placas, horas, teléfonos, tiempos.",
+      "Modo claro y oscuro siguiendo al sistema, con los mismos roles en los dos."
+    ],
+    "rules": [
+      {
+        "name": "The Red Means Decide Rule",
+        "body": "El rojo de alerta aparece solo donde el operador tiene que decidir algo. Si un elemento rojo no pide una decisión, va en otro color.",
+        "section": "colors"
+      },
+      {
+        "name": "The State Colors Are Vocabulary Rule",
+        "body": "Verde, ámbar y gris significan disponible, en atención y fuera de servicio en toda la app. No se reutilizan para éxito, advertencia o deshabilitado genéricos.",
+        "section": "colors"
+      },
+      {
+        "name": "The Alarm Outweighs The Title Rule",
+        "body": "En una pantalla de trabajo, lo que está sin resolver pesa más que el título de la página: más color, más contraste y el bloque entero cambia, aunque el título siga siendo más grande en px.",
+        "section": "typography"
+      },
+      {
+        "name": "The Never Clip Data Rule",
+        "body": "Si no entra, se scrollea o se esconde una columna prescindible, a propósito. Un dato no puede desaparecer porque se achicó la ventana.",
+        "section": "layout"
+      },
+      {
+        "name": "The Only Floaters Cast Shadows Rule",
+        "body": "Si un elemento no tapa a otro, no lleva sombra. Las tarjetas y los paneles se separan con borde.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** reservar el rojo de alerta para lo que pide una decisión, y usar `primarioTinteTexto` para texto rojo en los dos temas.",
+      "**Do** mostrar el tiempo de lo urgente al principio de la fila y en monoespaciada.",
+      "**Do** usar los íconos del panel (`shared/ui/iconos.tsx`) en vez de caracteres como ⚠ o ✓.",
+      "**Do** dar a cada control interactivo un elemento real (`<button>`, `<a>`) y foco visible con teclado.",
+      "**Do** probar cada pantalla a 1024 y 1280 px, en claro y en oscuro."
+    ],
+    "donts": [
+      "**Don't** usar los comandos `bolder`, `delight`, `overdrive`, `animate` ni `colorize` de Impeccable: es un sistema para emergencias.",
+      "**Don't** poner enlaces ni teléfonos en rojo: van en texto normal o secundario, subrayados.",
+      "**Don't** usar `textoTenue` para algo que haya que leer: no llega a 4,5:1.",
+      "**Don't** agregar sombras a paneles o tarjetas, ni gradientes, ni bordes de color de más de 1 px a un costado.",
+      "**Don't** dejar que una tabla corte celdas: scroll lateral o columna escondida a propósito."
+    ]
+  }
+}

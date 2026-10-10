@@ -4,7 +4,7 @@ import { Text, XStack } from 'tamagui'
 export type TonoInsignia = 'rojo' | 'verde' | 'ambar' | 'gris' | 'contorno'
 
 const TONOS = {
-  rojo: { fondo: '$primarioTinte', texto: '$primarioPresionado', punto: '$primario' },
+  rojo: { fondo: '$primarioTinte', texto: '$primarioTinteTexto', punto: '$primario' },
   verde: { fondo: '$disponibleTinte', texto: '$disponibleTexto', punto: '$disponible' },
   ambar: { fondo: '$enAtencionTinte', texto: '$enAtencionTexto', punto: '$enAtencion' },
   gris: { fondo: '$fueraServicioTinte', texto: '$fueraServicioTexto', punto: '$fueraServicio' },
@@ -21,7 +21,7 @@ export function Insignia({ tono, conPunto = false, children }: Props) {
   if (tono === 'contorno') {
     return (
       <XStack self="flex-start" items="center" height={24} px={10} rounded={999} borderWidth={1} borderColor="$bordeFuerte">
-        <Text fontSize={12} fontWeight="500" color="$textoSecundario">
+        <Text fontSize={12} lineHeight={16} fontWeight="500" color="$textoSecundario">
           {children}
         </Text>
       </XStack>
@@ -32,7 +32,7 @@ export function Insignia({ tono, conPunto = false, children }: Props) {
   return (
     <XStack self="flex-start" items="center" gap={6} height={24} px={10} rounded={999} bg={colores.fondo}>
       {conPunto ? <XStack width={6} height={6} rounded={999} bg={colores.punto} /> : null}
-      <Text fontSize={12} fontWeight="500" color={colores.texto}>
+      <Text fontSize={12} lineHeight={16} fontWeight="500" color={colores.texto}>
         {children}
       </Text>
     </XStack>

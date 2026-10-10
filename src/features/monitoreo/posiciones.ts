@@ -172,13 +172,23 @@ export function cruzarConLaOperacion(
 }
 
 /** Los contadores de la franja son también los filtros de la tabla: tocar uno deja ver solo esas unidades. */
-export type FiltroDeUnidades = 'DISPONIBLE' | 'EN_ATENCION' | 'SIN_TURNO' | 'SIN_SENAL'
+export type FiltroDeUnidades = 'DISPONIBLE' | 'EN_ATENCION' | 'FUERA_DE_SERVICIO' | 'SIN_TURNO' | 'SIN_SENAL'
 
+/**
+ * Disponible quiere decir "se la puede enviar": una disponible sin señal no entra, porque no se sabe dónde está.
+ * Esa cuenta en "Sin señal".
+ */
 export function cumpleFiltro(unidad: UnidadMonitoreada, filtro: FiltroDeUnidades | null): boolean {
-  if (filtro === null) {
-    return true
+  switch (filtro) {
+    case null:
+      return true
+    case 'SIN_SENAL':
+      return unidad.sinSenal
+    case 'DISPONIBLE':
+      return unidad.unidad.estado === 'DISPONIBLE' && !unidad.sinSenal
+    default:
+      return unidad.unidad.estado === filtro
   }
-  return filtro === 'SIN_SENAL' ? unidad.sinSenal : unidad.unidad.estado === filtro
 }
 
 /**

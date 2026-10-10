@@ -1,6 +1,6 @@
 import { AdvancedMarker, APIProvider, ColorScheme, Map, useMap } from '@vis.gl/react-google-maps'
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { Button, Paragraph, Text, XStack, YStack, type YStackProps } from 'tamagui'
+import { Button, Paragraph, Text, XStack, YStack } from 'tamagui'
 import type { IncidenteAbierto } from './api'
 import type { PosicionConocida, UnidadMonitoreada } from './posiciones'
 
@@ -19,7 +19,7 @@ const ZOOM_UN_PUNTO = 14
 const RELLENO_ENCUADRE = 72
 
 /** El mapa sigue en el mismo sitio del árbol al abrirse: si se moviera, Google lo recrearía y perdería el encuadre. */
-const ESTILO_EN_LA_PAGINA: CSSProperties = { display: 'flex', width: '100%' }
+const ESTILO_EN_LA_PAGINA: CSSProperties = { display: 'flex', width: '100%', height: '100%' }
 const ESTILO_PANTALLA_COMPLETA: CSSProperties = { position: 'fixed', inset: 0, zIndex: 1000, display: 'flex' }
 
 function coordenadasDeEntorno(latitud: string | undefined, longitud: string | undefined) {
@@ -44,15 +44,20 @@ type Props = {
   incidentes: IncidenteAbierto[]
   /** Id de la ambulancia elegida en la tabla: el mapa la centra y se acerca. Null si no hay ninguna. */
   enfocada: number | null
+  /** Tocar el pin de una unidad la elige, igual que tocar su fila en la tabla. */
+  onElegirUnidad: (ambulanciaId: number) => void
   /**
-   * Alto del recuadro del mapa. Llega como prop y es obligatorio a propósito: Google Maps no dibuja nada si su
-   * contenedor mide cero, que es justo lo que pasa con un `flex` dentro de un padre sin alto definido.
+   * Lo que está sin resolver, para cuando el mapa tapa la pantalla: en pantalla completa la franja no se ve y esto
+   * es lo único que avisa. Null si no hay nada.
    */
-  alto: number
+  avisoEnPantallaCompleta: ReactNode
 }
 
-/** Dónde está cada unidad en turno y dónde está pasando algo, ahora. */
-export function MapaDeFlota({ unidades, incidentes, enfocada, alto }: Props) {
+/**
+ * Dónde está cada unidad en turno y dónde está pasando algo, ahora. Ocupa el alto que le da el contenedor, que
+ * tiene que tenerlo definido: Google Maps no dibuja nada si su contenedor mide cero.
+ */
+export function MapaDeFlota({ unidades, incidentes, enfocada, onElegirUnidad, avisoEnPantallaCompleta }: Props) {
   const [pantallaCompleta, setPantallaCompleta] = useState(false)
   const enElMapa = unidades.filter(vaAlMapa)
 
@@ -78,7 +83,7 @@ export function MapaDeFlota({ unidades, incidentes, enfocada, alto }: Props) {
 
   if (!CLAVE_MAPA || !ID_MAPA) {
     return (
-      <Recuadro alto={alto} rectangular={false}>
+      <Recuadro rectangular={false}>
         <YStack flex={1} items="center" justify="center" px={32} gap={6}>
           <Text fontSize={15} fontWeight="600" color="$texto">
             Falta configurar el mapa
@@ -93,65 +98,130 @@ export function MapaDeFlota({ unidades, incidentes, enfocada, alto }: Props) {
 
   return (
     <div style={pantallaCompleta ? ESTILO_PANTALLA_COMPLETA : ESTILO_EN_LA_PAGINA}>
-      <Recuadro alto={pantallaCompleta ? '100%' : alto} rectangular={pantallaCompleta}>
-        <APIProvider apiKey={CLAVE_MAPA}>
-          <Map
-            mapId={ID_MAPA}
-            style={{ width: '100%', height: '100%' }}
-            // Sin valor controlado: una vez encuadrado, el mapa es del administrador y nadie se lo mueve.
-            defaultCenter={CIUDAD ?? CENTRO_BOLIVIA}
-            defaultZoom={CIUDAD ? ZOOM_CIUDAD : ZOOM_BOLIVIA}
-            colorScheme={ColorScheme.FOLLOW_SYSTEM}
-            // Los controles que llevan a otra cosa sobran acá, y la pantalla completa es la del panel.
-            clickableIcons={false}
-            mapTypeControl={false}
-            streetViewControl={false}
-            fullscreenControl={false}
-          >
-            <EncuadreInicial unidades={enElMapa} incidentes={incidentes} />
-            <EnfoqueDeUnidad unidades={enElMapa} enfocada={enfocada} />
+      <Recuadro rectangular={pantallaCompleta}>
+        {/* El mapa va absoluto dentro de su caja: así toma el alto que la caja reciba del flex, sin depender de
+            que cada ancestro tenga un alto en porcentaje. */}
+        <YStack flex={1} minH={0} position="relative">
+          <APIProvider apiKey={CLAVE_MAPA}>
+            <Map
+              mapId={ID_MAPA}
+              style={{ position: 'absolute', inset: 0 }}
+              // Sin valor controlado: una vez encuadrado, el mapa es del administrador y nadie se lo mueve.
+              defaultCenter={CIUDAD ?? CENTRO_BOLIVIA}
+              defaultZoom={CIUDAD ? ZOOM_CIUDAD : ZOOM_BOLIVIA}
+              colorScheme={ColorScheme.FOLLOW_SYSTEM}
+              // Los controles que llevan a otra cosa sobran acá, y la pantalla completa es la del panel.
+              clickableIcons={false}
+              mapTypeControl={false}
+              streetViewControl={false}
+              fullscreenControl={false}
+            >
+              <EncuadreInicial unidades={enElMapa} incidentes={incidentes} />
+              <EnfoqueDeUnidad unidades={enElMapa} enfocada={enfocada} />
 
-            {incidentes.map((incidente) => (
-              <AdvancedMarker
-                key={`incidente-${incidente.id}`}
-                position={{ lat: incidente.latitud, lng: incidente.longitud }}
-                title={tituloDelIncidente(incidente)}
-                zIndex={1}
-              >
-                <PinDeIncidente incidente={incidente} />
-              </AdvancedMarker>
-            ))}
+              {incidentes.map((incidente) => (
+                <AdvancedMarker
+                  key={`incidente-${incidente.id}`}
+                  position={{ lat: incidente.latitud, lng: incidente.longitud }}
+                  title={tituloDelIncidente(incidente)}
+                  zIndex={1}
+                >
+                  <PinDeIncidente incidente={incidente} />
+                </AdvancedMarker>
+              ))}
 
-            {/* Las unidades van encima: tapar una ambulancia con un incidente sería esconder a quien lo atiende. */}
-            {enElMapa.map((unidad) => (
-              <AdvancedMarker
-                key={`unidad-${unidad.unidad.ambulanciaId}`}
-                position={{ lat: unidad.posicion.latitud, lng: unidad.posicion.longitud }}
-                title={unidad.unidad.placa}
-                zIndex={unidad.unidad.ambulanciaId === enfocada ? 3 : 2}
-              >
-                <PinDeUnidad unidad={unidad} resaltada={unidad.unidad.ambulanciaId === enfocada} />
-              </AdvancedMarker>
-            ))}
-          </Map>
-        </APIProvider>
+              {/* Las unidades van encima: tapar una ambulancia con un incidente sería esconder a quien lo atiende. */}
+              {enElMapa.map((unidad) => (
+                <AdvancedMarker
+                  key={`unidad-${unidad.unidad.ambulanciaId}`}
+                  position={{ lat: unidad.posicion.latitud, lng: unidad.posicion.longitud }}
+                  title={unidad.unidad.placa}
+                  zIndex={unidad.unidad.ambulanciaId === enfocada ? 3 : 2}
+                  onClick={() => onElegirUnidad(unidad.unidad.ambulanciaId)}
+                >
+                  <PinDeUnidad unidad={unidad} resaltada={unidad.unidad.ambulanciaId === enfocada} />
+                </AdvancedMarker>
+              ))}
+            </Map>
+          </APIProvider>
 
-        <XStack position="absolute" top={12} right={12} zIndex={2}>
-          <Button
-            size="$3"
-            bg="$superficie"
-            borderColor="$borde"
-            hoverStyle={{ bg: '$fondo' }}
-            aria-label={pantallaCompleta ? 'Salir de la pantalla completa' : 'Ver el mapa en pantalla completa'}
-            onPress={() => setPantallaCompleta((abierta) => !abierta)}
-          >
-            <Button.Text fontSize={12} fontWeight="600" color="$texto">
-              {pantallaCompleta ? 'Salir (Esc)' : 'Pantalla completa'}
-            </Button.Text>
-          </Button>
-        </XStack>
+          {pantallaCompleta && avisoEnPantallaCompleta ? (
+            <XStack position="absolute" t={12} l={12} zIndex={2}>
+              {avisoEnPantallaCompleta}
+            </XStack>
+          ) : null}
+
+          <XStack position="absolute" t={12} r={12} zIndex={2}>
+            <Button
+              size="$3"
+              bg="$superficie"
+              borderColor="$borde"
+              hoverStyle={{ bg: '$fondo' }}
+              aria-label={pantallaCompleta ? 'Salir de la pantalla completa' : 'Ver el mapa en pantalla completa'}
+              onPress={() => setPantallaCompleta((abierta) => !abierta)}
+            >
+              <Button.Text fontSize={12} fontWeight="600" color="$texto">
+                {pantallaCompleta ? 'Salir (Esc)' : 'Pantalla completa'}
+              </Button.Text>
+            </Button>
+          </XStack>
+        </YStack>
+        <Leyenda />
       </Recuadro>
     </div>
+  )
+}
+
+/** Qué quiere decir cada pin. Va debajo del mapa y no encima, para no tapar justo lo que explica. */
+function Leyenda() {
+  return (
+    <XStack
+      items="center"
+      gap={16}
+      rowGap={6}
+      px={12}
+      py={8}
+      flexWrap="wrap"
+      bg="$superficie"
+      borderTopWidth={1}
+      borderColor="$borde"
+    >
+      <ItemDeLeyenda texto="Disponible">
+        <YStack width={16} height={10} rounded={999} bg="$disponibleFuerte" />
+      </ItemDeLeyenda>
+      <ItemDeLeyenda texto="En atención">
+        <YStack width={16} height={10} rounded={999} bg="$enAtencionFuerte" />
+      </ItemDeLeyenda>
+      <ItemDeLeyenda texto="Sin señal">
+        <YStack
+          width={16}
+          height={10}
+          rounded={999}
+          bg="$disponibleFuerte"
+          opacity={0.7}
+          borderWidth={1}
+          borderStyle="dashed"
+          borderColor="$texto"
+        />
+      </ItemDeLeyenda>
+      <ItemDeLeyenda texto="Incidente sin unidad">
+        <YStack width={12} height={12} rounded={999} bg="$primario" />
+      </ItemDeLeyenda>
+      <ItemDeLeyenda texto="Incidente con unidad">
+        <YStack width={12} height={12} rounded={999} bg="$superficie" borderWidth={2} borderColor="$primario" />
+      </ItemDeLeyenda>
+    </XStack>
+  )
+}
+
+function ItemDeLeyenda({ texto, children }: { texto: string; children: ReactNode }) {
+  return (
+    <XStack items="center" gap={6}>
+      {children}
+      <Text fontSize={12} lineHeight={16} color="$textoSecundario">
+        {texto}
+      </Text>
+    </XStack>
   )
 }
 
@@ -161,16 +231,15 @@ function tituloDelIncidente(incidente: IncidenteAbierto) {
 }
 
 type PropsRecuadro = {
-  alto: YStackProps['height']
   /** En pantalla completa las esquinas redondeadas dejarían ver el fondo: ahí el mapa va a ras de la ventana. */
   rectangular: boolean
   children: ReactNode
 }
 
-function Recuadro({ alto, rectangular, children }: PropsRecuadro) {
+function Recuadro({ rectangular, children }: PropsRecuadro) {
   return (
     <YStack
-      height={alto}
+      position="relative"
       minW={0}
       flex={1}
       rounded={rectangular ? 0 : 12}
@@ -258,10 +327,11 @@ function EnfoqueDeUnidad({ unidades, enfocada }: { unidades: UnidadEnMapa[]; enf
  */
 function PinDeUnidad({ unidad, resaltada }: { unidad: UnidadEnMapa; resaltada: boolean }) {
   const enAtencion = unidad.unidad.estado === 'EN_ATENCION'
-  const color = enAtencion ? '$enAtencion' : '$disponible'
+  // Los tonos fuertes y no los de estado: la placa va en blanco encima y tiene que leerse.
+  const color = enAtencion ? '$enAtencionFuerte' : '$disponibleFuerte'
 
   return (
-    <YStack items="center" opacity={unidad.sinSenal ? 0.55 : 1}>
+    <YStack items="center" cursor="pointer" opacity={unidad.sinSenal ? 0.7 : 1}>
       <XStack
         items="center"
         height={26}
@@ -290,22 +360,28 @@ function PinDeUnidad({ unidad, resaltada }: { unidad: UnidadEnMapa; resaltada: b
  */
 function PinDeIncidente({ incidente }: { incidente: IncidenteAbierto }) {
   const cubierto = incidente.unidadesAcudiendo > 0
+  const tamano = cubierto ? 22 : 28
 
   return (
     <YStack items="center">
+      {/* Con alguien en camino el incidente sigue abierto, pero ya no reclama una decisión: pasa a contorno y más
+          chico. La diferencia tiene que verse por la forma, no solo por un matiz de opacidad. */}
       <XStack
         items="center"
         justify="center"
-        width={26}
-        height={26}
+        width={tamano}
+        height={tamano}
         rounded={999}
-        bg="$primario"
+        bg={cubierto ? '$superficie' : '$primario'}
         borderWidth={2}
-        borderColor="$superficie"
-        // Con alguien en camino el incidente sigue abierto, pero ya no es de los que reclaman una decisión.
-        opacity={cubierto ? 0.7 : 1}
+        borderColor={cubierto ? '$primario' : '$superficie'}
       >
-        <Text fontSize={14} lineHeight={18} fontWeight="700" color="$primarioTexto">
+        <Text
+          fontSize={cubierto ? 12 : 15}
+          lineHeight={cubierto ? 16 : 18}
+          fontWeight="700"
+          color={cubierto ? '$primarioTinteTexto' : '$primarioTexto'}
+        >
           !
         </Text>
       </XStack>

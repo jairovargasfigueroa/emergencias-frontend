@@ -5,7 +5,44 @@ export type ColumnaTabla = {
   titulo: string
   /** Ancho fijo en píxeles. Sin ancho, la columna ocupa el espacio que sobra. */
   ancho?: number
+  /**
+   * Para una columna sin ancho fijo: por debajo de esto no se aplasta, y si la tabla ya no entra, scrollea de
+   * costado. Sin él, 160 px.
+   */
+  anchoMinimo?: number
   alinearDerecha?: boolean
+  /**
+   * Se esconde por debajo de 1280 px, donde el menú se pliega y la tabla pierde ancho. Solo para columnas que se
+   * deducen de otra o que se pueden consultar en el detalle: nunca la que identifica la fila.
+   */
+  ocultarEnPantallaChica?: boolean
+}
+
+/** Lo que mide como mínimo una columna sin ancho fijo antes de que la tabla pase a scrollear de costado. */
+const ANCHO_MINIMO_FLEXIBLE = 160
+
+/** El relleno de cada fila, a los dos lados (`px={12}`). */
+const RELLENO_FILA = 24
+
+/**
+ * Lo mínimo que necesita la tabla para que ninguna columna se aplaste. Si el contenedor es más angosto, la tabla
+ * scrollea de costado en vez de cortar las celdas, que es lo que hacía antes: los datos desaparecían sin aviso.
+ */
+function anchoMinimoDeLaTabla(columnas: ColumnaTabla[], compacta: boolean): number {
+  return columnas
+    .filter((columna) => !(compacta && columna.ocultarEnPantallaChica))
+    .reduce((suma, columna) => suma + (columna.ancho ?? columna.anchoMinimo ?? ANCHO_MINIMO_FLEXIBLE), RELLENO_FILA)
+}
+
+/** Las propiedades que comparten el encabezado y las celdas de una misma columna, para que nunca se desalineen. */
+function propsDeColumna(columna: ColumnaTabla) {
+  return {
+    width: columna.ancho,
+    flex: columna.ancho ? undefined : 1,
+    minW: columna.ancho ? 0 : (columna.anchoMinimo ?? ANCHO_MINIMO_FLEXIBLE),
+    justify: columna.alinearDerecha ? ('flex-end' as const) : ('flex-start' as const),
+    '$max-xl': columna.ocultarEnPantallaChica ? { display: 'none' as const } : undefined,
+  }
 }
 
 type PropsTabla = {
@@ -16,37 +53,55 @@ type PropsTabla = {
    * de listado.
    */
   alto?: number
+  /** Ocupa el alto que le da el contenedor, con el encabezado quieto y las filas scrolleando adentro. */
+  llenar?: boolean
   children: ReactNode
 }
 
-/** Tabla de datos. Tamagui no trae una: se arma con filas y celdas de ancho fijo o flexible. */
-export function Tabla({ columnas, alto, children }: PropsTabla) {
+/**
+ * Tabla de datos. Tamagui no trae una: se arma con filas y celdas de ancho fijo o flexible. Cuando no entra en su
+ * contenedor scrollea de costado, con el encabezado y las filas juntos.
+ */
+export function Tabla({ columnas, alto, llenar = false, children }: PropsTabla) {
+  const filasAdentro = alto !== undefined || llenar
   return (
-    <YStack role="table" height={alto} bg="$superficie" borderWidth={1} borderColor="$borde" rounded={12} overflow="hidden">
-      <XStack role="row" items="center" height={44} px={12} bg="$fondo">
-        {columnas.map((columna) => (
-          <XStack
-            key={columna.titulo}
-            role="columnheader"
-            px={12}
-            width={columna.ancho}
-            flex={columna.ancho ? undefined : 1}
-            minW={0}
-            justify={columna.alinearDerecha ? 'flex-end' : 'flex-start'}
-          >
-            <Text fontSize={12} lineHeight={16} fontWeight="500" color="$textoSecundario">
-              {columna.titulo}
-            </Text>
+    <YStack
+      role="table"
+      height={alto}
+      flex={llenar ? 1 : undefined}
+      minH={llenar ? 0 : undefined}
+      bg="$superficie"
+      borderWidth={1}
+      borderColor="$borde"
+      rounded={12}
+      overflow="hidden"
+    >
+      {/* `auto` y no `scroll`: en Windows `scroll` deja la barra siempre a la vista, haya o no qué desplazar. */}
+      <YStack flex={filasAdentro ? 1 : undefined} minH={filasAdentro ? 0 : undefined} overflowX="auto">
+        <YStack
+          flex={filasAdentro ? 1 : undefined}
+          minH={filasAdentro ? 0 : undefined}
+          minW={anchoMinimoDeLaTabla(columnas, false)}
+          $max-xl={{ minW: anchoMinimoDeLaTabla(columnas, true) }}
+        >
+          <XStack role="row" items="center" height={44} px={12} bg="$fondo">
+            {columnas.map((columna) => (
+              <XStack key={columna.titulo} role="columnheader" px={12} {...propsDeColumna(columna)}>
+                <Text fontSize={12} lineHeight={16} fontWeight="500" color="$textoSecundario">
+                  {columna.titulo}
+                </Text>
+              </XStack>
+            ))}
           </XStack>
-        ))}
-      </XStack>
-      {alto ? (
-        <YStack flex={1} minH={0} overflow="scroll">
-          {children}
+          {filasAdentro ? (
+            <YStack flex={1} minH={0} overflowY="auto">
+              {children}
+            </YStack>
+          ) : (
+            children
+          )}
         </YStack>
-      ) : (
-        children
-      )}
+      </YStack>
     </YStack>
   )
 }
@@ -80,17 +135,7 @@ export function FilaTabla({ columnas, atenuada = false, alto = 60, interactiva =
     >
       <XStack items="center" minH={alto} px={12} py={8}>
         {columnas.map((columna, indice) => (
-          <XStack
-            key={columna.titulo}
-            role="cell"
-            px={12}
-            width={columna.ancho}
-            flex={columna.ancho ? undefined : 1}
-            minW={0}
-            items="center"
-            justify={columna.alinearDerecha ? 'flex-end' : 'flex-start'}
-            gap={6}
-          >
+          <XStack key={columna.titulo} role="cell" px={12} items="center" gap={6} {...propsDeColumna(columna)}>
             {celdas[indice]}
           </XStack>
         ))}

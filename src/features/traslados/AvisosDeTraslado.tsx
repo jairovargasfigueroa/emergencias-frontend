@@ -11,7 +11,7 @@ import { avisoDelProblema, textoTiempoRestante } from './textos'
  * Desde cuántos minutos antes de la última salida posible el tiempo que queda se pinta en rojo: a esa altura
  * conviene asignar a mano en vez de esperar a que el sistema consiga una unidad.
  */
-const MINUTOS_PARA_APURARSE = 30
+export const MINUTOS_PARA_APURARSE = 30
 
 type PropsTiempo = {
   traslado: Traslado

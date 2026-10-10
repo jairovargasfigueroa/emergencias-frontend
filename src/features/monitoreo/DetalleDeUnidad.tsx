@@ -37,7 +37,7 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
             {tripulacion.length === 1 ? 'A bordo' : `A bordo (${tripulacion.length})`}
           </Text>
           {tripulacion.length === 0 ? (
-            <Text fontSize={13} color="$textoTenue">
+            <Text fontSize={13} color="$textoSecundario">
               Nadie abrió turno en esta unidad.
             </Text>
           ) : (
@@ -47,7 +47,7 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
                   {tripulante.nombreCompleto}
                 </Text>
                 <a href={`tel:${tripulante.telefono}`} style={{ textDecoration: 'none' }}>
-                  <Text fontSize={13} fontFamily="$mono" color="$primarioPresionado">
+                  <Text fontSize={13} fontFamily="$mono" color="$texto" textDecorationLine="underline">
                     {tripulante.telefono}
                   </Text>
                 </a>
@@ -88,7 +88,7 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
           {atencion ? (
             <LineaDeTiempo atencion={atencion} ahora={ahora} />
           ) : (
-            <Text fontSize={13} color="$textoTenue">
+            <Text fontSize={13} color="$textoSecundario">
               Esta unidad no está atendiendo nada ahora.
             </Text>
           )}
@@ -134,7 +134,7 @@ export function DetalleDeUnidad({ unidad, ahora }: Props) {
 function LineaDeTiempo({ atencion, ahora }: { atencion: AtencionEnCurso; ahora: number }) {
   if (atencion.hitos.length === 0) {
     return (
-      <Text fontSize={13} color="$textoTenue">
+      <Text fontSize={13} color="$textoSecundario">
         Todavía no hay hitos registrados.
       </Text>
     )
@@ -170,7 +170,7 @@ function Separador({ texto }: { texto: string }) {
   return (
     <XStack items="center" gap={6}>
       <YStack width={16} height={1} bg="$bordeFuerte" />
-      <Text fontSize={11} color="$textoTenue">
+      <Text fontSize={12} color="$textoSecundario">
         {texto}
       </Text>
       <YStack width={16} height={1} bg="$bordeFuerte" />
@@ -189,8 +189,8 @@ function EnlaceAlTrabajo({ atencion }: { atencion: AtencionEnCurso }) {
         params={{ trasladoId: atencion.trasladoId }}
         style={{ textDecoration: 'none' }}
       >
-        <Text fontSize={13} fontWeight="500" color="$primarioPresionado">
-          {etiqueta} #{atencion.trasladoId} →
+        <Text fontSize={13} fontWeight="500" color="$texto" textDecorationLine="underline">
+          {etiqueta} #{atencion.trasladoId}
         </Text>
       </Link>
     )
@@ -203,8 +203,8 @@ function EnlaceAlTrabajo({ atencion }: { atencion: AtencionEnCurso }) {
         params={{ incidenteId: atencion.incidenteId }}
         style={{ textDecoration: 'none' }}
       >
-        <Text fontSize={13} fontWeight="500" color="$primarioPresionado">
-          {etiqueta} #{atencion.incidenteId} →
+        <Text fontSize={13} fontWeight="500" color="$texto" textDecorationLine="underline">
+          {etiqueta} #{atencion.incidenteId}
         </Text>
       </Link>
     )

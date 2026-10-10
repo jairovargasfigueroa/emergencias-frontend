@@ -28,8 +28,10 @@ const SECCIONES: Seccion[] = [
 export function Navegacion() {
   return (
     <YStack render="nav" aria-label="Secciones del panel" gap={2}>
+      {/* Con el menú plegado queda solo el ícono: el nombre sigue en `title`, que aparece al pasar el mouse, y en
+          `aria-label`, que es lo que lee el lector de pantalla cuando el texto no se ve. */}
       {SECCIONES.map(({ to, etiqueta, Icono }) => (
-        <Link key={to} to={to} style={{ textDecoration: 'none' }}>
+        <Link key={to} to={to} title={etiqueta} aria-label={etiqueta} style={{ textDecoration: 'none' }}>
           {({ isActive }) => (
             <XStack
               items="center"
@@ -39,9 +41,15 @@ export function Navegacion() {
               rounded={8}
               bg={isActive ? '$primarioTinte' : 'transparent'}
               hoverStyle={{ bg: isActive ? '$primarioTinte' : '$fondo' }}
+              $max-xl={{ justify: 'center', px: 0 }}
             >
-              <Icono size={18} color={isActive ? 'var(--primarioPresionado)' : 'var(--textoSecundario)'} />
-              <Text fontSize={14} fontWeight={isActive ? '600' : '500'} color={isActive ? '$primarioPresionado' : '$texto'}>
+              <Icono size={18} color={isActive ? 'var(--primarioTinteTexto)' : 'var(--textoSecundario)'} />
+              <Text
+                fontSize={14}
+                fontWeight={isActive ? '600' : '500'}
+                color={isActive ? '$primarioTinteTexto' : '$texto'}
+                $max-xl={{ display: 'none' }}
+              >
                 {etiqueta}
               </Text>
             </XStack>

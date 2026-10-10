@@ -6,11 +6,16 @@ export const sesionKeys = {
   actual: ['sesion'] as const,
 }
 
-/** Administrador con sesión abierta, o `null`. Sale del navegador: no depende de la conexión. */
+/**
+ * Administrador con sesión abierta, o `null`. Sale del navegador: no depende de la conexión. Arranca ya leída: sin
+ * `initialData`, al recargar la página el primer render no la tenía, el layout mandaba al login y el login, al
+ * ver la sesión, a la portada. Cualquier F5 sacaba al administrador de la pantalla en la que estaba.
+ */
 export const sesionQuery = () =>
   queryOptions({
     queryKey: sesionKeys.actual,
     queryFn: () => leerSesion(),
+    initialData: () => leerSesion(),
     staleTime: Infinity,
     gcTime: Infinity,
   })

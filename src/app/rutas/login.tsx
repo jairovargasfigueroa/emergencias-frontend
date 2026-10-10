@@ -7,9 +7,9 @@ export const rutaLogin = createRoute({
   getParentRoute: () => rutaRaiz,
   path: '/login',
   beforeLoad: () => {
-    // Con sesión abierta el login no tiene nada que hacer.
+    // Con sesión abierta el login no tiene nada que hacer: a la portada, que decide la ruta de inicio.
     if (leerSesion()) {
-      throw redirect({ to: '/flota' })
+      throw redirect({ to: '/' })
     }
   },
   component: LoginPage,

@@ -25,7 +25,7 @@ export function LoginPage() {
     validators: { onSubmit: esquema },
     onSubmit: async ({ value }) => {
       await ingresar.mutateAsync(esquema.parse(value))
-      await navegar({ to: '/flota', replace: true })
+      await navegar({ to: '/', replace: true })
     },
   })
 

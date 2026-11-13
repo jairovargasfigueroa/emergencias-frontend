@@ -1,6 +1,6 @@
 import { useForm } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Dialog, Label, Paragraph, Spinner, XStack, YStack, useToastController } from 'tamagui'
+import { Button, Dialog, Label, Paragraph, Spinner, TextArea, XStack, YStack, useToastController } from 'tamagui'
 import { z } from 'zod'
 import { codigoDeError, mensajeDeError } from '../../shared/api/cliente'
 import { BotonPrimario } from '../../shared/ui/botones'
@@ -10,9 +10,17 @@ import { MOTIVOS_CIERRE_INCIDENTE, type MotivoCierreIncidente } from './api'
 import { cerrarIncidenteMutation } from './queries'
 import { OPCION_MOTIVO_CIERRE } from './textos'
 
-const esquema = z.object({
-  motivo: z.enum(MOTIVOS_CIERRE_INCIDENTE, { message: 'Elige por qué lo cierras.' }),
-})
+const esquema = z
+  .object({
+    motivo: z.enum(MOTIVOS_CIERRE_INCIDENTE, { message: 'Elige por qué lo cierras.' }),
+    detalle: z.string().trim().max(1000, 'El detalle es demasiado largo.'),
+  })
+  .superRefine((valor, ctx) => {
+    // Es lo que después sirve para evaluar el mal uso de una cuenta (PB-23): sin fundamento no cuenta.
+    if (valor.motivo === 'FALSA_ALARMA_VERIFICADA' && !valor.detalle) {
+      ctx.addIssue({ code: 'custom', path: ['detalle'], message: 'Escribe cómo se verificó que era una falsa alarma.' })
+    }
+  })
 
 type Props = {
   incidenteId: number
@@ -32,12 +40,12 @@ export function DialogoCerrarIncidente({ incidenteId, onCerrar }: Props) {
   const cerrar = useMutation(cerrarIncidenteMutation(queryClient))
 
   const form = useForm({
-    defaultValues: { motivo: '' as MotivoCierreIncidente },
+    defaultValues: { motivo: '' as MotivoCierreIncidente, detalle: '' },
     validators: { onSubmit: esquema },
     onSubmit: async ({ value }) => {
-      const { motivo } = esquema.parse(value)
+      const { motivo, detalle } = esquema.parse(value)
       try {
-        await cerrar.mutateAsync({ id: incidenteId, motivo })
+        await cerrar.mutateAsync({ id: incidenteId, motivo, detalle: detalle || null })
         toast.show('Incidente cerrado', {
           message: `El incidente #${incidenteId} quedó cerrado y se les avisó a quienes pidieron la ambulancia.`,
         })
@@ -102,6 +110,40 @@ export function DialogoCerrarIncidente({ incidenteId, onCerrar }: Props) {
               </YStack>
             )}
           </form.Field>
+
+          <form.Subscribe selector={(estado) => estado.values.motivo}>
+            {(motivo) => (
+              <form.Field name="detalle">
+                {(campo) => (
+                  <YStack gap={6}>
+                    <Label htmlFor="detalle-cierre" color="$texto" fontSize={13} fontWeight="500">
+                      {motivo === 'FALSA_ALARMA_VERIFICADA' ? '¿Cómo se verificó?' : 'Detalle (opcional)'}
+                    </Label>
+                    <TextArea
+                      id="detalle-cierre"
+                      size="$4"
+                      rows={3}
+                      placeholder={
+                        motivo === 'FALSA_ALARMA_VERIFICADA'
+                          ? 'Ej.: se devolvió la llamada y no había ninguna emergencia'
+                          : undefined
+                      }
+                      value={campo.state.value}
+                      onChangeText={campo.handleChange}
+                      onBlur={campo.handleBlur}
+                      borderColor={campo.state.meta.isValid ? '$bordeFuerte' : '$primario'}
+                    />
+                    {motivo === 'FALSA_ALARMA_VERIFICADA' ? (
+                      <Paragraph fontSize={12} lineHeight={17} color="$textoSecundario">
+                        Queda en el historial de quien pidió la ambulancia y sirve para evaluar el mal uso de su cuenta.
+                      </Paragraph>
+                    ) : null}
+                    <MensajeDeCampo texto={textoDeErrores(campo.state.meta.errors)} />
+                  </YStack>
+                )}
+              </form.Field>
+            )}
+          </form.Subscribe>
 
           <XStack px={12} py={10} rounded={10} bg="$enAtencionTinte">
             <Paragraph fontSize={13} lineHeight={19} color="$enAtencionTexto">

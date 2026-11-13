@@ -3,6 +3,7 @@ import type { ComponentType } from 'react'
 import { Text, XStack, YStack } from 'tamagui'
 import {
   IconoAmbulancia,
+  IconoCentroSalud,
   IconoIncidentes,
   IconoMonitoreo,
   IconoPersonas,
@@ -11,7 +12,7 @@ import {
 } from '../shared/ui/iconos'
 
 type Seccion = {
-  to: '/flota' | '/personal' | '/incidentes' | '/traslados' | '/centro-de-control'
+  to: '/flota' | '/personal' | '/incidentes' | '/traslados' | '/centro-de-control' | '/centros-salud'
   etiqueta: string
   Icono: ComponentType<PropsIcono>
 }
@@ -23,6 +24,7 @@ const SECCIONES: Seccion[] = [
   { to: '/incidentes', etiqueta: 'Incidentes', Icono: IconoIncidentes },
   { to: '/traslados', etiqueta: 'Traslados', Icono: IconoTraslados },
   { to: '/centro-de-control', etiqueta: 'Centro de control', Icono: IconoMonitoreo },
+  { to: '/centros-salud', etiqueta: 'Centros de salud', Icono: IconoCentroSalud },
 ]
 
 export function Navegacion() {

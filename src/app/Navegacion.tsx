@@ -9,12 +9,13 @@ import {
   IconoMonitoreo,
   IconoPersonas,
   IconoReportes,
+  IconoTarifas,
   IconoTraslados,
   type PropsIcono,
 } from '../shared/ui/iconos'
 
 type Seccion = {
-  to: '/flota' | '/personal' | '/incidentes' | '/traslados' | '/centro-de-control' | '/centros-salud' | '/mal-uso' | '/reportes'
+  to: '/flota' | '/personal' | '/incidentes' | '/traslados' | '/centro-de-control' | '/centros-salud' | '/mal-uso' | '/reportes' | '/tarifas'
   etiqueta: string
   Icono: ComponentType<PropsIcono>
 }
@@ -28,6 +29,7 @@ const SECCIONES: Seccion[] = [
   { to: '/centro-de-control', etiqueta: 'Centro de control', Icono: IconoMonitoreo },
   { to: '/centros-salud', etiqueta: 'Centros de salud', Icono: IconoCentroSalud },
   { to: '/reportes', etiqueta: 'Reportes', Icono: IconoReportes },
+  { to: '/tarifas', etiqueta: 'Tarifas', Icono: IconoTarifas },
   { to: '/mal-uso', etiqueta: 'Mal uso', Icono: IconoMalUso },
 ]
 

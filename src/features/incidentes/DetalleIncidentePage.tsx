@@ -11,6 +11,7 @@ import { BotonPrimario } from '../../shared/ui/botones'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
+import { CobroDelServicio } from '../cobros/CobroDelServicio'
 import { resumenIaKeys } from '../resumen-ia/queries'
 import { ResumenIaDelIncidente } from '../resumen-ia/ResumenIaDelIncidente'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
@@ -424,6 +425,16 @@ function TarjetaAtencion({ atencion }: { atencion: AtencionDeIncidente }) {
             </Dato>
           )}
         </XStack>
+
+        {/* PB-29: una salida terminada se cobra. Una cancelada o en curso, todavía no. */}
+        {atencionResuelta(atencion.estado) ? (
+          <YStack gap={8} pt={16} borderTopWidth={1} borderColor="$borde">
+            <Text fontSize={13} color="$textoSecundario">
+              Cobro
+            </Text>
+            <CobroDelServicio atencionId={atencion.id} />
+          </YStack>
+        ) : null}
       </YStack>
     </Tarjeta>
   )

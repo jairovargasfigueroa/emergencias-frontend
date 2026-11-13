@@ -11,7 +11,9 @@ import { BotonPrimario } from '../../shared/ui/botones'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
 import { IconoActualizar, IconoAnterior } from '../../shared/ui/iconos'
+import { CobroDelServicio } from '../cobros/CobroDelServicio'
 import { TEXTO_TIPO_UNIDAD, TIPO_UNIDAD_CORTO } from '../flota/api'
+import { atencionResuelta } from '../incidentes/api'
 import { TEXTO_HITO } from '../monitoreo/textos'
 import { tipoCorregido, type Traslado, type TrasladoDelPanel } from './api'
 import { AvisoDelProblema, BotonFamiliaAvisada } from './AvisosDeTraslado'
@@ -213,6 +215,13 @@ function Contenido({ fila, recargando, onRecargar, onAsignar, onDevolver }: Prop
           {fila.hitos.map((hito) => (
             <Dato key={hito.clave} etiqueta={TEXTO_HITO[hito.clave]} valor={hora(hito.hora)} />
           ))}
+        </Seccion>
+      ) : null}
+
+      {/* PB-29: el viaje terminado se cobra. */}
+      {fila.atencionId && fila.estadoAtencion && atencionResuelta(fila.estadoAtencion) ? (
+        <Seccion titulo="Cobro">
+          <CobroDelServicio atencionId={fila.atencionId} />
         </Seccion>
       ) : null}
     </>

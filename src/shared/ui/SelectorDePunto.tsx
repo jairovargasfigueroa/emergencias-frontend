@@ -17,17 +17,19 @@ type Props = {
   /** El punto marcado, o null si todavía no hay ninguno. */
   punto: Punto | null
   onElegir: (punto: Punto) => void
+  /** Lo que marca el pin, para quien pasa el mouse: "Ubicación del centro", "Dónde se lo busca". */
+  titulo: string
 }
 
 /**
- * Un mapa chico donde un clic marca dónde queda el centro. Sin la clave de Google se avisa y alcanza con escribir
- * las coordenadas a mano.
+ * Un mapa chico donde un clic marca un punto. Sin la clave de Google se avisa: quien lo usa tiene que ofrecer otra
+ * forma de cargarlo.
  */
-export function SelectorDePunto({ punto, onElegir }: Props) {
+export function SelectorDePunto({ punto, onElegir, titulo }: Props) {
   if (!CLAVE_MAPA || !ID_MAPA) {
     return (
       <Paragraph fontSize={13} lineHeight={18} color="$textoSecundario">
-        El mapa no está configurado: escribe la latitud y la longitud a mano.
+        El mapa no está configurado: completa VITE_GOOGLE_MAPS_API_KEY y VITE_GOOGLE_MAPS_MAP_ID en .env.local.
       </Paragraph>
     )
   }
@@ -52,7 +54,7 @@ export function SelectorDePunto({ punto, onElegir }: Props) {
             }
           }}
         >
-          {punto ? <AdvancedMarker position={punto} title="Ubicación del centro" /> : null}
+          {punto ? <AdvancedMarker position={punto} title={titulo} /> : null}
         </Map>
       </APIProvider>
     </YStack>

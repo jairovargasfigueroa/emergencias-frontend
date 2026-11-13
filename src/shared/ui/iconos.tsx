@@ -37,6 +37,49 @@ export function IconoAmbulancia(props: PropsIcono) {
   )
 }
 
+/** Un edificio con la cruz: hospital, clínica o posta. */
+export function IconoCentroSalud(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M4 21V8l8-4.5L20 8v13" />
+      <path d="M2.5 21h19" />
+      <path d="M12 8.5v5M9.5 11h5" />
+      <path d="M10 21v-3.5h4V21" />
+    </Icono>
+  )
+}
+
+/** Un escudo con un signo de exclamación: cuentas que se revisan por mal uso. */
+export function IconoMalUso(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z" />
+      <path d="M12 8v5" />
+      <path d="M12 16.25v.01" />
+    </Icono>
+  )
+}
+
+/** Barras de un gráfico: los reportes de la operación. */
+export function IconoReportes(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M3.5 20.5h17" />
+      <path d="M6.5 16.5v-5M11 16.5V7.5M15.5 16.5v-7M20 16.5V5" />
+    </Icono>
+  )
+}
+
+/** Una etiqueta de precio: las tarifas de referencia. */
+export function IconoTarifas(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M3.5 12.5V4.5a1 1 0 0 1 1-1h8l8 8-9 9z" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+    </Icono>
+  )
+}
+
 export function IconoPersonas(props: PropsIcono) {
   return (
     <Icono {...props}>

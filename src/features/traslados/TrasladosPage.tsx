@@ -7,7 +7,8 @@ import { comoDia } from '../../shared/formato/fechas'
 import { useAhora } from '../../shared/reloj/useAhora'
 import { EncabezadoPagina } from '../../shared/ui/EncabezadoPagina'
 import { Cargando, ErrorAlCargar } from '../../shared/ui/EstadosDeCarga'
-import { IconoActualizar, IconoAnterior, IconoSiguiente } from '../../shared/ui/iconos'
+import { BotonPrimario } from '../../shared/ui/botones'
+import { IconoActualizar, IconoAnterior, IconoMas, IconoSiguiente } from '../../shared/ui/iconos'
 import { FilaTabla, Tabla, TablaVacia, type ColumnaTabla } from '../../shared/ui/Tabla'
 import { TIPO_UNIDAD_CORTO } from '../flota/api'
 import type { Traslado, TrasladoDelPanel } from './api'
@@ -15,6 +16,7 @@ import { AccionDelProblema, AvisoDelProblema } from './AvisosDeTraslado'
 import { esVista, TEXTO_VISTA, VISTAS, type BusquedaTraslados } from './busqueda'
 import { DialogoAsignar } from './DialogoAsignar'
 import { DialogoDevolver } from './DialogoDevolver'
+import { DialogoTrasladoTelefonico } from './DialogoTrasladoTelefonico'
 import { InsigniaEstadoTraslado } from './InsigniasDeTraslado'
 import { problemasQuery, trasladosDelDiaQuery } from './queries'
 import { ventanaDeRecogida } from './textos'
@@ -44,6 +46,7 @@ export function TrasladosPage() {
   const ahora = useAhora(INTERVALO_RELOJ_MS)
   const [aAsignar, setAAsignar] = useState<Traslado | null>(null)
   const [aDevolver, setADevolver] = useState<TrasladoDelPanel | null>(null)
+  const [telefonicoAbierto, setTelefonicoAbierto] = useState(false)
 
   const delDia = useQuery({ ...trasladosDelDiaQuery(dia), enabled: vista === 'DIA' })
   const problemas = useQuery(problemasQuery())
@@ -70,15 +73,20 @@ export function TrasladosPage() {
         titulo="Traslados"
         descripcion="Pedidos de traslado y la unidad que los está haciendo. La unidad se asigna cuando llega la hora de salir."
         accion={
-          <Button
-            size="$4"
-            variant="outlined"
-            icon={consulta.isFetching ? <Spinner size="small" color="$textoSecundario" /> : <IconoActualizar size={16} />}
-            disabled={consulta.isFetching}
-            onPress={() => consulta.refetch()}
-          >
-            Actualizar
-          </Button>
+          <XStack gap={8}>
+            <Button
+              size="$4"
+              variant="outlined"
+              icon={consulta.isFetching ? <Spinner size="small" color="$textoSecundario" /> : <IconoActualizar size={16} />}
+              disabled={consulta.isFetching}
+              onPress={() => consulta.refetch()}
+            >
+              Actualizar
+            </Button>
+            <BotonPrimario size="$4" icon={<IconoMas size={16} color="#FFFFFF" />} onPress={() => setTelefonicoAbierto(true)}>
+              <Button.Text color="$primarioTexto">Pedido por teléfono</Button.Text>
+            </BotonPrimario>
+          </XStack>
         }
       />
 
@@ -173,6 +181,7 @@ export function TrasladosPage() {
 
       <DialogoAsignar traslado={aAsignar} onCerrar={() => setAAsignar(null)} />
       <DialogoDevolver fila={aDevolver} onCerrar={() => setADevolver(null)} />
+      <DialogoTrasladoTelefonico abierto={telefonicoAbierto} onCambiarAbierto={setTelefonicoAbierto} />
     </>
   )
 }

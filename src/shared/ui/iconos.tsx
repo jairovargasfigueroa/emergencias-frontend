@@ -37,6 +37,18 @@ export function IconoAmbulancia(props: PropsIcono) {
   )
 }
 
+/** Un edificio con la cruz: hospital, clínica o posta. */
+export function IconoCentroSalud(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M4 21V8l8-4.5L20 8v13" />
+      <path d="M2.5 21h19" />
+      <path d="M12 8.5v5M9.5 11h5" />
+      <path d="M10 21v-3.5h4V21" />
+    </Icono>
+  )
+}
+
 export function IconoPersonas(props: PropsIcono) {
   return (
     <Icono {...props}>

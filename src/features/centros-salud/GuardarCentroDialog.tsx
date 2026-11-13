@@ -5,9 +5,9 @@ import { z } from 'zod'
 import { mensajeDeError } from '../../shared/api/cliente'
 import { BotonPrimario } from '../../shared/ui/botones'
 import { MensajeDeCampo, textoDeErrores } from '../../shared/ui/EstadosDeCarga'
+import { SelectorDePunto } from '../../shared/ui/SelectorDePunto'
 import type { CentroSalud } from './api'
 import { corregirCentroSaludMutation, registrarCentroSaludMutation } from './queries'
-import { SelectorDePunto } from './SelectorDePunto'
 
 function coordenada(limite: number, nombre: string) {
   return z
@@ -160,6 +160,7 @@ export function GuardarCentroDialog({ centro, onCerrar }: Props) {
                     return (
                       <SelectorDePunto
                         punto={punto}
+                        titulo="Ubicación del centro"
                         onElegir={({ lat: nuevaLat, lng: nuevaLng }) => {
                           form.setFieldValue('latitud', nuevaLat.toFixed(6))
                           form.setFieldValue('longitud', nuevaLng.toFixed(6))

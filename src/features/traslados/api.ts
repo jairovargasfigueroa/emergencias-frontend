@@ -83,6 +83,44 @@ export type TrasladoDelPanel = {
   hitos: Hito[]
   /** Por qué no viajó nadie, cuando la unidad lo cerró sin traslado. */
   motivoSinTraslado: MotivoSinTraslado | null
+  /** Quién de la central lo cargó, si se pidió por teléfono. Null si se pidió por la app. */
+  registradoPorLaCentral: string | null
+  /** El teléfono de quien pidió el traslado, para devolverle la llamada. */
+  telefonoSolicitante: string | null
+}
+
+/** `RegistrarTrasladoRequest` del backend: el viaje, igual que lo pide la app. */
+export type PedidoDeTraslado = {
+  movilidad: Movilidad
+  oxigeno: boolean
+  equipo: boolean
+  aislamiento: boolean
+  pesoAproximado: number | null
+  acompanantes: number
+  observaciones: string | null
+  /** Null acepta la unidad que sugiere el sistema según las necesidades. */
+  tipoUnidad: TipoUnidad | null
+  origenLatitud: number
+  origenLongitud: number
+  origenReferencia: string | null
+  contactoNombre: string | null
+  contactoTelefono: string | null
+  /** Un centro del catálogo, o si no, el punto del destino. */
+  centroSaludDestinoId: number | null
+  destinoLatitud: number | null
+  destinoLongitud: number | null
+  destinoDetalle: string | null
+  /** Null es "lo antes posible". */
+  horaCita: string | null
+}
+
+/** `RegistrarTrasladoCentralRequest` del backend: un pedido que llegó por teléfono (PB-26). */
+export type RegistrarTrasladoCentral = {
+  pasajeroNombre: string
+  pasajeroTelefono: string
+  /** En verdadero cuando la central ya vio el aviso de un pedido parecido y confirma que es otro viaje. */
+  confirmarDuplicado: boolean
+  pedido: PedidoDeTraslado
 }
 
 /** El pedido sigue vivo: espera su día, espera unidad, o la unidad está en camino. */
@@ -109,6 +147,11 @@ export function minutosParaLaUltimaSalida(traslado: Traslado, ahora: number) {
 }
 
 export const trasladosApi = {
+  /**
+   * Falla con 409 `TRASLADO_POSIBLE_DUPLICADO` si ese teléfono ya tiene un traslado vigente el mismo día, y con los
+   * mismos 409 que un pedido de la app (`HORA_INALCANZABLE`, `DESTINO_REQUERIDO`).
+   */
+  registrarDesdeLaCentral: (datos: RegistrarTrasladoCentral) => api.post<TrasladoDelPanel>('/traslados/central', datos),
   /** Sin fecha, el backend devuelve el día de hoy en la zona de la empresa. */
   delDia: (dia: string | undefined, signal?: AbortSignal) =>
     api.get<TrasladoDelPanel[]>(dia ? `/traslados?dia=${dia}` : '/traslados', signal),

@@ -161,6 +161,11 @@ function Contenido({ fila, recargando, onRecargar, onAsignar, onDevolver }: Prop
 
       <Seccion titulo="Quién viaja">
         <Dato etiqueta="Paciente" valor={traslado.pasajero} />
+        <Dato
+          etiqueta="Pedido"
+          valor={fila.registradoPorLaCentral ? `Por teléfono, cargado por ${fila.registradoPorLaCentral}` : 'Por la app'}
+        />
+        <Dato etiqueta="Teléfono de quien pidió" valor={fila.telefonoSolicitante} />
         <Dato etiqueta="Cómo se moviliza" valor={TEXTO_MOVILIDAD[traslado.movilidad]} />
         <Dato etiqueta="Necesita" valor={necesidades(traslado)} />
         <Dato etiqueta="Peso aproximado" valor={traslado.pesoAproximado ? `${traslado.pesoAproximado} kg` : null} />

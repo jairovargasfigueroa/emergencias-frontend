@@ -2,7 +2,7 @@ import { mutationOptions, queryOptions, type QueryClient } from '@tanstack/react
 import { codigoDeError } from '../../shared/api/cliente'
 import { flotaKeys } from '../flota/queries'
 import { operacionKeys } from '../monitoreo/queries'
-import { trasladosApi, type TrasladoDelPanel } from './api'
+import { trasladosApi, type RegistrarTrasladoCentral, type TrasladoDelPanel } from './api'
 
 export const trasladosKeys = {
   todos: ['traslados'] as const,
@@ -116,4 +116,11 @@ export const marcarFamiliaAvisadaMutation = (queryClient: QueryClient) =>
     mutationFn: (id: number) => trasladosApi.marcarFamiliaAvisada(id),
     onSuccess: (fila: TrasladoDelPanel) => recargarTraslado(queryClient, fila),
     onError: (error) => recargarSiCambio(queryClient, error),
+  })
+
+/** PB-26: un pedido que llegó por teléfono. Entra a la agenda, así que se recarga todo lo de traslados. */
+export const registrarTrasladoCentralMutation = (queryClient: QueryClient) =>
+  mutationOptions({
+    mutationFn: (datos: RegistrarTrasladoCentral) => trasladosApi.registrarDesdeLaCentral(datos),
+    onSuccess: (fila: TrasladoDelPanel) => recargarTraslado(queryClient, fila),
   })

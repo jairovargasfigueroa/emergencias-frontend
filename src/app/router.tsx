@@ -7,6 +7,7 @@ import { rutaIncidente } from './rutas/incidente'
 import { rutaIncidentes } from './rutas/incidentes'
 import { rutaInicio } from './rutas/inicio'
 import { rutaLogin } from './rutas/login'
+import { rutaHistorialCiudadano, rutaMalUso } from './rutas/mal-uso'
 import { rutaPersonal } from './rutas/personal'
 import { rutaProtegida } from './rutas/protegida'
 import { rutaRaiz } from './rutas/raiz'
@@ -27,6 +28,8 @@ const arbolDeRutas = rutaRaiz.addChildren([
     rutaTraslado,
     rutaCentroDeControl,
     rutaCentrosSalud,
+    rutaMalUso,
+    rutaHistorialCiudadano,
   ]),
 ])
 

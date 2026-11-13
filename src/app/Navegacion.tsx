@@ -5,6 +5,7 @@ import {
   IconoAmbulancia,
   IconoCentroSalud,
   IconoIncidentes,
+  IconoMalUso,
   IconoMonitoreo,
   IconoPersonas,
   IconoTraslados,
@@ -12,7 +13,7 @@ import {
 } from '../shared/ui/iconos'
 
 type Seccion = {
-  to: '/flota' | '/personal' | '/incidentes' | '/traslados' | '/centro-de-control' | '/centros-salud'
+  to: '/flota' | '/personal' | '/incidentes' | '/traslados' | '/centro-de-control' | '/centros-salud' | '/mal-uso'
   etiqueta: string
   Icono: ComponentType<PropsIcono>
 }
@@ -25,6 +26,7 @@ const SECCIONES: Seccion[] = [
   { to: '/traslados', etiqueta: 'Traslados', Icono: IconoTraslados },
   { to: '/centro-de-control', etiqueta: 'Centro de control', Icono: IconoMonitoreo },
   { to: '/centros-salud', etiqueta: 'Centros de salud', Icono: IconoCentroSalud },
+  { to: '/mal-uso', etiqueta: 'Mal uso', Icono: IconoMalUso },
 ]
 
 export function Navegacion() {

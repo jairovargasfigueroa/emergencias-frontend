@@ -49,6 +49,17 @@ export function IconoCentroSalud(props: PropsIcono) {
   )
 }
 
+/** Un escudo con un signo de exclamación: cuentas que se revisan por mal uso. */
+export function IconoMalUso(props: PropsIcono) {
+  return (
+    <Icono {...props}>
+      <path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.3-7.5 9.5-4.3-1.2-7.5-5-7.5-9.5V6z" />
+      <path d="M12 8v5" />
+      <path d="M12 16.25v.01" />
+    </Icono>
+  )
+}
+
 export function IconoPersonas(props: PropsIcono) {
   return (
     <Icono {...props}>

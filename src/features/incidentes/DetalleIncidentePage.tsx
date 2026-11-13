@@ -213,6 +213,7 @@ function Resumen({ incidente }: { incidente: IncidenteDetalle }) {
             {incidente.motivoCierre ? <Nota>{TEXTO_MOTIVO_CIERRE[incidente.motivoCierre]}</Nota> : null}
             {/* Solo si lo cerró la central: los que se cierran solos no tienen a quién nombrar. */}
             {incidente.cerradoPor ? <Nota>Lo cerró {incidente.cerradoPor}</Nota> : null}
+            {incidente.detalleCierre ? <Nota>{incidente.detalleCierre}</Nota> : null}
           </Dato>
         )}
         <Dato etiqueta="Primera unidad en el lugar">

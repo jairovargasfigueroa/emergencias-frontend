@@ -128,6 +128,8 @@ export type IncidenteDetalle = IncidenteResumen & {
   atenciones: AtencionDeIncidente[]
   /** El administrador que lo cerró a mano. Null si se cerró solo, por lo que pasó con sus unidades o sus alertas. */
   cerradoPor: string | null
+  /** Lo que escribió la central al cerrarlo; en una falsa alarma, cómo se verificó. */
+  detalleCierre: string | null
 }
 
 export const incidentesApi = {
@@ -147,5 +149,7 @@ export const incidentesApi = {
    * La central cierra un incidente que no se va a atender, solo sin unidades trabajándolo. A quienes pidieron la
    * ambulancia les llega un aviso. Responde sin cuerpo.
    */
-  cerrar: (id: number, motivo: MotivoCierreIncidente) => api.post<void>(`/incidentes/${id}/cierre`, { motivo }),
+  /** Una falsa alarma lleva `detalle` obligatorio: cómo se verificó (PB-23). */
+  cerrar: (id: number, motivo: MotivoCierreIncidente, detalle: string | null) =>
+    api.post<void>(`/incidentes/${id}/cierre`, { motivo, detalle }),
 }

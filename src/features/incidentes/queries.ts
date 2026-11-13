@@ -79,7 +79,8 @@ export const despacharUnidadMutation = (queryClient: QueryClient) =>
  */
 export const cerrarIncidenteMutation = (queryClient: QueryClient) =>
   mutationOptions({
-    mutationFn: ({ id, motivo }: { id: number; motivo: MotivoCierreIncidente }) => incidentesApi.cerrar(id, motivo),
+    mutationFn: ({ id, motivo, detalle }: { id: number; motivo: MotivoCierreIncidente; detalle: string | null }) =>
+      incidentesApi.cerrar(id, motivo, detalle),
     onSuccess: () => recargarIncidentes(queryClient),
     onError: (error) => {
       const codigo = codigoDeError(error)
